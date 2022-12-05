@@ -1,0 +1,2952 @@
+#compdef icav2
+
+# Generated with perl module App::Spec v0.000
+
+_icav2() {
+    local program=icav2
+    typeset -A opt_args
+    local curcontext="$curcontext" state line context
+
+
+        # ---- Command: 
+        _arguments -s  \
+            '1: :->cmd1' \
+            '*: :->args' \
+            && ret=0
+
+
+        case $state in
+        cmd1)
+            _alternative 'args:cmd2:((analysisstorages\:"Analysis storages commands
+" config\:"Config actions
+" dataformats\:"Data format commands
+" help\:"Help about any command
+" metadatamodels\:"Metadata model commands
+" pipelines\:"Pipeline commands
+" projectanalyses\:"Project analyses commands
+" projectdata\:"Project Data commands
+" projectpipelines\:"Project pipeline commands
+" projects\:"Project commands
+" projectsamples\:"Project samples commands
+" regions\:"Region commands
+" storagebundles\:"Storage bundle commands
+" storageconfigurations\:"Storage configurations commands
+" tokens\:"Tokens commands
+" version\:"The version of this application
+"))'
+        ;;
+
+        args)
+            case $line[1] in
+            _meta)
+
+                # ---- Command: _meta
+                _arguments -s -C \
+                    '1: :->cmd1' \
+                    '2: :->cmd2' \
+                    '*: :->args' \
+                    && ret=0
+
+
+                case $state in
+                cmd2)
+                    _alternative 'args:cmd3:((completion\:"Shell completion functions" pod\:"Pod documentation"))'
+                ;;
+
+                args)
+                    case $line[2] in
+                    completion)
+
+                        # ---- Command: _meta completion
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '3: :->cmd3' \
+                            '*: :->args' \
+                            && ret=0
+
+
+                        case $state in
+                        cmd3)
+                            _alternative 'args:cmd4:((generate\:"Generate self completion"))'
+                        ;;
+
+                        args)
+                            case $line[3] in
+                            generate)
+
+                                # ---- Command: _meta completion generate
+                                _arguments -s -C \
+                                    '1: :->cmd1' \
+                                    '2: :->cmd2' \
+                                    '3: :->cmd3' \
+                                    '--help[Show command help]' \
+                                    '-h[Show command help]' \
+                                    '--name[name of the program (optional, override name in spec)]:name' \
+                                    '--zsh[for zsh]' \
+                                    '--bash[for bash]' \
+                                    && ret=0
+
+
+                            ;;
+                            esac
+
+                        ;;
+
+                        esac
+                    ;;
+                    pod)
+
+                        # ---- Command: _meta pod
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '3: :->cmd3' \
+                            '*: :->args' \
+                            && ret=0
+
+
+                        case $state in
+                        cmd3)
+                            _alternative 'args:cmd4:((generate\:"Generate self pod"))'
+                        ;;
+
+                        args)
+                            case $line[3] in
+                            generate)
+
+                                # ---- Command: _meta pod generate
+                                _arguments -s -C \
+                                    '1: :->cmd1' \
+                                    '2: :->cmd2' \
+                                    '3: :->cmd3' \
+                                    '--help[Show command help]' \
+                                    '-h[Show command help]' \
+                                    && ret=0
+
+
+                            ;;
+                            esac
+
+                        ;;
+
+                        esac
+                    ;;
+                    esac
+
+                ;;
+
+                esac
+            ;;
+            analysisstorages)
+
+                # ---- Command: analysisstorages
+                _arguments -s -C \
+                    '1: :->cmd1' \
+                    '2: :->cmd2' \
+                    '*: :->args' \
+                    && ret=0
+
+
+                case $state in
+                cmd2)
+                    _alternative 'args:cmd3:((list\:"list of storage id'"'"'s
+"))'
+                ;;
+
+                args)
+                    case $line[2] in
+                    list)
+
+                        # ---- Command: analysisstorages list
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    esac
+
+                ;;
+
+                esac
+            ;;
+            config)
+
+                # ---- Command: config
+                _arguments -s -C \
+                    '1: :->cmd1' \
+                    '2: :->cmd2' \
+                    '*: :->args' \
+                    && ret=0
+
+
+                case $state in
+                cmd2)
+                    _alternative 'args:cmd3:((get\:"Get configuration information
+" reset\:"Remove the configuration information
+" set\:"Set configuration information
+"))'
+                ;;
+
+                args)
+                    case $line[2] in
+                    get)
+
+                        # ---- Command: config get
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    reset)
+
+                        # ---- Command: config reset
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    set)
+
+                        # ---- Command: config set
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    esac
+
+                ;;
+
+                esac
+            ;;
+            dataformats)
+
+                # ---- Command: dataformats
+                _arguments -s -C \
+                    '1: :->cmd1' \
+                    '2: :->cmd2' \
+                    '*: :->args' \
+                    && ret=0
+
+
+                case $state in
+                cmd2)
+                    _alternative 'args:cmd3:((list\:"List data formats
+"))'
+                ;;
+
+                args)
+                    case $line[2] in
+                    list)
+
+                        # ---- Command: dataformats list
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    esac
+
+                ;;
+
+                esac
+            ;;
+            help)
+
+                # ---- Command: help
+                _arguments -s -C \
+                    '1: :->cmd1' \
+                    '--help[Show command help]' \
+                    '-h[Show command help]' \
+                    && ret=0
+
+
+            ;;
+            metadatamodels)
+
+                # ---- Command: metadatamodels
+                _arguments -s -C \
+                    '1: :->cmd1' \
+                    '2: :->cmd2' \
+                    '*: :->args' \
+                    && ret=0
+
+
+                case $state in
+                cmd2)
+                    _alternative 'args:cmd3:((list\:"list of metadata models
+"))'
+                ;;
+
+                args)
+                    case $line[2] in
+                    list)
+
+                        # ---- Command: metadatamodels list
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    esac
+
+                ;;
+
+                esac
+            ;;
+            pipelines)
+
+                # ---- Command: pipelines
+                _arguments -s -C \
+                    '1: :->cmd1' \
+                    '2: :->cmd2' \
+                    '*: :->args' \
+                    && ret=0
+
+
+                case $state in
+                cmd2)
+                    _alternative 'args:cmd3:((get\:"Get details of a pipeline
+" list\:"List pipelines
+"))'
+                ;;
+
+                args)
+                    case $line[2] in
+                    get)
+
+                        # ---- Command: pipelines get
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    list)
+
+                        # ---- Command: pipelines list
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    esac
+
+                ;;
+
+                esac
+            ;;
+            projectanalyses)
+
+                # ---- Command: projectanalyses
+                _arguments -s -C \
+                    '1: :->cmd1' \
+                    '2: :->cmd2' \
+                    '*: :->args' \
+                    && ret=0
+
+
+                case $state in
+                cmd2)
+                    _alternative 'args:cmd3:((get\:"Get the details of an analysis
+" get-analysis-step-logs\:"List analysis step logs
+" get-cwl-analysis-input-json\:"List cwl analysis input json
+" get-cwl-analysis-output-json\:"List cwl analysis output json
+" input\:"Retrieve input of analyses commands
+" list\:"List of analyses for a project
+" list-analysis-steps\:"List analysis steps
+" output\:"Retrieve output of analyses commands
+" update\:"Update tags of analyses
+"))'
+                ;;
+
+                args)
+                    case $line[2] in
+                    get)
+
+                        # ---- Command: projectanalyses get
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    get-analysis-step-logs)
+
+                        # ---- Command: projectanalyses get-analysis-step-logs
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '3: :->analysis_id' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            '--step-name[step name]:step-name' \
+                            '--stdout[get stdout of a step]:stdout' \
+                            '--stderr[get stderr of a step]:stderr' \
+                            '--output-path[Write output to file]:output-path:_files' \
+                            && ret=0
+
+                        case $state in
+                        analysis_id)
+_icav2_projectanalyses_get-analysis-step-logs_param_analysis_id_completion
+                        ;;
+                        esac
+
+                    ;;
+                    get-cwl-analysis-input-json)
+
+                        # ---- Command: projectanalyses get-cwl-analysis-input-json
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '3: :->analysis_id' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+                        case $state in
+                        analysis_id)
+_icav2_projectanalyses_get-cwl-analysis-input-json_param_analysis_id_completion
+                        ;;
+                        esac
+
+                    ;;
+                    get-cwl-analysis-output-json)
+
+                        # ---- Command: projectanalyses get-cwl-analysis-output-json
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '3: :->analysis_id' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+                        case $state in
+                        analysis_id)
+_icav2_projectanalyses_get-cwl-analysis-output-json_param_analysis_id_completion
+                        ;;
+                        esac
+
+                    ;;
+                    input)
+
+                        # ---- Command: projectanalyses input
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    list)
+
+                        # ---- Command: projectanalyses list
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    list-analysis-steps)
+
+                        # ---- Command: projectanalyses list-analysis-steps
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '3: :->analysis_id' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            '--show-technical-steps[Also list technical steps]:show-technical-steps' \
+                            && ret=0
+
+                        case $state in
+                        analysis_id)
+_icav2_projectanalyses_list-analysis-steps_param_analysis_id_completion
+                        ;;
+                        esac
+
+                    ;;
+                    output)
+
+                        # ---- Command: projectanalyses output
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    update)
+
+                        # ---- Command: projectanalyses update
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    esac
+
+                ;;
+
+                esac
+            ;;
+            projectdata)
+
+                # ---- Command: projectdata
+                _arguments -s -C \
+                    '1: :->cmd1' \
+                    '2: :->cmd2' \
+                    '*: :->args' \
+                    && ret=0
+
+
+                case $state in
+                cmd2)
+                    _alternative 'args:cmd3:((archive\:"archive data
+" create\:"Create data id for a project
+" delete\:"delete data
+" download\:"Download a file/folder
+" downloadurl\:"get download url
+" folderuploadsession\:"Get details of a folder upload
+" get\:"Get details of a data
+" link\:"Link data to a project
+" list\:"List data
+" ls\:"List data in directory, similar to ls in a posix file system
+" mount\:"Mount project data
+" s3-sync-download\:"Upload a folder to icav2 using aws s3 sync.
+" s3-sync-upload\:"Upload a folder to icav2 using aws s3 sync.
+" temporarycredentials\:"fetch temporal credentials for data
+" unarchive\:"unarchive data
+" unlink\:"Unlink data to a project
+" unmount\:"Unmount project data
+" update\:"Updates the details of a data
+" upload\:"Upload a file/folder
+" view\:"View a file to stdout
+"))'
+                ;;
+
+                args)
+                    case $line[2] in
+                    archive)
+
+                        # ---- Command: projectdata archive
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    create)
+
+                        # ---- Command: projectdata create
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    delete)
+
+                        # ---- Command: projectdata delete
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    download)
+
+                        # ---- Command: projectdata download
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    downloadurl)
+
+                        # ---- Command: projectdata downloadurl
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    folderuploadsession)
+
+                        # ---- Command: projectdata folderuploadsession
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    get)
+
+                        # ---- Command: projectdata get
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    link)
+
+                        # ---- Command: projectdata link
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    list)
+
+                        # ---- Command: projectdata list
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    ls)
+
+                        # ---- Command: projectdata ls
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '3: :->data_path' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            '--long-listing[use long-listing format to show owner, modification timestamp and size
+]:long-listing' \
+                            '--time[sort items by time
+]:time' \
+                            '--reverse[reverse order
+]:reverse' \
+                            && ret=0
+
+                        case $state in
+                        data_path)
+_icav2_projectdata_ls_param_data_path_completion
+                        ;;
+                        esac
+
+                    ;;
+                    mount)
+
+                        # ---- Command: projectdata mount
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    s3-sync-download)
+
+                        # ---- Command: projectdata s3-sync-download
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '3: :->data_path' \
+                            '4: :->download_path' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            '--write-script-path[Optional, write out a script instead of invoking aws s3 command
+]:write-script-path:_files' \
+                            '*--s3-sync-arg[Other arguments are sent to aws s3 sync, specify multiple times for multiple arguments
+]:s3-sync-arg' \
+                            && ret=0
+
+                        case $state in
+                        data_path)
+_icav2_projectdata_s3-sync-download_param_data_path_completion
+                        ;;
+                        download_path)
+_path_files -/
+                        ;;
+                        esac
+
+                    ;;
+                    s3-sync-upload)
+
+                        # ---- Command: projectdata s3-sync-upload
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '3: :->upload_path' \
+                            '4: :->data_path' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            '--write-script-path[Optional, write out a script instead of invoking aws s3 command
+]:write-script-path:_files' \
+                            '*--s3-sync-arg[Other arguments are sent to aws s3 sync, specify multiple times for multiple arguments
+]:s3-sync-arg' \
+                            && ret=0
+
+                        case $state in
+                        upload_path)
+_path_files -/
+                        ;;
+                        data_path)
+_icav2_projectdata_s3-sync-upload_param_data_path_completion
+                        ;;
+                        esac
+
+                    ;;
+                    temporarycredentials)
+
+                        # ---- Command: projectdata temporarycredentials
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    unarchive)
+
+                        # ---- Command: projectdata unarchive
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    unlink)
+
+                        # ---- Command: projectdata unlink
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    unmount)
+
+                        # ---- Command: projectdata unmount
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    update)
+
+                        # ---- Command: projectdata update
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    upload)
+
+                        # ---- Command: projectdata upload
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    view)
+
+                        # ---- Command: projectdata view
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '3: :->data_path' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            '--browser[Display file in browser
+]:browser' \
+                            && ret=0
+
+                        case $state in
+                        data_path)
+_icav2_projectdata_view_param_data_path_completion
+                        ;;
+                        esac
+
+                    ;;
+                    esac
+
+                ;;
+
+                esac
+            ;;
+            projectpipelines)
+
+                # ---- Command: projectpipelines
+                _arguments -s -C \
+                    '1: :->cmd1' \
+                    '2: :->cmd2' \
+                    '*: :->args' \
+                    && ret=0
+
+
+                case $state in
+                cmd2)
+                    _alternative 'args:cmd3:((create\:"Create a pipeline
+" create-cwl-wes-input-template\:"Create a WES input template for a CWL workflow ready for launch
+" create-cwl-workflow-from-zip\:"From a zip file, deploy a workflow to icav2
+" input\:"Retrieve input parameters of pipeline
+" link\:"Link pipeline to a project
+" list\:"List of pipelines for a project
+" start\:"Start a pipeline
+" start-cwl-wes\:"Launch an analysis on icav2
+" unlink\:"Unlink pipeline from a project
+"))'
+                ;;
+
+                args)
+                    case $line[2] in
+                    create)
+
+                        # ---- Command: projectpipelines create
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    create-cwl-wes-input-template)
+
+                        # ---- Command: projectpipelines create-cwl-wes-input-template
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            '--pipeline-id[Optional, id of the pipeline you wish to launch
+]:pipeline-id:_icav2_projectpipelines_create-cwl-wes-input-template_option_pipeline_id_completion' \
+                            '--pipeline-code[Optional, name of the pipeline you wish to launch
+]:pipeline-code:_icav2_projectpipelines_create-cwl-wes-input-template_option_pipeline_code_completion' \
+                            '--user-reference[Optional, name of the workflow analysis
+]:user-reference' \
+                            '--name[Optional, name of the workflow analysis
+]:name' \
+                            '--output-template-yaml-path[Required, Output template yaml path, parent directory must exist
+]:output-template-yaml-path:_files' \
+                            '--output-parent-folder-id[Optional, the id of the parent folder to write outputs to
+]:output-parent-folder-id' \
+                            '--output-parent-folder-path[Optional, the path to the parent folder to write outputs to (will be created if it doesn'"'"'t exist)
+]:output-parent-folder-path:_icav2_projectpipelines_create-cwl-wes-input-template_option_output_parent_folder_path_completion' \
+                            '--analysis-storage-id[Optional, analysis storage id, overrides default analysis storage size
+]:analysis-storage-id' \
+                            '--analysis-storage-size[Optional, analysis storage size, one of Small, Medium, Large
+]:analysis-storage-size:("Small" "Medium" "Large")' \
+                            '--activation-id[Optional, the activation id used by the pipeline analysis
+]:activation-id' \
+                            '*--user-tag[User tags to attach to the analysis pipeline, specify multiple times for multiple user tags
+]:user-tag' \
+                            '*--technical-tag[User tags to attach to the analysis pipeline, specify multiple times for multiple technical tags
+]:technical-tag' \
+                            '*--reference-tag[User tags to attach to the analysis pipeline, specify multiple times for multiple reference tags
+]:reference-tag' \
+                            && ret=0
+
+
+                    ;;
+                    create-cwl-workflow-from-zip)
+
+                        # ---- Command: projectpipelines create-cwl-workflow-from-zip
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '3: :->zipped_workflow_path' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            '--analysis-storage-id[analysis storage id]:analysis-storage-id' \
+                            '--analysis-storage-size[analysis storage size]:analysis-storage-size:("Small" "Medium" "Large")' \
+                            && ret=0
+
+                        case $state in
+                        zipped_workflow_path)
+_files
+                        ;;
+                        esac
+
+                    ;;
+                    input)
+
+                        # ---- Command: projectpipelines input
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    link)
+
+                        # ---- Command: projectpipelines link
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    list)
+
+                        # ---- Command: projectpipelines list
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    start)
+
+                        # ---- Command: projectpipelines start
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    start-cwl-wes)
+
+                        # ---- Command: projectpipelines start-cwl-wes
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            '--launch-yaml[Required, input json similar to v1
+]:launch-yaml:_files' \
+                            '--pipeline-id[Optional, id of the pipeline you wish to launch
+]:pipeline-id:_icav2_projectpipelines_start-cwl-wes_option_pipeline_id_completion' \
+                            '--pipeline-code[Optional, name of the pipeline you wish to launch
+]:pipeline-code:_icav2_projectpipelines_start-cwl-wes_option_pipeline_code_completion' \
+                            '--output-parent-folder-id[Optional, the id of the parent folder to write outputs to
+]:output-parent-folder-id' \
+                            '--output-parent-folder-path[Optional, the path to the parent folder to write outputs to (will be created if it doesn'"'"'t exist)
+]:output-parent-folder-path:_icav2_projectpipelines_start-cwl-wes_option_output_parent_folder_path_completion' \
+                            '--analysis-storage-id[Optional, analysis storage id, overrides default analysis storage size
+]:analysis-storage-id' \
+                            '--analysis-storage-size[Optional, analysis storage size, one of Small, Medium, Large
+]:analysis-storage-size:("Small" "Medium" "Large")' \
+                            '--activation-id[Optional, the activation id used by the pipeline analysis
+]:activation-id' \
+                            '--create-cwl-analysis-json-output-path[Optional, Path to output a json file that contains the body for a create cwl analysis (https://ica.illumina.com/ica/api/swagger/index.html#/Project%20Analysis/createCwlAnalysis)
+]:create-cwl-analysis-json-output-path' \
+                            && ret=0
+
+
+                    ;;
+                    unlink)
+
+                        # ---- Command: projectpipelines unlink
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    esac
+
+                ;;
+
+                esac
+            ;;
+            projects)
+
+                # ---- Command: projects
+                _arguments -s -C \
+                    '1: :->cmd1' \
+                    '2: :->cmd2' \
+                    '*: :->args' \
+                    && ret=0
+
+
+                case $state in
+                cmd2)
+                    _alternative 'args:cmd3:((create\:"Create a project
+" enter\:"Enter project context
+" exit\:"Exit project context
+" get\:"Get details of a project
+" list\:"List projects
+"))'
+                ;;
+
+                args)
+                    case $line[2] in
+                    create)
+
+                        # ---- Command: projects create
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    enter)
+
+                        # ---- Command: projects enter
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '3: :->project_name' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+                        case $state in
+                        project_name)
+_icav2_projects_enter_param_project_name_completion
+                        ;;
+                        esac
+
+                    ;;
+                    exit)
+
+                        # ---- Command: projects exit
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    get)
+
+                        # ---- Command: projects get
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    list)
+
+                        # ---- Command: projects list
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    esac
+
+                ;;
+
+                esac
+            ;;
+            projectsamples)
+
+                # ---- Command: projectsamples
+                _arguments -s -C \
+                    '1: :->cmd1' \
+                    '2: :->cmd2' \
+                    '*: :->args' \
+                    && ret=0
+
+
+                case $state in
+                cmd2)
+                    _alternative 'args:cmd3:((complete\:"Set sample to complete
+" create\:"Create a sample for a project
+" delete\:"Delete a sample for a project
+" get\:"Get details of a sample
+" link\:"Link data to a sample for a project
+" list\:"List of samples for a project
+" listdata\:"List data from given sample
+" unlink\:"Unlink data from a sample for a project
+" update\:"Update a sample for a project
+"))'
+                ;;
+
+                args)
+                    case $line[2] in
+                    complete)
+
+                        # ---- Command: projectsamples complete
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    create)
+
+                        # ---- Command: projectsamples create
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    delete)
+
+                        # ---- Command: projectsamples delete
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    get)
+
+                        # ---- Command: projectsamples get
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    link)
+
+                        # ---- Command: projectsamples link
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    list)
+
+                        # ---- Command: projectsamples list
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    listdata)
+
+                        # ---- Command: projectsamples listdata
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    unlink)
+
+                        # ---- Command: projectsamples unlink
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    update)
+
+                        # ---- Command: projectsamples update
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    esac
+
+                ;;
+
+                esac
+            ;;
+            regions)
+
+                # ---- Command: regions
+                _arguments -s -C \
+                    '1: :->cmd1' \
+                    '2: :->cmd2' \
+                    '*: :->args' \
+                    && ret=0
+
+
+                case $state in
+                cmd2)
+                    _alternative 'args:cmd3:((list\:"list of regions
+"))'
+                ;;
+
+                args)
+                    case $line[2] in
+                    list)
+
+                        # ---- Command: regions list
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    esac
+
+                ;;
+
+                esac
+            ;;
+            storagebundles)
+
+                # ---- Command: storagebundles
+                _arguments -s -C \
+                    '1: :->cmd1' \
+                    '2: :->cmd2' \
+                    '*: :->args' \
+                    && ret=0
+
+
+                case $state in
+                cmd2)
+                    _alternative 'args:cmd3:((list\:"list of storage bundles
+"))'
+                ;;
+
+                args)
+                    case $line[2] in
+                    list)
+
+                        # ---- Command: storagebundles list
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    esac
+
+                ;;
+
+                esac
+            ;;
+            storageconfigurations)
+
+                # ---- Command: storageconfigurations
+                _arguments -s -C \
+                    '1: :->cmd1' \
+                    '2: :->cmd2' \
+                    '*: :->args' \
+                    && ret=0
+
+
+                case $state in
+                cmd2)
+                    _alternative 'args:cmd3:((list\:"list of storage configurations
+"))'
+                ;;
+
+                args)
+                    case $line[2] in
+                    list)
+
+                        # ---- Command: storageconfigurations list
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    esac
+
+                ;;
+
+                esac
+            ;;
+            tokens)
+
+                # ---- Command: tokens
+                _arguments -s -C \
+                    '1: :->cmd1' \
+                    '2: :->cmd2' \
+                    '*: :->args' \
+                    && ret=0
+
+
+                case $state in
+                cmd2)
+                    _alternative 'args:cmd3:((create\:"Create a JWT token
+" refresh\:"Refresh a JWT token from basic authentication
+"))'
+                ;;
+
+                args)
+                    case $line[2] in
+                    create)
+
+                        # ---- Command: tokens create
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    refresh)
+
+                        # ---- Command: tokens refresh
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    esac
+
+                ;;
+
+                esac
+            ;;
+            version)
+
+                # ---- Command: version
+                _arguments -s -C \
+                    '1: :->cmd1' \
+                    '--help[Show command help]' \
+                    '-h[Show command help]' \
+                    && ret=0
+
+
+            ;;
+            esac
+
+        ;;
+
+        esac
+
+}
+
+_icav2_projectanalyses_get-analysis-step-logs_param_analysis_id_completion() {
+    local __dynamic_completion
+    local CURRENT_WORD="$words[CURRENT]"
+    IFS=$'\n' __dynamic_completion=( $( 
+## CONFIG SETUP ##
+
+if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
+  ICAV2_ACCESS_TOKEN="$(yq \
+    --unwrapScalar \
+    '
+      .access-token
+    ' "${HOME}/.icav2/.session.ica.yaml"
+  )"
+fi
+
+
+if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
+  ICAV2_PROJECT_ID="$(yq \
+    --unwrapScalar \
+      '
+        .project-id
+      ' "${HOME}/.icav2/.session.ica.yaml"
+  )"
+fi
+
+if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
+  exit
+fi
+
+# Check token expiry
+if [[ \
+  "$(  \
+    cut -d'.' -f2 <<< "${ICAV2_ACCESS_TOKEN}" | \
+      (
+        if type gbase64 1>/dev/null 2>&1; then
+          gbase64 -d 2>/dev/null || true
+        else
+          base64 -d 2>/dev/null || true
+        fi
+      ) | \
+    jq --raw-output '.exp' \
+  )" < "$(date +%s)" ]]; then
+ ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+
+ # Replace token
+ ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
+ yq --inplace \
+   '
+      .access-token = env(ICAV2_ACCESS_TOKEN)
+   ' "${HOME}/.session.ica.yaml"
+fi
+
+ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+
+## END CONFIG SETUP ##
+
+## LIST ANALYSIS IDS
+
+curl \
+  --fail --silent --location \
+  --request 'GET' \
+  --header 'Accept: application/vnd.illumina.v3+json' \
+  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
+  "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/analyses" | \
+jq --raw-output \
+  '
+   .items |
+   map(.id) |
+   .[]
+  '
+
+ ) )
+    compadd -X "analysis_id:" $__dynamic_completion
+}
+_icav2_projectanalyses_get-cwl-analysis-input-json_param_analysis_id_completion() {
+    local __dynamic_completion
+    local CURRENT_WORD="$words[CURRENT]"
+    IFS=$'\n' __dynamic_completion=( $( 
+## CONFIG SETUP ##
+
+if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
+  ICAV2_ACCESS_TOKEN="$(yq \
+    --unwrapScalar \
+    '
+      .access-token
+    ' "${HOME}/.icav2/.session.ica.yaml"
+  )"
+fi
+
+
+if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
+  ICAV2_PROJECT_ID="$(yq \
+    --unwrapScalar \
+      '
+        .project-id
+      ' "${HOME}/.icav2/.session.ica.yaml"
+  )"
+fi
+
+if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
+  exit
+fi
+
+# Check token expiry
+if [[ \
+  "$(  \
+    cut -d'.' -f2 <<< "${ICAV2_ACCESS_TOKEN}" | \
+      (
+        if type gbase64 1>/dev/null 2>&1; then
+          gbase64 -d 2>/dev/null || true
+        else
+          base64 -d 2>/dev/null || true
+        fi
+      ) | \
+    jq --raw-output '.exp' \
+  )" < "$(date +%s)" ]]; then
+ ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+
+ # Replace token
+ ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
+ yq --inplace \
+   '
+      .access-token = env(ICAV2_ACCESS_TOKEN)
+   ' "${HOME}/.session.ica.yaml"
+fi
+
+ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+
+## END CONFIG SETUP ##
+
+## LIST ANALYSIS IDS
+
+curl \
+  --fail --silent --location \
+  --request 'GET' \
+  --header 'Accept: application/vnd.illumina.v3+json' \
+  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
+  "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/analyses" | \
+jq --raw-output \
+  '
+   .items |
+   map(.id) |
+   .[]
+  '
+
+ ) )
+    compadd -X "analysis_id:" $__dynamic_completion
+}
+_icav2_projectanalyses_get-cwl-analysis-output-json_param_analysis_id_completion() {
+    local __dynamic_completion
+    local CURRENT_WORD="$words[CURRENT]"
+    IFS=$'\n' __dynamic_completion=( $( 
+## CONFIG SETUP ##
+
+if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
+  ICAV2_ACCESS_TOKEN="$(yq \
+    --unwrapScalar \
+    '
+      .access-token
+    ' "${HOME}/.icav2/.session.ica.yaml"
+  )"
+fi
+
+
+if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
+  ICAV2_PROJECT_ID="$(yq \
+    --unwrapScalar \
+      '
+        .project-id
+      ' "${HOME}/.icav2/.session.ica.yaml"
+  )"
+fi
+
+if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
+  exit
+fi
+
+# Check token expiry
+if [[ \
+  "$(  \
+    cut -d'.' -f2 <<< "${ICAV2_ACCESS_TOKEN}" | \
+      (
+        if type gbase64 1>/dev/null 2>&1; then
+          gbase64 -d 2>/dev/null || true
+        else
+          base64 -d 2>/dev/null || true
+        fi
+      ) | \
+    jq --raw-output '.exp' \
+  )" < "$(date +%s)" ]]; then
+ ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+
+ # Replace token
+ ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
+ yq --inplace \
+   '
+      .access-token = env(ICAV2_ACCESS_TOKEN)
+   ' "${HOME}/.session.ica.yaml"
+fi
+
+ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+
+## END CONFIG SETUP ##
+
+## LIST ANALYSIS IDS
+
+curl \
+  --fail --silent --location \
+  --request 'GET' \
+  --header 'Accept: application/vnd.illumina.v3+json' \
+  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
+  "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/analyses" | \
+jq --raw-output \
+  '
+   .items |
+   map(.id) |
+   .[]
+  '
+
+ ) )
+    compadd -X "analysis_id:" $__dynamic_completion
+}
+_icav2_projectanalyses_list-analysis-steps_param_analysis_id_completion() {
+    local __dynamic_completion
+    local CURRENT_WORD="$words[CURRENT]"
+    IFS=$'\n' __dynamic_completion=( $( 
+## CONFIG SETUP ##
+
+if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
+  ICAV2_ACCESS_TOKEN="$(yq \
+    --unwrapScalar \
+    '
+      .access-token
+    ' "${HOME}/.icav2/.session.ica.yaml"
+  )"
+fi
+
+
+if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
+  ICAV2_PROJECT_ID="$(yq \
+    --unwrapScalar \
+      '
+        .project-id
+      ' "${HOME}/.icav2/.session.ica.yaml"
+  )"
+fi
+
+if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
+  exit
+fi
+
+# Check token expiry
+if [[ \
+  "$(  \
+    cut -d'.' -f2 <<< "${ICAV2_ACCESS_TOKEN}" | \
+      (
+        if type gbase64 1>/dev/null 2>&1; then
+          gbase64 -d 2>/dev/null || true
+        else
+          base64 -d 2>/dev/null || true
+        fi
+      ) | \
+    jq --raw-output '.exp' \
+  )" < "$(date +%s)" ]]; then
+ ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+
+ # Replace token
+ ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
+ yq --inplace \
+   '
+      .access-token = env(ICAV2_ACCESS_TOKEN)
+   ' "${HOME}/.session.ica.yaml"
+fi
+
+ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+
+## END CONFIG SETUP ##
+
+## LIST ANALYSIS IDS
+
+curl \
+  --fail --silent --location \
+  --request 'GET' \
+  --header 'Accept: application/vnd.illumina.v3+json' \
+  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
+  "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/analyses" | \
+jq --raw-output \
+  '
+   .items |
+   map(.id) |
+   .[]
+  '
+
+ ) )
+    compadd -X "analysis_id:" $__dynamic_completion
+}
+_icav2_projectdata_ls_param_data_path_completion() {
+    local __dynamic_completion
+    local CURRENT_WORD="$words[CURRENT]"
+    IFS=$'\n' __dynamic_completion=( $( 
+## CONFIG SETUP ##
+
+if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
+  ICAV2_ACCESS_TOKEN="$(yq \
+    --unwrapScalar \
+    '
+      .access-token
+    ' "${HOME}/.icav2/.session.ica.yaml"
+  )"
+fi
+
+
+if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
+  ICAV2_PROJECT_ID="$(yq \
+    --unwrapScalar \
+      '
+        .project-id
+      ' "${HOME}/.icav2/.session.ica.yaml"
+  )"
+fi
+
+if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
+  exit
+fi
+
+# Check token expiry
+if [[ \
+  "$(  \
+    cut -d'.' -f2 <<< "${ICAV2_ACCESS_TOKEN}" | \
+      (
+        if type gbase64 1>/dev/null 2>&1; then
+          gbase64 -d 2>/dev/null || true
+        else
+          base64 -d 2>/dev/null || true
+        fi
+      ) | \
+    jq --raw-output '.exp' \
+  )" < "$(date +%s)" ]]; then
+ ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+
+ # Replace token
+ ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
+ yq --inplace \
+   '
+      .access-token = env(ICAV2_ACCESS_TOKEN)
+   ' "${HOME}/.session.ica.yaml"
+fi
+
+ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+
+## END CONFIG SETUP ##
+
+ITEM_TYPE="FOLDER"
+
+## INVOKE DATA FUNCTION ##
+
+
+max_items=1000
+parent_folder_path="/"
+if [[ -n "${CURRENT_WORD-}" ]]; then
+  if [[ "${CURRENT_WORD}" =~ ^.*/$ ]]; then
+    parent_folder_path="${CURRENT_WORD}"
+    basename_var=""
+  else
+    parent_folder_path="$(dirname "${CURRENT_WORD}")/"
+    if [[ "${parent_folder_path}" == "//" ]]; then
+      parent_folder_path="/"
+    fi
+    basename_var="$(basename "${CURRENT_WORD}")"
+  fi
+fi
+
+params="$( \
+  jq --null-input --raw-output \
+    --arg parent_folder_path "${parent_folder_path}" \
+    --arg file_name "${basename_var}" \
+    --arg type "${ITEM_TYPE-}" \
+    --arg page_size "${max_items}" \
+    '
+      # Intialise parameters
+      {
+        "parentFolderPath": $parent_folder_path,
+        "filename": $file_name,
+        "filenameMatchMode": "FUZZY",
+        "page_size": $page_size,
+        "type": $type
+      } |
+      # Drop nulls
+      with_entries(
+        select(
+          .value != ""
+        )
+      ) |
+      # Convert to string
+      to_entries |
+      map(
+        "\(.key)=\(.value)"
+      ) |
+      join("&")
+    '
+)"
+
+# List Data in Directory
+curl \
+  --fail --silent --location \
+  --request GET \
+  --header "Accept: application/vnd.illumina.v3+json" \
+  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
+  --url "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
+jq --raw-output \
+  '
+    .items |
+    map(
+      .data.details.path
+    ) |
+    .[]
+  '
+
+## INVOKE DATA FUNCTION ##
+
+ ) )
+    compadd -X "data_path:" $__dynamic_completion
+}
+_icav2_projectdata_s3-sync-download_param_data_path_completion() {
+    local __dynamic_completion
+    local CURRENT_WORD="$words[CURRENT]"
+    IFS=$'\n' __dynamic_completion=( $( 
+## CONFIG SETUP ##
+
+if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
+  ICAV2_ACCESS_TOKEN="$(yq \
+    --unwrapScalar \
+    '
+      .access-token
+    ' "${HOME}/.icav2/.session.ica.yaml"
+  )"
+fi
+
+
+if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
+  ICAV2_PROJECT_ID="$(yq \
+    --unwrapScalar \
+      '
+        .project-id
+      ' "${HOME}/.icav2/.session.ica.yaml"
+  )"
+fi
+
+if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
+  exit
+fi
+
+# Check token expiry
+if [[ \
+  "$(  \
+    cut -d'.' -f2 <<< "${ICAV2_ACCESS_TOKEN}" | \
+      (
+        if type gbase64 1>/dev/null 2>&1; then
+          gbase64 -d 2>/dev/null || true
+        else
+          base64 -d 2>/dev/null || true
+        fi
+      ) | \
+    jq --raw-output '.exp' \
+  )" < "$(date +%s)" ]]; then
+ ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+
+ # Replace token
+ ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
+ yq --inplace \
+   '
+      .access-token = env(ICAV2_ACCESS_TOKEN)
+   ' "${HOME}/.session.ica.yaml"
+fi
+
+ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+
+## END CONFIG SETUP ##
+
+ITEM_TYPE="FOLDER"
+
+## INVOKE DATA FUNCTION ##
+
+
+max_items=1000
+parent_folder_path="/"
+if [[ -n "${CURRENT_WORD-}" ]]; then
+  if [[ "${CURRENT_WORD}" =~ ^.*/$ ]]; then
+    parent_folder_path="${CURRENT_WORD}"
+    basename_var=""
+  else
+    parent_folder_path="$(dirname "${CURRENT_WORD}")/"
+    if [[ "${parent_folder_path}" == "//" ]]; then
+      parent_folder_path="/"
+    fi
+    basename_var="$(basename "${CURRENT_WORD}")"
+  fi
+fi
+
+params="$( \
+  jq --null-input --raw-output \
+    --arg parent_folder_path "${parent_folder_path}" \
+    --arg file_name "${basename_var}" \
+    --arg type "${ITEM_TYPE-}" \
+    --arg page_size "${max_items}" \
+    '
+      # Intialise parameters
+      {
+        "parentFolderPath": $parent_folder_path,
+        "filename": $file_name,
+        "filenameMatchMode": "FUZZY",
+        "page_size": $page_size,
+        "type": $type
+      } |
+      # Drop nulls
+      with_entries(
+        select(
+          .value != ""
+        )
+      ) |
+      # Convert to string
+      to_entries |
+      map(
+        "\(.key)=\(.value)"
+      ) |
+      join("&")
+    '
+)"
+
+# List Data in Directory
+curl \
+  --fail --silent --location \
+  --request GET \
+  --header "Accept: application/vnd.illumina.v3+json" \
+  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
+  --url "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
+jq --raw-output \
+  '
+    .items |
+    map(
+      .data.details.path
+    ) |
+    .[]
+  '
+
+## INVOKE DATA FUNCTION ##
+
+ ) )
+    compadd -X "data_path:" $__dynamic_completion
+}
+_icav2_projectdata_s3-sync-upload_param_data_path_completion() {
+    local __dynamic_completion
+    local CURRENT_WORD="$words[CURRENT]"
+    IFS=$'\n' __dynamic_completion=( $( 
+## CONFIG SETUP ##
+
+if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
+  ICAV2_ACCESS_TOKEN="$(yq \
+    --unwrapScalar \
+    '
+      .access-token
+    ' "${HOME}/.icav2/.session.ica.yaml"
+  )"
+fi
+
+
+if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
+  ICAV2_PROJECT_ID="$(yq \
+    --unwrapScalar \
+      '
+        .project-id
+      ' "${HOME}/.icav2/.session.ica.yaml"
+  )"
+fi
+
+if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
+  exit
+fi
+
+# Check token expiry
+if [[ \
+  "$(  \
+    cut -d'.' -f2 <<< "${ICAV2_ACCESS_TOKEN}" | \
+      (
+        if type gbase64 1>/dev/null 2>&1; then
+          gbase64 -d 2>/dev/null || true
+        else
+          base64 -d 2>/dev/null || true
+        fi
+      ) | \
+    jq --raw-output '.exp' \
+  )" < "$(date +%s)" ]]; then
+ ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+
+ # Replace token
+ ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
+ yq --inplace \
+   '
+      .access-token = env(ICAV2_ACCESS_TOKEN)
+   ' "${HOME}/.session.ica.yaml"
+fi
+
+ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+
+## END CONFIG SETUP ##
+
+ITEM_TYPE="FOLDER"
+
+## INVOKE DATA FUNCTION ##
+
+
+max_items=1000
+parent_folder_path="/"
+if [[ -n "${CURRENT_WORD-}" ]]; then
+  if [[ "${CURRENT_WORD}" =~ ^.*/$ ]]; then
+    parent_folder_path="${CURRENT_WORD}"
+    basename_var=""
+  else
+    parent_folder_path="$(dirname "${CURRENT_WORD}")/"
+    if [[ "${parent_folder_path}" == "//" ]]; then
+      parent_folder_path="/"
+    fi
+    basename_var="$(basename "${CURRENT_WORD}")"
+  fi
+fi
+
+params="$( \
+  jq --null-input --raw-output \
+    --arg parent_folder_path "${parent_folder_path}" \
+    --arg file_name "${basename_var}" \
+    --arg type "${ITEM_TYPE-}" \
+    --arg page_size "${max_items}" \
+    '
+      # Intialise parameters
+      {
+        "parentFolderPath": $parent_folder_path,
+        "filename": $file_name,
+        "filenameMatchMode": "FUZZY",
+        "page_size": $page_size,
+        "type": $type
+      } |
+      # Drop nulls
+      with_entries(
+        select(
+          .value != ""
+        )
+      ) |
+      # Convert to string
+      to_entries |
+      map(
+        "\(.key)=\(.value)"
+      ) |
+      join("&")
+    '
+)"
+
+# List Data in Directory
+curl \
+  --fail --silent --location \
+  --request GET \
+  --header "Accept: application/vnd.illumina.v3+json" \
+  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
+  --url "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
+jq --raw-output \
+  '
+    .items |
+    map(
+      .data.details.path
+    ) |
+    .[]
+  '
+
+## INVOKE DATA FUNCTION ##
+
+ ) )
+    compadd -X "data_path:" $__dynamic_completion
+}
+_icav2_projectdata_view_param_data_path_completion() {
+    local __dynamic_completion
+    local CURRENT_WORD="$words[CURRENT]"
+    IFS=$'\n' __dynamic_completion=( $( 
+## CONFIG SETUP ##
+
+if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
+  ICAV2_ACCESS_TOKEN="$(yq \
+    --unwrapScalar \
+    '
+      .access-token
+    ' "${HOME}/.icav2/.session.ica.yaml"
+  )"
+fi
+
+
+if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
+  ICAV2_PROJECT_ID="$(yq \
+    --unwrapScalar \
+      '
+        .project-id
+      ' "${HOME}/.icav2/.session.ica.yaml"
+  )"
+fi
+
+if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
+  exit
+fi
+
+# Check token expiry
+if [[ \
+  "$(  \
+    cut -d'.' -f2 <<< "${ICAV2_ACCESS_TOKEN}" | \
+      (
+        if type gbase64 1>/dev/null 2>&1; then
+          gbase64 -d 2>/dev/null || true
+        else
+          base64 -d 2>/dev/null || true
+        fi
+      ) | \
+    jq --raw-output '.exp' \
+  )" < "$(date +%s)" ]]; then
+ ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+
+ # Replace token
+ ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
+ yq --inplace \
+   '
+      .access-token = env(ICAV2_ACCESS_TOKEN)
+   ' "${HOME}/.session.ica.yaml"
+fi
+
+ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+
+## END CONFIG SETUP ##
+
+ITEM_TYPE=""
+
+## INVOKE DATA FUNCTION ##
+
+
+max_items=1000
+parent_folder_path="/"
+if [[ -n "${CURRENT_WORD-}" ]]; then
+  if [[ "${CURRENT_WORD}" =~ ^.*/$ ]]; then
+    parent_folder_path="${CURRENT_WORD}"
+    basename_var=""
+  else
+    parent_folder_path="$(dirname "${CURRENT_WORD}")/"
+    if [[ "${parent_folder_path}" == "//" ]]; then
+      parent_folder_path="/"
+    fi
+    basename_var="$(basename "${CURRENT_WORD}")"
+  fi
+fi
+
+params="$( \
+  jq --null-input --raw-output \
+    --arg parent_folder_path "${parent_folder_path}" \
+    --arg file_name "${basename_var}" \
+    --arg type "${ITEM_TYPE-}" \
+    --arg page_size "${max_items}" \
+    '
+      # Intialise parameters
+      {
+        "parentFolderPath": $parent_folder_path,
+        "filename": $file_name,
+        "filenameMatchMode": "FUZZY",
+        "page_size": $page_size,
+        "type": $type
+      } |
+      # Drop nulls
+      with_entries(
+        select(
+          .value != ""
+        )
+      ) |
+      # Convert to string
+      to_entries |
+      map(
+        "\(.key)=\(.value)"
+      ) |
+      join("&")
+    '
+)"
+
+# List Data in Directory
+curl \
+  --fail --silent --location \
+  --request GET \
+  --header "Accept: application/vnd.illumina.v3+json" \
+  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
+  --url "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
+jq --raw-output \
+  '
+    .items |
+    map(
+      .data.details.path
+    ) |
+    .[]
+  '
+
+## INVOKE DATA FUNCTION ##
+
+ ) )
+    compadd -X "data_path:" $__dynamic_completion
+}
+_icav2_projectpipelines_create-cwl-wes-input-template_option_pipeline_id_completion() {
+    local __dynamic_completion
+    local CURRENT_WORD="$words[CURRENT]"
+    IFS=$'\n' __dynamic_completion=( $( 
+## CONFIG SETUP ##
+
+if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
+  ICAV2_ACCESS_TOKEN="$(yq \
+    --unwrapScalar \
+    '
+      .access-token
+    ' "${HOME}/.icav2/.session.ica.yaml"
+  )"
+fi
+
+
+if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
+  ICAV2_PROJECT_ID="$(yq \
+    --unwrapScalar \
+      '
+        .project-id
+      ' "${HOME}/.icav2/.session.ica.yaml"
+  )"
+fi
+
+if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
+  exit
+fi
+
+# Check token expiry
+if [[ \
+  "$(  \
+    cut -d'.' -f2 <<< "${ICAV2_ACCESS_TOKEN}" | \
+      (
+        if type gbase64 1>/dev/null 2>&1; then
+          gbase64 -d 2>/dev/null || true
+        else
+          base64 -d 2>/dev/null || true
+        fi
+      ) | \
+    jq --raw-output '.exp' \
+  )" < "$(date +%s)" ]]; then
+ ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+
+ # Replace token
+ ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
+ yq --inplace \
+   '
+      .access-token = env(ICAV2_ACCESS_TOKEN)
+   ' "${HOME}/.session.ica.yaml"
+fi
+
+ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+
+## END CONFIG SETUP ##
+
+ATTRIBUTE_NAME="id"
+
+## INVOKE PROJECT PIPELINE ##
+
+curl \
+  --fail --silent --location \
+  --request "GET" \
+  --url "https://ica.illumina.com/ica/rest/api/projects/${ICAV2_PROJECT_ID}/pipelines" \
+  --header "Accept: application/vnd.illumina.v3+json" \
+  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" | \
+jq \
+  --raw-output \
+  --arg attribute_type "${ATTRIBUTE_NAME}" \
+  '
+    .items |
+    map(.pipeline | .[$attribute_type]) |
+    .[]
+  '
+
+## INVOKE PROJECT PIPELINE ##
+
+ ) )
+    compadd -X "pipeline_id:" $__dynamic_completion
+}
+_icav2_projectpipelines_create-cwl-wes-input-template_option_pipeline_code_completion() {
+    local __dynamic_completion
+    local CURRENT_WORD="$words[CURRENT]"
+    IFS=$'\n' __dynamic_completion=( $( 
+## CONFIG SETUP ##
+
+if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
+  ICAV2_ACCESS_TOKEN="$(yq \
+    --unwrapScalar \
+    '
+      .access-token
+    ' "${HOME}/.icav2/.session.ica.yaml"
+  )"
+fi
+
+
+if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
+  ICAV2_PROJECT_ID="$(yq \
+    --unwrapScalar \
+      '
+        .project-id
+      ' "${HOME}/.icav2/.session.ica.yaml"
+  )"
+fi
+
+if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
+  exit
+fi
+
+# Check token expiry
+if [[ \
+  "$(  \
+    cut -d'.' -f2 <<< "${ICAV2_ACCESS_TOKEN}" | \
+      (
+        if type gbase64 1>/dev/null 2>&1; then
+          gbase64 -d 2>/dev/null || true
+        else
+          base64 -d 2>/dev/null || true
+        fi
+      ) | \
+    jq --raw-output '.exp' \
+  )" < "$(date +%s)" ]]; then
+ ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+
+ # Replace token
+ ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
+ yq --inplace \
+   '
+      .access-token = env(ICAV2_ACCESS_TOKEN)
+   ' "${HOME}/.session.ica.yaml"
+fi
+
+ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+
+## END CONFIG SETUP ##
+
+ATTRIBUTE_NAME="code"
+
+## INVOKE PROJECT PIPELINE ##
+
+curl \
+  --fail --silent --location \
+  --request "GET" \
+  --url "https://ica.illumina.com/ica/rest/api/projects/${ICAV2_PROJECT_ID}/pipelines" \
+  --header "Accept: application/vnd.illumina.v3+json" \
+  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" | \
+jq \
+  --raw-output \
+  --arg attribute_type "${ATTRIBUTE_NAME}" \
+  '
+    .items |
+    map(.pipeline | .[$attribute_type]) |
+    .[]
+  '
+
+## INVOKE PROJECT PIPELINE ##
+
+ ) )
+    compadd -X "pipeline_code:" $__dynamic_completion
+}
+_icav2_projectpipelines_create-cwl-wes-input-template_option_output_parent_folder_path_completion() {
+    local __dynamic_completion
+    local CURRENT_WORD="$words[CURRENT]"
+    IFS=$'\n' __dynamic_completion=( $( 
+## CONFIG SETUP ##
+
+if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
+  ICAV2_ACCESS_TOKEN="$(yq \
+    --unwrapScalar \
+    '
+      .access-token
+    ' "${HOME}/.icav2/.session.ica.yaml"
+  )"
+fi
+
+
+if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
+  ICAV2_PROJECT_ID="$(yq \
+    --unwrapScalar \
+      '
+        .project-id
+      ' "${HOME}/.icav2/.session.ica.yaml"
+  )"
+fi
+
+if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
+  exit
+fi
+
+# Check token expiry
+if [[ \
+  "$(  \
+    cut -d'.' -f2 <<< "${ICAV2_ACCESS_TOKEN}" | \
+      (
+        if type gbase64 1>/dev/null 2>&1; then
+          gbase64 -d 2>/dev/null || true
+        else
+          base64 -d 2>/dev/null || true
+        fi
+      ) | \
+    jq --raw-output '.exp' \
+  )" < "$(date +%s)" ]]; then
+ ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+
+ # Replace token
+ ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
+ yq --inplace \
+   '
+      .access-token = env(ICAV2_ACCESS_TOKEN)
+   ' "${HOME}/.session.ica.yaml"
+fi
+
+ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+
+## END CONFIG SETUP ##
+
+ITEM_TYPE="FOLDER"
+
+## INVOKE DATA FUNCTION ##
+
+
+max_items=1000
+parent_folder_path="/"
+if [[ -n "${CURRENT_WORD-}" ]]; then
+  if [[ "${CURRENT_WORD}" =~ ^.*/$ ]]; then
+    parent_folder_path="${CURRENT_WORD}"
+    basename_var=""
+  else
+    parent_folder_path="$(dirname "${CURRENT_WORD}")/"
+    if [[ "${parent_folder_path}" == "//" ]]; then
+      parent_folder_path="/"
+    fi
+    basename_var="$(basename "${CURRENT_WORD}")"
+  fi
+fi
+
+params="$( \
+  jq --null-input --raw-output \
+    --arg parent_folder_path "${parent_folder_path}" \
+    --arg file_name "${basename_var}" \
+    --arg type "${ITEM_TYPE-}" \
+    --arg page_size "${max_items}" \
+    '
+      # Intialise parameters
+      {
+        "parentFolderPath": $parent_folder_path,
+        "filename": $file_name,
+        "filenameMatchMode": "FUZZY",
+        "page_size": $page_size,
+        "type": $type
+      } |
+      # Drop nulls
+      with_entries(
+        select(
+          .value != ""
+        )
+      ) |
+      # Convert to string
+      to_entries |
+      map(
+        "\(.key)=\(.value)"
+      ) |
+      join("&")
+    '
+)"
+
+# List Data in Directory
+curl \
+  --fail --silent --location \
+  --request GET \
+  --header "Accept: application/vnd.illumina.v3+json" \
+  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
+  --url "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
+jq --raw-output \
+  '
+    .items |
+    map(
+      .data.details.path
+    ) |
+    .[]
+  '
+
+## INVOKE DATA FUNCTION ##
+
+ ) )
+    compadd -X "output_parent_folder_path:" $__dynamic_completion
+}
+_icav2_projectpipelines_start-cwl-wes_option_pipeline_id_completion() {
+    local __dynamic_completion
+    local CURRENT_WORD="$words[CURRENT]"
+    IFS=$'\n' __dynamic_completion=( $( 
+## CONFIG SETUP ##
+
+if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
+  ICAV2_ACCESS_TOKEN="$(yq \
+    --unwrapScalar \
+    '
+      .access-token
+    ' "${HOME}/.icav2/.session.ica.yaml"
+  )"
+fi
+
+
+if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
+  ICAV2_PROJECT_ID="$(yq \
+    --unwrapScalar \
+      '
+        .project-id
+      ' "${HOME}/.icav2/.session.ica.yaml"
+  )"
+fi
+
+if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
+  exit
+fi
+
+# Check token expiry
+if [[ \
+  "$(  \
+    cut -d'.' -f2 <<< "${ICAV2_ACCESS_TOKEN}" | \
+      (
+        if type gbase64 1>/dev/null 2>&1; then
+          gbase64 -d 2>/dev/null || true
+        else
+          base64 -d 2>/dev/null || true
+        fi
+      ) | \
+    jq --raw-output '.exp' \
+  )" < "$(date +%s)" ]]; then
+ ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+
+ # Replace token
+ ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
+ yq --inplace \
+   '
+      .access-token = env(ICAV2_ACCESS_TOKEN)
+   ' "${HOME}/.session.ica.yaml"
+fi
+
+ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+
+## END CONFIG SETUP ##
+
+ATTRIBUTE_NAME="id"
+
+## INVOKE PROJECT PIPELINE ##
+
+curl \
+  --fail --silent --location \
+  --request "GET" \
+  --url "https://ica.illumina.com/ica/rest/api/projects/${ICAV2_PROJECT_ID}/pipelines" \
+  --header "Accept: application/vnd.illumina.v3+json" \
+  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" | \
+jq \
+  --raw-output \
+  --arg attribute_type "${ATTRIBUTE_NAME}" \
+  '
+    .items |
+    map(.pipeline | .[$attribute_type]) |
+    .[]
+  '
+
+## INVOKE PROJECT PIPELINE ##
+
+ ) )
+    compadd -X "pipeline_id:" $__dynamic_completion
+}
+_icav2_projectpipelines_start-cwl-wes_option_pipeline_code_completion() {
+    local __dynamic_completion
+    local CURRENT_WORD="$words[CURRENT]"
+    IFS=$'\n' __dynamic_completion=( $( 
+## CONFIG SETUP ##
+
+if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
+  ICAV2_ACCESS_TOKEN="$(yq \
+    --unwrapScalar \
+    '
+      .access-token
+    ' "${HOME}/.icav2/.session.ica.yaml"
+  )"
+fi
+
+
+if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
+  ICAV2_PROJECT_ID="$(yq \
+    --unwrapScalar \
+      '
+        .project-id
+      ' "${HOME}/.icav2/.session.ica.yaml"
+  )"
+fi
+
+if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
+  exit
+fi
+
+# Check token expiry
+if [[ \
+  "$(  \
+    cut -d'.' -f2 <<< "${ICAV2_ACCESS_TOKEN}" | \
+      (
+        if type gbase64 1>/dev/null 2>&1; then
+          gbase64 -d 2>/dev/null || true
+        else
+          base64 -d 2>/dev/null || true
+        fi
+      ) | \
+    jq --raw-output '.exp' \
+  )" < "$(date +%s)" ]]; then
+ ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+
+ # Replace token
+ ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
+ yq --inplace \
+   '
+      .access-token = env(ICAV2_ACCESS_TOKEN)
+   ' "${HOME}/.session.ica.yaml"
+fi
+
+ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+
+## END CONFIG SETUP ##
+
+ATTRIBUTE_NAME="code"
+
+## INVOKE PROJECT PIPELINE ##
+
+curl \
+  --fail --silent --location \
+  --request "GET" \
+  --url "https://ica.illumina.com/ica/rest/api/projects/${ICAV2_PROJECT_ID}/pipelines" \
+  --header "Accept: application/vnd.illumina.v3+json" \
+  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" | \
+jq \
+  --raw-output \
+  --arg attribute_type "${ATTRIBUTE_NAME}" \
+  '
+    .items |
+    map(.pipeline | .[$attribute_type]) |
+    .[]
+  '
+
+## INVOKE PROJECT PIPELINE ##
+
+ ) )
+    compadd -X "pipeline_code:" $__dynamic_completion
+}
+_icav2_projectpipelines_start-cwl-wes_option_output_parent_folder_path_completion() {
+    local __dynamic_completion
+    local CURRENT_WORD="$words[CURRENT]"
+    IFS=$'\n' __dynamic_completion=( $( 
+## CONFIG SETUP ##
+
+if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
+  ICAV2_ACCESS_TOKEN="$(yq \
+    --unwrapScalar \
+    '
+      .access-token
+    ' "${HOME}/.icav2/.session.ica.yaml"
+  )"
+fi
+
+
+if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
+  ICAV2_PROJECT_ID="$(yq \
+    --unwrapScalar \
+      '
+        .project-id
+      ' "${HOME}/.icav2/.session.ica.yaml"
+  )"
+fi
+
+if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
+  exit
+fi
+
+# Check token expiry
+if [[ \
+  "$(  \
+    cut -d'.' -f2 <<< "${ICAV2_ACCESS_TOKEN}" | \
+      (
+        if type gbase64 1>/dev/null 2>&1; then
+          gbase64 -d 2>/dev/null || true
+        else
+          base64 -d 2>/dev/null || true
+        fi
+      ) | \
+    jq --raw-output '.exp' \
+  )" < "$(date +%s)" ]]; then
+ ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+
+ # Replace token
+ ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
+ yq --inplace \
+   '
+      .access-token = env(ICAV2_ACCESS_TOKEN)
+   ' "${HOME}/.session.ica.yaml"
+fi
+
+ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+
+## END CONFIG SETUP ##
+
+ITEM_TYPE="FOLDER"
+
+## INVOKE DATA FUNCTION ##
+
+
+max_items=1000
+parent_folder_path="/"
+if [[ -n "${CURRENT_WORD-}" ]]; then
+  if [[ "${CURRENT_WORD}" =~ ^.*/$ ]]; then
+    parent_folder_path="${CURRENT_WORD}"
+    basename_var=""
+  else
+    parent_folder_path="$(dirname "${CURRENT_WORD}")/"
+    if [[ "${parent_folder_path}" == "//" ]]; then
+      parent_folder_path="/"
+    fi
+    basename_var="$(basename "${CURRENT_WORD}")"
+  fi
+fi
+
+params="$( \
+  jq --null-input --raw-output \
+    --arg parent_folder_path "${parent_folder_path}" \
+    --arg file_name "${basename_var}" \
+    --arg type "${ITEM_TYPE-}" \
+    --arg page_size "${max_items}" \
+    '
+      # Intialise parameters
+      {
+        "parentFolderPath": $parent_folder_path,
+        "filename": $file_name,
+        "filenameMatchMode": "FUZZY",
+        "page_size": $page_size,
+        "type": $type
+      } |
+      # Drop nulls
+      with_entries(
+        select(
+          .value != ""
+        )
+      ) |
+      # Convert to string
+      to_entries |
+      map(
+        "\(.key)=\(.value)"
+      ) |
+      join("&")
+    '
+)"
+
+# List Data in Directory
+curl \
+  --fail --silent --location \
+  --request GET \
+  --header "Accept: application/vnd.illumina.v3+json" \
+  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
+  --url "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
+jq --raw-output \
+  '
+    .items |
+    map(
+      .data.details.path
+    ) |
+    .[]
+  '
+
+## INVOKE DATA FUNCTION ##
+
+ ) )
+    compadd -X "output_parent_folder_path:" $__dynamic_completion
+}
+_icav2_projects_enter_param_project_name_completion() {
+    local __dynamic_completion
+    local CURRENT_WORD="$words[CURRENT]"
+    IFS=$'\n' __dynamic_completion=( $( 
+## CONFIG SETUP ##
+
+if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
+  ICAV2_ACCESS_TOKEN="$(yq \
+    --unwrapScalar \
+    '
+      .access-token
+    ' "${HOME}/.icav2/.session.ica.yaml"
+  )"
+fi
+
+
+if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
+  ICAV2_PROJECT_ID="$(yq \
+    --unwrapScalar \
+      '
+        .project-id
+      ' "${HOME}/.icav2/.session.ica.yaml"
+  )"
+fi
+
+if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
+  exit
+fi
+
+# Check token expiry
+if [[ \
+  "$(  \
+    cut -d'.' -f2 <<< "${ICAV2_ACCESS_TOKEN}" | \
+      (
+        if type gbase64 1>/dev/null 2>&1; then
+          gbase64 -d 2>/dev/null || true
+        else
+          base64 -d 2>/dev/null || true
+        fi
+      ) | \
+    jq --raw-output '.exp' \
+  )" < "$(date +%s)" ]]; then
+ ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+
+ # Replace token
+ ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
+ yq --inplace \
+   '
+      .access-token = env(ICAV2_ACCESS_TOKEN)
+   ' "${HOME}/.session.ica.yaml"
+fi
+
+ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+
+## END CONFIG SETUP ##
+
+ATTRIBUTE_NAME="name"
+
+## INVOKE PROJECT FUNCTION ##
+
+curl \
+  --fail --silent --location \
+  --request "GET" \
+  --url "https://ica.illumina.com/ica/rest/api/projects/" \
+  --header "Accept: application/vnd.illumina.v3+json" \
+  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" | \
+jq \
+  --raw-output \
+  --arg attribute_name "${ATTRIBUTE_NAME}" \
+  '
+    .items |
+    map(.[$attribute_name]) |
+    .[]
+  '
+
+## INVOKE PROJECT FUNCTION ##
+
+ ) )
+    compadd -X "project_name:" $__dynamic_completion
+}
+
+__icav2_dynamic_comp() {
+    local argname="$1"
+    local arg="$2"
+    local comp="arg:$argname:(("
+    local line
+    while read -r line; do
+        local name="$line"
+        local desc="$line"
+        name="${name%$'\t'*}"
+        desc="${desc/*$'\t'}"
+        comp="$comp$name"
+        if [[ -n "$desc" && "$name" != "$desc" ]]; then
+            comp="$comp\\:"'"'"$desc"'"'
+        fi
+        comp="$comp "
+    done <<< "$arg"
+
+    comp="$comp))"
+    _alternative "$comp"
+}
+
