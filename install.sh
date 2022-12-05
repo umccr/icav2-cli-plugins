@@ -198,8 +198,9 @@ else
   python3 -m venv "${ICAV2_CLI_PLUGINS_HOME}/pyenv"
 fi
 
+cp "$(get_this_path)/src/plugins/requirements.txt" "${ICAV2_CLI_PLUGINS_HOME}/requirements.txt"
 "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" -m pip install --upgrade pip --quiet
-"${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" -m pip install --requirement "${ICAV2_CLI_PLUGINS_HOME}/plugins/requirements.txt" --quiet
+"${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" -m pip install --requirement "${ICAV2_CLI_PLUGINS_HOME}/requirements.txt" --quiet
 
 SITE_PACKAGES_DIR="$(
   find "${ICAV2_CLI_PLUGINS_HOME}/pyenv/lib/" \
@@ -210,6 +211,7 @@ SITE_PACKAGES_DIR="$(
 ##############
 # COPY SCRIPTS
 ##############
+mkdir -p "${ICAV2_CLI_PLUGINS_HOME}/plugins/"
 rsync --delete --archive \
   "$(get_this_path)/src/plugins/bin/" "${ICAV2_CLI_PLUGINS_HOME}/plugins/bin/"
 rsync --delete --archive \
