@@ -20,20 +20,20 @@ icav2() {
     "projectdata__s3-sync-upload" \
     "projectdata__help" \
     "projectdata__-h" \
-    "projectdata__--h" \
+    "projectdata__--help" \
     "projectanalyses__list-analysis-steps" \
     "projectanalyses__get-cwl-analysis-input-json" \
     "projectanalyses__get-cwl-analysis-output-json" \
     "projectanalyses__get-analysis-step-logs" \
     "projectanalyses__help" \
     "projectanalyses__-h" \
-    "projectanalyses__--h" \
+    "projectanalyses__--help" \
     "projectpipelines__create-cwl-workflow-from-zip" \
     "projectpipelines__create-cwl-wes-input-template" \
     "projectpipelines__start-cwl-wes" \
     "projectpipelines__help"
     "projectpipelines__-h" \
-    "projectpipelines__--h" \
+    "projectpipelines__--help" \
   )
 
   # Check env var is set
