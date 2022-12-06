@@ -173,10 +173,9 @@ def set_libicav2_configuration():
     logger.debug("Setting the libicav2 configuration object")
 
     host = os.environ.get("ICAV2_BASE_URL", DEFAULT_ICAV2_BASE_URL)
-    access_token = os.environ.get("ICAV2_ACCESS_TOKEN")
+    access_token = os.environ.get("ICAV2_ACCESS_TOKEN", None)
 
-    if not check_access_token_expiry(access_token):
-        logger.debug("Access token in environment varible has expired will try session file")
+    if access_token is None or check_access_token_expiry(access_token):
         access_token = get_access_token_from_session_file()
 
     LIBICAV2_CONFIGURATION = Configuration(
