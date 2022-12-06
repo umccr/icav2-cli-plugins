@@ -8,9 +8,18 @@ icav2() {
 
   local plugin_subcommands_array
   local plugin_subfunctions_array
+  local plugin_version="__PLUGIN_VERSION__"
+  local top
+  local bottom
 
   plugin_subfunctions_array=( \
     "projects__enter"
+  )
+
+  plugin_subcommands_top_only_array=( \
+    "projectdata" \
+    "projectanalyses" \
+    "projectpipelines" \
   )
 
   plugin_subcommands_array=( \
@@ -43,16 +52,34 @@ icav2() {
     return 1
   fi
 
-  # If blank or not matching, we just run the OG.
-  if [[ -z "${1-}" || -z ${2-} ]]; then
-    # FIXME - show plugin help over command help
+  # Get first two args if they exist
+  top="${1-}"
+  bottom="${2-}"
+
+  # If both blank or not matching, we just run the OG.
+  if [[ -z "${top}" && -z "${bottom}" ]]; then
     eval command icav2 '"${@}"'
+  # Otherwise if the first is matching top array and the bottom is empty, extend command with 'help'
+  elif [[ -n "${top}" && -z "${bottom}" && " ${plugin_subcommands_top_only_array[*]} " =~ "${top}" ]]; then
+        # Just the first subcommand, like icav2 projectdata help
+        # Extend arg to include help
+        bottom="help"
+  fi
+
+  # Now if still one is empty print command
+  if [[ -z "${top}" || -z ${bottom} ]]; then
+    eval command icav2 '"${@}"'
+  # Or print version
+  elif [[ "${top}" == "version" || "${top}" == "--version" || "${top}" == "-v" ]]; then
+    echo "icav2-cli-plugins-version: ${plugin_version}"
+    command icav2 --version
+  fi
   # Run the shell function
-  elif [[ " ${plugin_subfunctions_array[*]} " =~ ${1}__${2} ]]; then
-    eval "_icav2__plugins__cli__${1}__${2}" '"${@:3}"'
+  elif [[ " ${plugin_subfunctions_array[*]} " =~ ${top}__${bottom} ]]; then
+    eval "_icav2__plugins__cli__${top}__${bottom}" '"${@:3}"'
   # Run the wrapped python command
-  elif [[ " ${plugin_subcommands_array[*]} " =~ ${1}__${2} ]]; then
-    eval "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" "${ICAV2_CLI_PLUGINS_HOME}/plugins/bin/icav2-cli-plugins.py" "${1}" "${2}" '"${@:3}"'
+  elif [[ " ${plugin_subcommands_array[*]} " =~ ${top}__${bottom} ]]; then
+    eval "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" "${ICAV2_CLI_PLUGINS_HOME}/plugins/bin/icav2-cli-plugins.py" "${top}" "${bottom}" '"${@:3}"'
   else
     eval command icav2 '"${@}"'
   fi
