@@ -1045,7 +1045,7 @@ if [[ \
  yq --inplace \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' "${HOME}/.session.ica.yaml"
+   ' "${HOME}/.icav2/.session.ica.yaml"
 fi
 
 ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
@@ -1117,7 +1117,7 @@ if [[ \
  yq --inplace \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' "${HOME}/.session.ica.yaml"
+   ' "${HOME}/.icav2/.session.ica.yaml"
 fi
 
 ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
@@ -1189,7 +1189,7 @@ if [[ \
  yq --inplace \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' "${HOME}/.session.ica.yaml"
+   ' "${HOME}/.icav2/.session.ica.yaml"
 fi
 
 ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
@@ -1261,7 +1261,7 @@ if [[ \
  yq --inplace \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' "${HOME}/.session.ica.yaml"
+   ' "${HOME}/.icav2/.session.ica.yaml"
 fi
 
 ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
@@ -1333,7 +1333,7 @@ if [[ \
  yq --inplace \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' "${HOME}/.session.ica.yaml"
+   ' "${HOME}/.icav2/.session.ica.yaml"
 fi
 
 ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
@@ -1458,7 +1458,7 @@ if [[ \
  yq --inplace \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' "${HOME}/.session.ica.yaml"
+   ' "${HOME}/.icav2/.session.ica.yaml"
 fi
 
 ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
@@ -1583,7 +1583,7 @@ if [[ \
  yq --inplace \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' "${HOME}/.session.ica.yaml"
+   ' "${HOME}/.icav2/.session.ica.yaml"
 fi
 
 ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
@@ -1708,7 +1708,7 @@ if [[ \
  yq --inplace \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' "${HOME}/.session.ica.yaml"
+   ' "${HOME}/.icav2/.session.ica.yaml"
 fi
 
 ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
@@ -1833,7 +1833,7 @@ if [[ \
  yq --inplace \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' "${HOME}/.session.ica.yaml"
+   ' "${HOME}/.icav2/.session.ica.yaml"
 fi
 
 ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
@@ -1911,7 +1911,7 @@ if [[ \
  yq --inplace \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' "${HOME}/.session.ica.yaml"
+   ' "${HOME}/.icav2/.session.ica.yaml"
 fi
 
 ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
@@ -1989,7 +1989,7 @@ if [[ \
  yq --inplace \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' "${HOME}/.session.ica.yaml"
+   ' "${HOME}/.icav2/.session.ica.yaml"
 fi
 
 ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
@@ -2114,7 +2114,7 @@ if [[ \
  yq --inplace \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' "${HOME}/.session.ica.yaml"
+   ' "${HOME}/.icav2/.session.ica.yaml"
 fi
 
 ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
@@ -2192,7 +2192,7 @@ if [[ \
  yq --inplace \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' "${HOME}/.session.ica.yaml"
+   ' "${HOME}/.icav2/.session.ica.yaml"
 fi
 
 ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
@@ -2270,7 +2270,7 @@ if [[ \
  yq --inplace \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' "${HOME}/.session.ica.yaml"
+   ' "${HOME}/.icav2/.session.ica.yaml"
 fi
 
 ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
@@ -2395,7 +2395,7 @@ if [[ \
  yq --inplace \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' "${HOME}/.session.ica.yaml"
+   ' "${HOME}/.icav2/.session.ica.yaml"
 fi
 
 ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
