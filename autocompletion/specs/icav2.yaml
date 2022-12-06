@@ -187,7 +187,7 @@ subcommands:
             type: string
             completion:
               command_string: |
-                __list_folders.sh
+                __list_files_and_folders.sh
         options:
           - name: long-listing
             summary: |
