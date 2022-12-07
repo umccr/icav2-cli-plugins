@@ -6,6 +6,7 @@ from argparse import ArgumentError
 from docopt import docopt
 from utils.logger import get_logger
 from utils import version
+from utils.docopt_helpers import clean_multi_args
 
 # Collect logger
 logger = get_logger()
@@ -38,7 +39,14 @@ class Command:
         :return:
         """
         # Get arguments from commandline
-        return docopt(self.__doc__, argv=command_argv, options_first=False)
+        docopt_args = docopt(self.__doc__, argv=command_argv, options_first=False)
+
+        # Clean args as required in https://github.com/docopt/docopt/issues/134
+        return clean_multi_args(
+            args=docopt_args,
+            doc=self.__doc__,
+            use_dual_options=True
+        )
 
     def _help(self, fail=False):
         """
