@@ -29,7 +29,7 @@ PLUGIN_VERSION="__PLUGIN_VERSION__"
 if [[ "${PLUGIN_VERSION}" == "__PLUGIN_VERSION__" ]]; then
   echo "Installing from source" 1>&2
   latest_tag="$(git describe --abbrev=0 --tags)"
-  latest_commit="$(git log --format="%H" -n 1)"
+  latest_commit="$(git log --format="%H" -n 1 | cut -c1-7)"
   PLUGIN_VERSION="${latest_tag}--patch-${latest_commit}"
   echo "Setting plugin version as '${PLUGIN_VERSION}'"
 fi
@@ -230,7 +230,8 @@ rsync --delete --archive \
   "$(get_this_path)/src/plugins/classes/" "${SITE_PACKAGES_DIR}/classes/"
 rsync --delete --archive \
   "$(get_this_path)/shell_functions/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/"
-sed -i "s/__PLUGIN_VERSION__/"
+# Update shell function
+sed -i "s/__PLUGIN_VERSION__/${PLUGIN_VERSION}/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/icav2.sh"
 
 
 ######################

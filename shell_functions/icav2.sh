@@ -64,16 +64,16 @@ icav2() {
         # Just the first subcommand, like icav2 projectdata help
         # Extend arg to include help
         bottom="help"
-  fi
-
-  # Now if still one is empty print command
-  if [[ -z "${top}" || -z ${bottom} ]]; then
-    eval command icav2 '"${@}"'
   # Or print version
   elif [[ "${top}" == "version" || "${top}" == "--version" || "${top}" == "-v" ]]; then
     echo "icav2-cli-plugins-version: ${plugin_version}"
     command icav2 --version
+    return 0
   fi
+
+  # Now if still one is empty print command
+  if [[ -z "${top}" || -z "${bottom}" ]]; then
+    eval command icav2 '"${@}"'
   # Run the shell function
   elif [[ " ${plugin_subfunctions_array[*]} " =~ ${top}__${bottom} ]]; then
     eval "_icav2__plugins__cli__${top}__${bottom}" '"${@:3}"'
