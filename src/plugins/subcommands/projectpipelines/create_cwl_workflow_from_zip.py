@@ -54,7 +54,7 @@ Environment variables:
     ICAV2_ACCESS_TOKEN       Optional, taken from "$HOME/.icav2/.session.ica.yaml" if not set
 
 Example:
-    icav2 projectpipelines create-cwl-workflow-from-zip tabix_workflow.zip --project-name playground_v2
+    icav2 projectpipelines create-cwl-workflow-from-zip tabix_workflow.zip --analysis-storage-size Small
     """
 
     def __init__(self, command_argv):
