@@ -165,6 +165,10 @@ def get_multi_args(pattern: Required) -> List[str]:
     multi_args = pattern.flat(OneOrMore)
 
     if isinstance(multi_args, List):
+        # Return an empty list if there are no multi args
+        # Since reduce function cannot handle an empty list
+        if len(multi_args) == 0:
+            return multi_args
         multi_args = reduce(
             lambda a, b: a + b,
             [
