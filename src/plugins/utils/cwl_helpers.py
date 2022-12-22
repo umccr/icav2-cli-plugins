@@ -8,7 +8,6 @@ import re
 import subprocess
 from copy import deepcopy
 from datetime import datetime
-from os.path import relpath
 from pathlib import Path
 from typing import Optional, List, Dict, Union, Tuple
 import json
@@ -20,37 +19,10 @@ from mdutils import MdUtils
 
 from ruamel import yaml
 from utils.config_helpers import get_libicav2_configuration
+from utils.cwl_typing_helpers import InputEnumSchemaType, InputRecordSchemaType, InputArraySchemaType
 from utils.logger import get_logger
 
-from cwl_utils.parser.cwl_v1_0 import \
-    InputEnumSchema as InputEnumSchema_v1_0, \
-    InputArraySchema as InputArraySchema_v1_0, \
-    InputRecordSchema as InputRecordSchema_v1_0
-from cwl_utils.parser.cwl_v1_1 import \
-    InputEnumSchema as InputEnumSchema_v1_1, \
-    InputArraySchema as InputArraySchema_v1_1, \
-    InputRecordSchema as InputRecordSchema_v1_1
-from cwl_utils.parser.cwl_v1_2 import \
-    InputEnumSchema as InputEnumSchema_v1_2, \
-    InputArraySchema as InputArraySchema_v1_2, \
-    InputRecordSchema as InputRecordSchema_v1_2
 from utils.subprocess_handler import run_subprocess_proc
-
-InputEnumSchema = Union[
-    InputEnumSchema_v1_0,
-    InputEnumSchema_v1_1,
-    InputEnumSchema_v1_2
-]
-InputArraySchema = Union[
-    InputArraySchema_v1_0,
-    InputArraySchema_v1_1,
-    InputArraySchema_v1_2
-]
-InputRecordSchema = Union[
-    InputRecordSchema_v1_0,
-    InputRecordSchema_v1_1,
-    InputRecordSchema_v1_2
-]
 
 from cwl_utils.parser import load_document_by_uri, \
     Workflow, \
@@ -265,7 +237,6 @@ class ZippedCWLWorkflow:
         ]
 
         self.cwl_file_path = list(filter(lambda x: x.name == "workflow.cwl", workflow_files))[0]
-        self.params_xml_file = list(filter(lambda x: x.name == "params.xml", workflow_files))[0]
         self.cwl_tool_files = list(filter(lambda x: x.name not in ["workflow.cwl", "params.xml"], workflow_files))
 
         self.cwl_obj: Optional[Workflow] = load_document_by_uri(self.cwl_file_path)
@@ -292,7 +263,8 @@ class ZippedCWLWorkflow:
     # FIXME - this should be its own function outside of this class
     def create_icav2_workflow_from_zip(self, project_id: str, analysis_storage_id: str,
                                        workflow_description: str,
-                                       html_documentation_path: Path,
+                                       params_xml_file: Path,
+                                       html_documentation_path: Optional[Path],
                                        ) -> Tuple[str, str]:
 
         configuration = get_libicav2_configuration()
@@ -313,10 +285,16 @@ class ZippedCWLWorkflow:
             "--form", f"code={workflow_code}",
             "--form", f"description={workflow_description}",
             "--form", f"workflowCwlFile=@{self.cwl_file_path};filename=workflow.cwl",
-            "--form", f"htmlDocumentation=@{html_documentation_path};type=text/html",
-            "--form", f"parametersXmlFile=@{self.params_xml_file};filename=params.xml;type=text/xml",
+            "--form", f"parametersXmlFile=@{params_xml_file};filename=params.xml;type=text/xml",
             "--form", f"analysisStorageId={analysis_storage_id}"
         ]
+
+        if html_documentation_path is not None:
+            curl_command_list.extend(
+                [
+                    "--form", f"htmlDocumentation=@{html_documentation_path};type=text/html"
+                ]
+            )
 
         for tool_file in self.cwl_tool_files:
             curl_command_list.extend([
@@ -339,11 +317,11 @@ class ZippedCWLWorkflow:
 def get_workflow_input_type(workflow_input: WorkflowInputParameter):
     if isinstance(workflow_input.type, str):
         return get_workflow_input_type_from_str_type(workflow_input)
-    elif isinstance(workflow_input.type, InputEnumSchema):
+    elif isinstance(workflow_input.type, InputEnumSchemaType):
         return get_workflow_input_type_from_enum_schema(workflow_input)
-    elif isinstance(workflow_input.type, InputArraySchema):
+    elif isinstance(workflow_input.type, InputArraySchemaType):
         return get_workflow_input_type_from_array_schema(workflow_input)
-    elif isinstance(workflow_input.type, InputRecordSchema):
+    elif isinstance(workflow_input.type, InputRecordSchemaType):
         return get_workflow_input_type_from_record_schema(workflow_input)
     elif isinstance(workflow_input.type, List):
         return get_workflow_input_type_from_array_type(workflow_input)
@@ -357,7 +335,7 @@ def get_workflow_input_type_from_enum_schema(workflow_input: WorkflowInputParame
     :param workflow_input:
     :return:
     """
-    workflow_type: InputEnumSchema = workflow_input.type
+    workflow_type: InputEnumSchemaType = workflow_input.type
     return shortname(workflow_type.symbols[0])
 
 
