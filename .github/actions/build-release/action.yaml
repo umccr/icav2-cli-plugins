@@ -79,6 +79,13 @@ runs:
 
         # Confirm install.sh an executable
         chmod +x "icav2-plugins-cli--${{ inputs.git_tag }}/install.sh"
+        
+        # Add autocompletion
+        rsync --archive \
+          --include="bash/" \
+          --include="zsh/" \
+          --exclude="*" \
+          "autocompletion/" "icav2-plugins-cli--${{ inputs.git_tag }}/autocompletion/" 
 
         # Create zip file
         zip \
