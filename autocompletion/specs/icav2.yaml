@@ -297,6 +297,21 @@ subcommands:
             summary: analysis storage size
             type: string
             enum: [Small, Medium, Large]
+      create-cwl-workflow-from-github-release:
+        summary: |
+          From a github release, deploy a workflow to icav2
+        parameters:
+          - name: github_release_url
+            summary: Github release url
+            type: string
+        options:
+          - name: analysis-storage-id
+            summary: analysis storage id
+            type: string
+          - name: analysis-storage-size
+            summary: analysis storage size
+            type: string
+            enum: [ Small, Medium, Large ]
       create-cwl-wes-input-template:
         summary: |
           Create a WES input template for a CWL workflow ready for launch
