@@ -7,9 +7,12 @@ Given a pipeline id or pipeline code, create a wes input template that comprises
 * inputs
 * engine parameters
 """
-
+import os
+import re
 from argparse import ArgumentError
-from typing import Optional, List, Dict
+from tempfile import NamedTemporaryFile
+from typing import Optional, List, Dict, Tuple
+from urllib.parse import urlparse
 
 from ruamel.yaml import YAML, \
     CommentedMap
@@ -17,8 +20,12 @@ from ruamel.yaml import YAML, \
 from pathlib import Path
 
 from utils.config_helpers import get_project_id
+from utils.gh_helpers import get_release_markdown_file_doc_as_html, get_inputs_template_from_html_doc, \
+    get_overrides_template_from_html_doc
+from utils.globals import GITHUB_RELEASE_DESCRIPTION_REGEX_MATCH, GITHUB_RELEASE_REPO_TAG_REGEX_MATCH
 from utils.logger import get_logger
-from utils.projectpipeline_helpers import get_project_pipeline, get_pipeline_id_from_pipeline_code
+from utils.projectpipeline_helpers import get_project_pipeline, get_pipeline_id_from_pipeline_code, \
+    get_pipeline_description_from_pipeline_id
 
 from subcommands import Command
 
@@ -88,6 +95,13 @@ Example:
         # Initialise args
         self.pipeline_id: Optional[str] = None
         self.project_id: Optional[str] = None
+
+        self.pipeline_description: Optional[str] = None
+        self.release_url: Optional[str] = None
+        self.release_repo: Optional[str] = None
+        self.release_tag: Optional[str] = None
+        self.html_doc: Optional[Path] = None
+
         self.user_reference: Optional[str] = None
         self.output_template_yaml_path: Optional[Path] = None
         self.output_parent_folder_path: Optional[Path] = None
@@ -112,11 +126,64 @@ Example:
 
         self.set_overrides()
 
+    def __call__(self):
+        self.write_output_wes_template()
+
+    def __exit__(self):
+        os.remove(self.html_doc)
+
+    def set_html_doc(self):
+        self.html_doc = Path(NamedTemporaryFile(delete=False, suffix=".html").name)
+        get_release_markdown_file_doc_as_html(
+            repo=self.release_repo,
+            tag_name=self.release_tag,
+            output_path=self.html_doc
+        )
+
+    def get_release_url(self):
+        url_match_obj = GITHUB_RELEASE_DESCRIPTION_REGEX_MATCH.match(
+            self.pipeline_description
+        )
+        if url_match_obj is None:
+            return None
+        return url_match_obj.group(1)
+
     def set_input_template(self):
-        self.analysis_input_template = {}
+        if self.html_doc is not None:
+            self.analysis_input_template = get_inputs_template_from_html_doc(
+                 self.html_doc
+            )
+        else:
+            self.analysis_input_template = {}
 
     def set_overrides(self):
-        self.analysis_overrides_template = []
+        if self.html_doc is not None:
+            self.analysis_overrides_template = get_overrides_template_from_html_doc(
+                self.html_doc
+            )
+        else:
+            self.analysis_overrides_template = {}
+
+    def get_release_repo_and_tag_from_release_url(self) -> Tuple[str, str]:
+        """
+        Release url is like https://github.com/umccr/cwl-ica/releases/tag/dragen-pon-qc/3.9.3__221223084424
+        :return:
+        """
+        release_path = urlparse(self.release_url).path
+        release_regex_match = GITHUB_RELEASE_REPO_TAG_REGEX_MATCH.fullmatch(release_path)
+        if release_regex_match is None:
+            logger.error("Could not get release repo and tag from release url")
+            raise ValueError
+
+        # Ensure we only got two matches
+        try:
+            assert len(release_regex_match.groups()) == 2
+        except AssertionError:
+            logger.error(f"Expected 2 matches for release regex match but got {len(release_regex_match.groups())}")
+            logger.error(f"Groups were {release_regex_match.groups()}")
+            raise AssertionError
+
+        return release_regex_match.groups()
 
     def check_args(self):
         # Get project id
@@ -135,7 +202,6 @@ Example:
             logger.error("Must specify one of --user-reference or --name")
             raise ArgumentError
 
-
         # Get pipeline id / code
         pipeline_id_arg = self.args.get("--pipeline-id", None)
         pipeline_code_arg = self.args.get("--pipeline-code", None)
@@ -148,6 +214,18 @@ Example:
             logger.error("Must specify one of --pipeline-id or --pipeline-code")
             raise ArgumentError
 
+        # Get pipeline description
+        self.pipeline_description = get_pipeline_description_from_pipeline_id(self.project_id, self.pipeline_id)
+
+        # Set release url
+        self.release_url = self.get_release_url()
+
+        # Set release repo and tag
+        if self.release_url is not None:
+            self.release_repo, self.release_tag = self.get_release_repo_and_tag_from_release_url()
+            # New we can set the html documentation
+            self.set_html_doc()
+            
         # Get yaml path
         self.output_template_yaml_path = Path(self.args.get("--output-template-yaml-path"))
         if not self.output_template_yaml_path.parent.is_dir():
@@ -324,6 +402,3 @@ Example:
         with open(self.output_template_yaml_path, "w") as file_h:
             with YAML(output=file_h) as yaml_h:
                 yaml_h.dump(yaml_obj)
-
-    def __call__(self):
-        self.write_output_wes_template()
