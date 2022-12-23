@@ -9,24 +9,19 @@ Create technical tags for
     inputs logic and override steps
 """
 
-import argparse
-import logging
 from argparse import ArgumentError
 import os
 from pathlib import Path
-from typing import List, Optional, Dict
+from tempfile import NamedTemporaryFile
+from typing import Optional, Dict
 import math
 
-from libica.openapi.v2.model.project_data import ProjectData
-
-from utils.config_helpers import get_project_id_from_session_file, get_project_id
+from utils.config_helpers import get_project_id
 from utils.cwl_helpers import ZippedCWLWorkflow, generate_plot_png, generate_markdown_doc, \
     generate_standalone_html_through_pandoc
 from utils.globals import ICAV2_DEFAULT_ANALYSIS_STORAGE_SIZE, ICAv2AnalysisStorageSize
-from utils.projectdata_helpers import check_is_directory, list_data_non_recursively, list_files_short, list_files_long
 from utils.logger import get_logger
-from utils.projectpipeline_helpers import get_analysis_storage_id_from_analysis_storage_size
-from utils.user_helpers import get_user_from_user_id
+from utils.projectpipeline_helpers import get_analysis_storage_id_from_analysis_storage_size, create_params_xml
 
 from subcommands import Command
 
@@ -54,7 +49,7 @@ Environment variables:
     ICAV2_ACCESS_TOKEN       Optional, taken from "$HOME/.icav2/.session.ica.yaml" if not set
 
 Example:
-    icav2 projectpipelines create-cwl-workflow-from-zip tabix_workflow.zip --project-name playground_v2
+    icav2 projectpipelines create-cwl-workflow-from-zip tabix_workflow.zip --analysis-storage-size Small
     """
 
     def __init__(self, command_argv):
@@ -74,38 +69,9 @@ Example:
         # Get the override steps based on the cwl object
         self.override_steps = self.get_override_steps_from_cwl_obj()
 
-    def check_args(self):
-        # Check zipped workflow path exists
-        self.zipped_workflow_path = Path(self.args.get("<zipped_workflow_path>"))
-        if not self.zipped_workflow_path.is_file():
-            logger.error(f"Could not access zipped workflow path {self.zipped_workflow_path}")
-            raise ArgumentError
-        if not self.zipped_workflow_path.name.endswith(".zip"):
-            logger.error(f"zipped-workflow-path parameter {self.zipped_workflow_path} does not end with '.zip'")
-            raise ArgumentError
-
-        # Check we can get project id
-        self.project_id = get_project_id()
-
-        # Get analysis storage ID or go to default
-        analysis_storage_id_arg = self.args.get("--analysis-storage-id", None)
-        analysis_storage_size_arg = self.args.get("--analysis-storage-size", None)
-        if analysis_storage_size_arg is None:
-            analysis_storage_size_arg = ICAV2_DEFAULT_ANALYSIS_STORAGE_SIZE
-
-        if analysis_storage_id_arg is not None:
-            self.analysis_storage_id = analysis_storage_id_arg
-        else:
-            self.analysis_storage_id = get_analysis_storage_id_from_analysis_storage_size(ICAv2AnalysisStorageSize(analysis_storage_size_arg))
-
-    def get_zipped_workflow_obj(self) -> ZippedCWLWorkflow:
-        return ZippedCWLWorkflow(self.zipped_workflow_path)
-
-    def get_input_template_from_cwl_obj(self) -> Dict:
-        return self.zipped_workflow_obj.get_cwl_inputs_template_dict()
-
-    def get_override_steps_from_cwl_obj(self):
-        return self.zipped_workflow_obj.get_override_steps_dict()
+        # Set the params xml file
+        self.params_xml = Path(NamedTemporaryFile(delete=False, suffix=".xml").name)
+        create_params_xml(self.zipped_workflow_obj.cwl_obj.inputs, self.params_xml)
 
     def __call__(self):
         # Generate workflow plot
@@ -137,7 +103,47 @@ Example:
             project_id=self.project_id,
             analysis_storage_id=self.analysis_storage_id,
             workflow_description=self.zipped_workflow_obj.cwl_obj.doc,
+            params_xml_file=self.params_xml,
             html_documentation_path=html_doc
         )
 
         logger.info(f"Successfully created pipeline with pipeline id {pipeline_id} and pipeline code {pipeline_code}")
+
+    def __exit__(self):
+        os.remove(self.params_xml)
+
+    def check_args(self):
+        # Check zipped workflow path exists
+        self.zipped_workflow_path = Path(self.args.get("<zipped_workflow_path>"))
+        if not self.zipped_workflow_path.is_file():
+            logger.error(f"Could not access zipped workflow path {self.zipped_workflow_path}")
+            raise ArgumentError
+        if not self.zipped_workflow_path.name.endswith(".zip"):
+            logger.error(f"zipped-workflow-path parameter {self.zipped_workflow_path} does not end with '.zip'")
+            raise ArgumentError
+
+        # Check we can get project id
+        self.project_id = get_project_id()
+
+        # Get analysis storage ID or go to default
+        analysis_storage_id_arg = self.args.get("--analysis-storage-id", None)
+        analysis_storage_size_arg = self.args.get("--analysis-storage-size", None)
+        if analysis_storage_size_arg is None:
+            analysis_storage_size_arg = ICAV2_DEFAULT_ANALYSIS_STORAGE_SIZE
+
+        if analysis_storage_id_arg is not None:
+            self.analysis_storage_id = analysis_storage_id_arg
+        else:
+            self.analysis_storage_id = get_analysis_storage_id_from_analysis_storage_size(
+                ICAv2AnalysisStorageSize(analysis_storage_size_arg)
+            )
+
+    def get_zipped_workflow_obj(self) -> ZippedCWLWorkflow:
+        return ZippedCWLWorkflow(self.zipped_workflow_path)
+
+    def get_input_template_from_cwl_obj(self) -> Dict:
+        return self.zipped_workflow_obj.get_cwl_inputs_template_dict()
+
+    def get_override_steps_from_cwl_obj(self):
+        return self.zipped_workflow_obj.get_override_steps_dict()
+

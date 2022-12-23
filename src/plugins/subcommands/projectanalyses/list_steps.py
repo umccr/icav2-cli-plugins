@@ -28,7 +28,7 @@ logger = get_logger()
 class ProjectAnalysesListAnalysisSteps(Command):
     """Usage:
     icav2 projectanalyses list-analysis-steps help
-    icav2 projectanalyses list-analysis-steps (<analysis_id>)
+    icav2 projectanalyses list-analysis-steps <analysis_id>
                                               [--show-technical-steps]
 
 Description:

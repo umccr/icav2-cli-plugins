@@ -3,6 +3,7 @@
 """
 List of globals to use for icav2 cli plugins
 """
+import re
 from enum import Enum
 
 DEFAULT_ICAV2_BASE_URL = "https://ica.illumina.com/ica/rest"
@@ -26,3 +27,21 @@ class ICAv2AnalysisStorageSize(Enum):
 
 
 ICAV2_DEFAULT_ANALYSIS_STORAGE_SIZE = ICAv2AnalysisStorageSize.SMALL
+
+PARAMS_XML_FILE_NAME = "params.xml"
+
+BLANK_PARAMS_XML_V2_FILE_CONTENTS = [
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',
+    '<pd:pipeline xmlns:pd="xsd://www.illumina.com/ica/cp/pipelinedefinition" code="" version="1.0">',
+    '    <pd:dataInputs/>',
+    '    <pd:steps/>',
+    '</pd:pipeline>'
+]
+
+GITHUB_RELEASE_DESCRIPTION_REGEX_MATCH = re.compile(
+    r"GitHub\sRelease\sURL:\s(.*)"
+)
+
+GITHUB_RELEASE_REPO_TAG_REGEX_MATCH = re.compile(
+    r"/(.*)/releases/tag/(.*)"
+)

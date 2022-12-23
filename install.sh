@@ -19,12 +19,21 @@ You should have the following applications installed before continuing:
 * jq
 * python3
 * rsync
+* gh
 * yq (version 4.18 or later)
 
 MacOS users, please install greadlink through 'brew install coreutils'
 "
 
 ICAV2_CLI_PLUGINS_HOME="$HOME/.icav2-cli-plugins"
+PLUGIN_VERSION="__PLUGIN_VERSION__"
+if [[ "${PLUGIN_VERSION}" == "__PLUGIN_VERSION__" ]]; then
+  echo "Installing from source" 1>&2
+  latest_tag="$(git describe --abbrev=0 --tags)"
+  latest_commit="$(git log --format="%H" -n 1 | cut -c1-7)"
+  PLUGIN_VERSION="${latest_tag}--patch-${latest_commit}"
+  echo "Setting plugin version as '${PLUGIN_VERSION}'"
+fi
 
 ###########
 # Functions
@@ -70,7 +79,7 @@ binaries_check(){
   : '
   Check each of the required binaries are available
   '
-  if ! (type aws curl jq python3 yq 1>/dev/null); then
+  if ! (type aws curl jq python3 yq gh 1>/dev/null); then
     return 1
   fi
 }
@@ -222,7 +231,8 @@ rsync --delete --archive \
   "$(get_this_path)/src/plugins/classes/" "${SITE_PACKAGES_DIR}/classes/"
 rsync --delete --archive \
   "$(get_this_path)/shell_functions/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/"
-
+# Update shell function
+sed -i "s/__PLUGIN_VERSION__/${PLUGIN_VERSION}/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/icav2.sh"
 
 
 ######################

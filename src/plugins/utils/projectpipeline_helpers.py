@@ -34,8 +34,10 @@ from libica.openapi.v2 import ApiClient, ApiException
 from libica.openapi.v2.api.analysis_storage_api import AnalysisStorageApi
 from utils import sanitise_dict_keys
 from utils.config_helpers import get_libicav2_configuration
-from utils.globals import ICAv2AnalysisStorageSize
+from utils.cwl_typing_helpers import WorkflowInputParameter
+from utils.globals import ICAv2AnalysisStorageSize, BLANK_PARAMS_XML_V2_FILE_CONTENTS
 from utils.logger import get_logger
+
 from utils.projectdata_helpers import list_data_non_recursively, convert_icav2_uri_to_data_obj
 from utils.subprocess_handler import run_subprocess_proc
 
@@ -352,14 +354,21 @@ def convert_icav2_uris_to_data_ids(input_obj: Union[str, int, bool, Dict, List])
     if isinstance(input_obj, Dict):
         if "class" in input_obj.keys() and input_obj["class"] in ["File", "Directory"]:
             if input_obj.get("location", "").startswith("icav2://"):
+
                 # Get relative location path
                 input_obj_new: ProjectData = convert_icav2_uri_to_data_obj(input_obj.get("location"))
                 data_type: str = input_obj_new.get("data").get("details").get('data_type')  # One of FILE | FOLDER
                 owning_project_id: str = input_obj_new.get("data").get("details").get("owning_project_id")
                 data_id = input_obj_new.get("data").get("id")
                 basename = input_obj_new.get("data").get("details").get("name")
+
                 # Check presign, # FIXME also functionalise this, may need this for cross-tenant data collection later
-                presign_list = list(filter(lambda x: x == "presign=true", urlparse(input_obj.get("location")).query.split("&")))
+                presign_list = list(
+                    filter(
+                        lambda x: x == "presign=true",
+                        urlparse(input_obj.get("location")).query.split("&")
+                    )
+                )
                 if len(presign_list) > 0:
                     is_presign = True
                 else:
@@ -593,6 +602,18 @@ def get_pipeline_id_from_pipeline_code(project_id: str, pipeline_code: str) -> s
     raise ValueError
 
 
+def get_pipeline_description_from_pipeline_id(project_id: str, pipeline_id: str) -> str:
+    # Get the project pipeline
+    project_pipeline_obj = get_project_pipeline(
+        project_id=project_id,
+        pipeline_id=pipeline_id
+    )
+
+    pipeline_obj: Pipeline = project_pipeline_obj.pipeline
+
+    return pipeline_obj.description
+
+
 def get_project_pipeline(project_id: str, pipeline_id: str) -> ProjectPipeline:
     """
     Get a project pipeline dict
@@ -734,3 +755,25 @@ def get_cwl_analysis_output_json(project_id: str, analysis_id: str):
         raise ChildProcessError
 
     return json.loads(json.loads(command_stdout).get("outputJson"))
+
+
+def create_params_xml(inputs: List[WorkflowInputParameter], output_path: Path):
+    """
+    From the inputs, create a params xml file
+    :param inputs:
+    :param output_path:
+    :return:
+    """
+    # FIXME - waiting on https://github.com/umccr-illumina/ica_v2/issues/17
+    return create_blank_params_xml(output_path)
+
+
+def create_blank_params_xml(output_file_path: Path):
+    """
+    Create a params.xml file with no inputs
+    :param output_file_path:
+    :return:
+    """
+    with open(output_file_path, "w") as params_h:
+        for line in BLANK_PARAMS_XML_V2_FILE_CONTENTS:
+            params_h.write(line + "\n")
