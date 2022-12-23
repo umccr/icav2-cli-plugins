@@ -32,9 +32,10 @@ Available Commands:
   upload               Upload a file/folder
 
 Plugin Commands:
-  create-cwl-workflow-from-zip      Upload a CWL Workflow to ICAv2
-  create-cwl-wes-input-template     Create a template for a CWL pipeline
-  start-cwl-wes                     Launch a CWL workflow from a WES yaml
+  create-cwl-workflow-from-zip             Upload a CWL Workflow to ICAv2 from a local zip path
+  create-cwl-workflow-from-github-release  Upload a CWL Workflow to ICAv2 from a GitHub Release
+  create-cwl-wes-input-template            Create a template for a CWL pipeline
+  start-cwl-wes                            Launch a CWL workflow from a WES yaml
 
 Flags:
   -h, --help   help for projectpipelines
@@ -55,6 +56,8 @@ Use "icav2 projectdata [command] --help" for more information about a command.
 
         if cmd == "create-cwl-workflow-from-zip":
             from subcommands.projectpipelines.create_cwl_workflow_from_zip import ProjectDataCreateCWLWorkflow as subcommand
+        if cmd == "create-cwl-workflow-from-github-release":
+            from subcommands.projectpipelines.create_cwl_workflow_from_github_release import ProjectDataCreateCWLWorkflowFromGitHubRelease as subcommand
         elif cmd == "create-cwl-wes-input-template":
             from subcommands.projectpipelines.create_wes_input_template import ProjectDataCreateWESInputTemplate as subcommand
         elif cmd == "start-cwl-wes":
@@ -63,7 +66,6 @@ Use "icav2 projectdata [command] --help" for more information about a command.
             print(self.__doc__)
             print(f"Could not find cmd \"{cmd}\". Please refer to usage above")
             sys.exit(1)
-
         # Initialise and return
         return subcommand(command_argv)
 
