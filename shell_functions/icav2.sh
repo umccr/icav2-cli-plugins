@@ -38,6 +38,7 @@ icav2() {
     "projectanalyses__-h" \
     "projectanalyses__--help" \
     "projectpipelines__create-cwl-workflow-from-zip" \
+    "projectpipelines__create-cwl-workflow-from-github-release" \
     "projectpipelines__create-cwl-wes-input-template" \
     "projectpipelines__start-cwl-wes" \
     "projectpipelines__help"
