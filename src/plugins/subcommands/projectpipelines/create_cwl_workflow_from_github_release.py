@@ -9,20 +9,21 @@ Create technical tags for
     inputs logic and override steps
 """
 import os
+import shutil
 from argparse import ArgumentError
 from pathlib import Path
-from tempfile import NamedTemporaryFile
+from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Optional
 
 from utils.config_helpers import get_project_id
 from utils.cwl_helpers import ZippedCWLWorkflow
-from utils.gh_helpers import download_zipped_workflow_from_github_release
+from utils.gh_helpers import download_zipped_workflow_from_github_release, get_release_repo_and_tag_from_release_url
 from utils.globals import ICAV2_DEFAULT_ANALYSIS_STORAGE_SIZE, ICAv2AnalysisStorageSize
 from utils.logger import get_logger
 from utils.projectpipeline_helpers import get_analysis_storage_id_from_analysis_storage_size, create_params_xml
 import requests
 
-from urllib.parse import unquote, urlparse
+from urllib.parse import unquote
 
 from subcommands import Command
 
@@ -62,6 +63,7 @@ Example:
         self.github_repo: Optional[str] = None
         self.github_tag_name: Optional[str] = None
         # From the repo and tag name we can collect the zipped workflow obj and path
+        self.zipped_workflow_tmp_dir = TemporaryDirectory()
         self.zipped_workflow_path: Optional[Path] = None
         self.zipped_workflow_obj: Optional[ZippedCWLWorkflow] = None
 
@@ -120,14 +122,14 @@ Example:
 
     def __exit__(self):
         # Delete tmp file
-        os.remove(self.zipped_workflow_path)
+        shutil.rmtree(self.zipped_workflow_tmp_dir.name)
         os.remove(self.params_xml_file)
 
     def check_args(self):
         # Check the url exists
         github_release_url_arg = unquote(self.args.get("<github_release_url>"))
         url_obj = requests.get(github_release_url_arg)
-        if url_obj.status_code is not 200:
+        if not url_obj.status_code == 200:
             logger.error(f"Got status code {url_obj.status_code}, reason {url_obj.reason}")
             raise ArgumentError
 
@@ -138,9 +140,7 @@ Example:
         self.project_id = get_project_id()
 
         # Split GitHub release url into repo and tag
-        github_org, github_repo, github_tag_name = urlparse(self.github_release_url).path.split("/", 2)
-        self.github_repo = "/".join([github_org, github_repo])
-        self.github_tag_name = github_tag_name
+        self.github_repo, self.github_tag_name = get_release_repo_and_tag_from_release_url(self.github_release_url)
 
         # Get workflow object
         self.set_zipped_workflow_obj_from_github_release_url()
@@ -172,7 +172,7 @@ Example:
         self.params_xml_file = Path(NamedTemporaryFile(delete=False, suffix=".xml").name)
 
     def set_zipped_workflow_obj_from_github_release_url(self):
-        self.zipped_workflow_path = Path(NamedTemporaryFile(delete=False, suffix=".zip").name)
+        self.zipped_workflow_path = Path(self.zipped_workflow_tmp_dir.name) / (self.github_tag_name + ".zip").replace("/", "__")
         download_zipped_workflow_from_github_release(self.github_repo, self.github_tag_name, self.zipped_workflow_path)
 
     def create_params_xml(self):

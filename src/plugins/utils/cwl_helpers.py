@@ -230,14 +230,18 @@ class ZippedCWLWorkflow:
         with ZipFile(self.zipped_cwl_file_path, 'r') as zip_ref:
             zip_ref.extractall(self.unzipped_temp_dir.name)
 
-        workflow_files = [
-            workflow_file
-            for workflow_file in (Path(self.unzipped_temp_dir.name) / Path(self.zipped_cwl_file_path.stem)).rglob("*")
-            if workflow_file.is_file()
-        ]
+        workflow_file_list = list(
+            filter(
+                lambda filename: filename is not None,
+                map(
+                    lambda x: Path(self.unzipped_temp_dir.name) / Path(x.filename) if not x.filename.endswith("/") else None,
+                    zip_ref.filelist
+                )
+            )
+        )
 
-        self.cwl_file_path = list(filter(lambda x: x.name == "workflow.cwl", workflow_files))[0]
-        self.cwl_tool_files = list(filter(lambda x: x.name not in ["workflow.cwl", "params.xml"], workflow_files))
+        self.cwl_file_path = list(filter(lambda x: x.name == "workflow.cwl", workflow_file_list))[0]
+        self.cwl_tool_files = list(filter(lambda x: x.name not in ["workflow.cwl", "params.xml"], workflow_file_list))
 
         self.cwl_obj: Optional[Workflow] = load_document_by_uri(self.cwl_file_path)
         self.cwl_inputs: Optional[List[WorkflowInputParameter]] = self.cwl_obj.inputs
