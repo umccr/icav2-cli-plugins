@@ -39,7 +39,7 @@ BLANK_PARAMS_XML_V2_FILE_CONTENTS = [
 ]
 
 GITHUB_RELEASE_DESCRIPTION_REGEX_MATCH = re.compile(
-    r"GitHub\SRelease\SURL:\s(.*)"
+    r"GitHub\sRelease\sURL:\s(.*)"
 )
 
 GITHUB_RELEASE_REPO_TAG_REGEX_MATCH = re.compile(

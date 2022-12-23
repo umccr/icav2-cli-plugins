@@ -10,6 +10,7 @@ Given a pipeline id or pipeline code, create a wes input template that comprises
 import os
 import re
 from argparse import ArgumentError
+from fileinput import FileInput
 from tempfile import NamedTemporaryFile
 from typing import Optional, List, Dict, Tuple
 from urllib.parse import urlparse
@@ -21,7 +22,7 @@ from pathlib import Path
 
 from utils.config_helpers import get_project_id
 from utils.gh_helpers import get_release_markdown_file_doc_as_html, get_inputs_template_from_html_doc, \
-    get_overrides_template_from_html_doc
+    get_overrides_template_from_html_doc, get_release_repo_and_tag_from_release_url
 from utils.globals import GITHUB_RELEASE_DESCRIPTION_REGEX_MATCH, GITHUB_RELEASE_REPO_TAG_REGEX_MATCH
 from utils.logger import get_logger
 from utils.projectpipeline_helpers import get_project_pipeline, get_pipeline_id_from_pipeline_code, \
@@ -169,21 +170,8 @@ Example:
         Release url is like https://github.com/umccr/cwl-ica/releases/tag/dragen-pon-qc/3.9.3__221223084424
         :return:
         """
-        release_path = urlparse(self.release_url).path
-        release_regex_match = GITHUB_RELEASE_REPO_TAG_REGEX_MATCH.fullmatch(release_path)
-        if release_regex_match is None:
-            logger.error("Could not get release repo and tag from release url")
-            raise ValueError
+        return get_release_repo_and_tag_from_release_url(self.release_url)
 
-        # Ensure we only got two matches
-        try:
-            assert len(release_regex_match.groups()) == 2
-        except AssertionError:
-            logger.error(f"Expected 2 matches for release regex match but got {len(release_regex_match.groups())}")
-            logger.error(f"Groups were {release_regex_match.groups()}")
-            raise AssertionError
-
-        return release_regex_match.groups()
 
     def check_args(self):
         # Get project id
@@ -277,7 +265,9 @@ Example:
 
     def get_engine_parameters_as_commented_map(self):
         # Initialise commented map
-        engine_parameters_map = CommentedMap()
+        yaml = YAML()
+
+        engine_parameters_map = yaml.map()
 
         # Mentions
         add_output_folder_path_comment = True
@@ -331,9 +321,9 @@ Example:
                 "cwltool_overrides": {}
             }
         )
-        engine_parameters_map.yaml_set_comment_before_after_key(
-            "cwltool_overrides",
-            after="\n".join(self.analysis_overrides_template)
+        engine_parameters_map.yaml_add_eol_comment(
+            key="cwltool_overrides",
+            comment="Available overrides keys are as follows: \n      # " + "\n      # ".join(self.analysis_overrides_template)
         )
 
         # Additional keys
@@ -383,22 +373,57 @@ Example:
         )
         engine_parameters_map.yaml_set_comment_before_after_key(
             "engine_parameters",
-            after=additional_keys_str
+            after=additional_keys_str,
+            indent=2
         )
 
         return engine_parameters_map
 
     def write_output_wes_template(self):
-        # Initial object
-        yaml_obj = CommentedMap({
-            "user_reference": self.user_reference,
-            "inputs": self.analysis_input_template,
+        # Initialise main object
+        yaml_obj = YAML()
+
+        # Initialise map
+        user_reference_map: CommentedMap = yaml_obj.map()
+        user_reference_map.update({
+            "user_reference": self.user_reference
         })
-        yaml_obj.update(
-            self.get_engine_parameters_as_commented_map()
+        user_reference_map.yaml_set_comment_before_after_key(
+            before="Name of analysis",
+            key="user_reference"
+        )
+
+        # Inputs
+        inputs_map: CommentedMap = yaml_obj.map()
+        inputs_map.update({
+            "inputs": self.analysis_input_template
+        })
+        inputs_map.yaml_set_comment_before_after_key(
+            before="Inputs JSON Body",
+            key="inputs"
+        )
+
+        # Engine parameters map
+        engine_parameters_map = self.get_engine_parameters_as_commented_map()
+        engine_parameters_map.yaml_set_comment_before_after_key(
+            before="Engine Parameters",
+            key="engine_parameters"
         )
 
         # Write output to file path
         with open(self.output_template_yaml_path, "w") as file_h:
             with YAML(output=file_h) as yaml_h:
-                yaml_h.dump(yaml_obj)
+                yaml_h.indent = 4
+                yaml_h.block_seq_indent = 2
+                yaml_h.explicit_start = False
+                yaml_h.dump(user_reference_map)
+                yaml_h.dump(inputs_map)
+                yaml_h.dump(engine_parameters_map)
+
+        # Merge documents
+        with FileInput(self.output_template_yaml_path, inplace=True) as input:
+            for line in input:
+                if line.rstrip() == "---":
+                    pass
+                else:
+                    print(line.rstrip())
