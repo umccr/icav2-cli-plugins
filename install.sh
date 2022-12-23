@@ -19,6 +19,7 @@ You should have the following applications installed before continuing:
 * jq
 * python3
 * rsync
+* gh
 * yq (version 4.18 or later)
 
 MacOS users, please install greadlink through 'brew install coreutils'
@@ -78,7 +79,7 @@ binaries_check(){
   : '
   Check each of the required binaries are available
   '
-  if ! (type aws curl jq python3 yq 1>/dev/null); then
+  if ! (type aws curl jq python3 yq gh 1>/dev/null); then
     return 1
   fi
 }
