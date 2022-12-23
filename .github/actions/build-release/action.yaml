@@ -74,11 +74,18 @@ runs:
 
         # Update the plugin version in the installation script
         sed --in-place \
-          "s/^PLUGIN_VERSION=\"__PLUGIN_VERSION__\"$/PLUGIN_VERSION="${ICAV2_PLUGINGS_CLI_VERSION}\"/' \
-          install.sh
+          "s%^PLUGIN_VERSION=\"__PLUGIN_VERSION__\"$%PLUGIN_VERSION=\"${ICAV2_PLUGINGS_CLI_VERSION}\"%" \
+          "icav2-plugins-cli--${{ inputs.git_tag }}/install.sh"
 
         # Confirm install.sh an executable
         chmod +x "icav2-plugins-cli--${{ inputs.git_tag }}/install.sh"
+        
+        # Add autocompletion
+        rsync --archive \
+          --include="bash/***" \
+          --include="zsh/***" \
+          --exclude="*" \
+          "autocompletion/" "icav2-plugins-cli--${{ inputs.git_tag }}/autocompletion/" 
 
         # Create zip file
         zip \

@@ -228,8 +228,6 @@ rsync --delete --archive \
 rsync --delete --archive \
   "$(get_this_path)/src/plugins/subcommands/" "${SITE_PACKAGES_DIR}/subcommands/"
 rsync --delete --archive \
-  "$(get_this_path)/src/plugins/classes/" "${SITE_PACKAGES_DIR}/classes/"
-rsync --delete --archive \
   "$(get_this_path)/shell_functions/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/"
 # Update shell function
 sed -i "s/__PLUGIN_VERSION__/${PLUGIN_VERSION}/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/icav2.sh"
