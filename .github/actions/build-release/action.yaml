@@ -82,8 +82,8 @@ runs:
         
         # Add autocompletion
         rsync --archive \
-          --include="bash/" \
-          --include="zsh/" \
+          --include="bash/***" \
+          --include="zsh/***" \
           --exclude="*" \
           "autocompletion/" "icav2-plugins-cli--${{ inputs.git_tag }}/autocompletion/" 
 
