@@ -232,6 +232,14 @@ rsync --delete --archive \
 # Update shell function
 sed -i "s/__PLUGIN_VERSION__/${PLUGIN_VERSION}/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/icav2.sh"
 
+######################
+# LINK PANDOC BINARY
+######################
+# Link pandoc binary from site-packages/pypandoc/files/pandoc to ${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin
+( \
+  cd "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/";
+  ln -sf "${SITE_PACKAGES_DIR}/pypandoc/files/pandoc" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/pandoc}"
+)
 
 ######################
 # COPY AUTOCOMPLETIONS
