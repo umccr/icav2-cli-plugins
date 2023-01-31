@@ -96,7 +96,7 @@ Parameters:
     fi
   else
     export ICAV2_PROJECT_ID="${project_id}"
-    echo "ICAV2_PROJECT_ID env var now set to '${ICAV2_PROJECT_ID}"
+    echo "ICAV2_PROJECT_ID env var now set to '${ICAV2_PROJECT_ID}'"
   fi
 
   # Done
