@@ -80,7 +80,7 @@ icav2() {
     eval "_icav2__plugins__cli__${top}__${bottom%_}" '"${@:3}"'
   # Run the wrapped python command
   elif [[ " ${plugin_subcommands_array[*]} " =~ ${top}__${bottom} ]]; then
-    eval "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" "${ICAV2_CLI_PLUGINS_HOME}/plugins/bin/icav2-cli-plugins.py" "${top}" "${bottom%_}" '"${@:3}"'
+    eval PATH="'${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/:$PATH'" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" "${ICAV2_CLI_PLUGINS_HOME}/plugins/bin/icav2-cli-plugins.py" "${top}" "${bottom%_}" '"${@:3}"'
   else
     eval command icav2 '"${@}"'
   fi
