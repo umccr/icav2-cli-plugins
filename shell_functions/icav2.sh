@@ -30,7 +30,7 @@ icav2() {
     "projectdata__help" \
     "projectdata__-h" \
     "projectdata__--help" \
-    "projectanalyses__list-analysis-steps" \
+    "projectanalyses__list-analysis-steps_" \
     "projectanalyses__get-cwl-analysis-input-json" \
     "projectanalyses__get-cwl-analysis-output-json" \
     "projectanalyses__get-analysis-step-logs" \
@@ -55,13 +55,13 @@ icav2() {
 
   # Get first two args if they exist
   top="${1-}"
-  bottom="${2-}"
+  bottom="${2-}_"
 
   # If both blank or not matching, we just run the OG.
-  if [[ -z "${top}" && -z "${bottom}" ]]; then
+  if [[ -z "${top}" && -z "${bottom_}" ]]; then
     eval command icav2 '"${@}"'
   # Otherwise if the first is matching top array and the bottom is empty, extend command with 'help'
-  elif [[ -n "${top}" && -z "${bottom}" && " ${plugin_subcommands_top_only_array[*]} " =~ "${top}" ]]; then
+  elif [[ -n "${top}" && -z "${bottom%_}" && " ${plugin_subcommands_top_only_array[*]} " =~ ${top} ]]; then
         # Just the first subcommand, like icav2 projectdata help
         # Extend arg to include help
         bottom="help"
@@ -73,14 +73,14 @@ icav2() {
   fi
 
   # Now if still one is empty print command
-  if [[ -z "${top}" || -z "${bottom}" ]]; then
+  if [[ -z "${top}" || -z "${bottom%_}" ]]; then
     eval command icav2 '"${@}"'
   # Run the shell function
   elif [[ " ${plugin_subfunctions_array[*]} " =~ ${top}__${bottom} ]]; then
-    eval "_icav2__plugins__cli__${top}__${bottom}" '"${@:3}"'
+    eval "_icav2__plugins__cli__${top}__${bottom%_}" '"${@:3}"'
   # Run the wrapped python command
   elif [[ " ${plugin_subcommands_array[*]} " =~ ${top}__${bottom} ]]; then
-    eval "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" "${ICAV2_CLI_PLUGINS_HOME}/plugins/bin/icav2-cli-plugins.py" "${top}" "${bottom}" '"${@:3}"'
+    eval "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" "${ICAV2_CLI_PLUGINS_HOME}/plugins/bin/icav2-cli-plugins.py" "${top}" "${bottom%_}" '"${@:3}"'
   else
     eval command icav2 '"${@}"'
   fi
