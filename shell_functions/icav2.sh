@@ -23,27 +23,28 @@ icav2() {
   )
 
   plugin_subcommands_array=( \
-    "projectdata__ls" \
-    "projectdata__view" \
-    "projectdata__s3-sync-download" \
-    "projectdata__s3-sync-upload" \
-    "projectdata__help" \
-    "projectdata__-h" \
-    "projectdata__--help" \
+    "projectdata__ls_" \
+    "projectdata__view_" \
+    "projectdata__s3-sync-download_" \
+    "projectdata__s3-sync-upload_" \
+    "projectdata__create-download-script_"
+    "projectdata__help_" \
+    "projectdata__-h_" \
+    "projectdata__--help_" \
     "projectanalyses__list-analysis-steps_" \
-    "projectanalyses__get-cwl-analysis-input-json" \
-    "projectanalyses__get-cwl-analysis-output-json" \
-    "projectanalyses__get-analysis-step-logs" \
-    "projectanalyses__help" \
-    "projectanalyses__-h" \
-    "projectanalyses__--help" \
-    "projectpipelines__create-cwl-workflow-from-zip" \
-    "projectpipelines__create-cwl-workflow-from-github-release" \
-    "projectpipelines__create-cwl-wes-input-template" \
-    "projectpipelines__start-cwl-wes" \
-    "projectpipelines__help"
-    "projectpipelines__-h" \
-    "projectpipelines__--help" \
+    "projectanalyses__get-cwl-analysis-input-json_" \
+    "projectanalyses__get-cwl-analysis-output-json_" \
+    "projectanalyses__get-analysis-step-logs_" \
+    "projectanalyses__help_" \
+    "projectanalyses__-h_" \
+    "projectanalyses__--help_" \
+    "projectpipelines__create-cwl-workflow-from-zip_" \
+    "projectpipelines__create-cwl-workflow-from-github-release_" \
+    "projectpipelines__create-cwl-wes-input-template_" \
+    "projectpipelines__start-cwl-wes_" \
+    "projectpipelines__help_"
+    "projectpipelines__-h_" \
+    "projectpipelines__--help_" \
   )
 
   # Check env var is set
@@ -68,6 +69,7 @@ icav2() {
   # Or print version
   elif [[ "${top}" == "version" || "${top}" == "--version" || "${top}" == "-v" ]]; then
     echo "icav2-cli-plugins-version: ${plugin_version}"
+    echo "libica module version: ${libica_version}"
     command icav2 --version
     return 0
   fi
