@@ -8,12 +8,10 @@ Given a pipeline id or pipeline code, create a wes input template that comprises
 * engine parameters
 """
 import os
-import re
 from argparse import ArgumentError
 from fileinput import FileInput
 from tempfile import NamedTemporaryFile
 from typing import Optional, List, Dict, Tuple
-from urllib.parse import urlparse
 
 from ruamel.yaml import YAML, \
     CommentedMap
@@ -23,7 +21,7 @@ from pathlib import Path
 from utils.config_helpers import get_project_id
 from utils.gh_helpers import get_release_markdown_file_doc_as_html, get_inputs_template_from_html_doc, \
     get_overrides_template_from_html_doc, get_release_repo_and_tag_from_release_url
-from utils.globals import GITHUB_RELEASE_DESCRIPTION_REGEX_MATCH, GITHUB_RELEASE_REPO_TAG_REGEX_MATCH
+from utils.globals import GITHUB_RELEASE_DESCRIPTION_REGEX_MATCH
 from utils.logger import get_logger
 from utils.projectpipeline_helpers import get_project_pipeline, get_pipeline_id_from_pipeline_code, \
     get_pipeline_description_from_pipeline_id
