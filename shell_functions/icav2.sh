@@ -9,6 +9,7 @@ icav2() {
   local plugin_subcommands_array
   local plugin_subfunctions_array
   local plugin_version="__PLUGIN_VERSION__"
+  local libica_version="__LIBICA_VERSION__"
   local top
   local bottom
 
