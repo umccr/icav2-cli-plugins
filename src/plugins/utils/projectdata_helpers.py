@@ -255,7 +255,7 @@ def find_data_recursively(project_id: str,
     data_items: List[ProjectData] = list_data_non_recursively(project_id, parent_folder_path=parent_folder_path)
 
     # Check if we can pull out any items in the top directory
-    if mindepth is None or mindepth == 0:
+    if mindepth is None or mindepth <= 0:
         name_regex_obj = re.compile(name)
         for data_item in data_items:
             data_item_match = name_regex_obj.match(data_item.data.details.name)
@@ -265,7 +265,7 @@ def find_data_recursively(project_id: str,
                 matched_data_items.append(data_item)
 
     # Otherwise look recursively
-    if maxdepth is None or not maxdepth == 0:
+    if maxdepth is None or not maxdepth <= 0:
         # Listing subfolders
         subfolders = filter(
             lambda x: x.data.details.data_type == "FOLDER",
@@ -273,13 +273,15 @@ def find_data_recursively(project_id: str,
         )
         for subfolder in subfolders:
             matched_data_items.extend(
-                find_data_recursively(project_id=project_id,
-                                      parent_folder_id=subfolder.data.id,
-                                      parent_folder_path=subfolder.data.details.path,
-                                      name=name,
-                                      data_type=data_type,
-                                      mindepth=mindepth-1 if mindepth is not None else None,
-                                      maxdepth=maxdepth-1 if maxdepth is not None else None)
+                find_data_recursively(
+                    project_id=project_id,
+                    parent_folder_id=subfolder.data.id,
+                    parent_folder_path=subfolder.data.details.path,
+                    name=name,
+                    data_type=data_type,
+                    mindepth=mindepth-1 if mindepth is not None else None,
+                    maxdepth=maxdepth-1 if maxdepth is not None else None
+                )
             )
 
     return matched_data_items

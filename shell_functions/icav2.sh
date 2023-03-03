@@ -26,6 +26,7 @@ icav2() {
   plugin_subcommands_array=( \
     "projectdata__ls_" \
     "projectdata__view_" \
+    "projectdata__find_" \
     "projectdata__s3-sync-download_" \
     "projectdata__s3-sync-upload_" \
     "projectdata__create-download-script_"
