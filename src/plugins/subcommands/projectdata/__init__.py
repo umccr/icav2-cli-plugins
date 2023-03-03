@@ -63,8 +63,8 @@ Use "icav2 projectdata [command] --help" for more information about a command.
             from subcommands.projectdata.s3_sync_download import S3SyncDownload as subcommand
         elif cmd == "s3-sync-upload":
             from subcommands.projectdata.s3_sync_upload import S3SyncUpload as subcommand
-        # elif cmd == "create-download-script":
-        #     from subcommands.projectdata.create_download_script import create_download_script as subcommand
+        elif cmd == "create-download-script":
+            from subcommands.projectdata.create_download_script import CreateDownloadScript as subcommand
         else:
             print(self.__doc__)
             print(f"Could not find cmd \"{cmd}\". Please refer to usage above")
