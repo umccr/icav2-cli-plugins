@@ -165,6 +165,38 @@ subcommands:
         options:
           - name: browser
             summary: Display file in browser
+      find:
+        summary: Find files and directories in icav2 directory
+        parameters:
+          - name: data_path
+            summary: Folder path
+            type: string
+            completion:
+              command_string: |
+                __list_folders.sh
+        options:
+          - name: min-depth
+            summary: minimum depth to search
+            type: string
+          - name: max-depth
+            summary: maximum depth to search
+            type: string
+          - name: type
+            summary: data type
+            type: string
+            enum: [FILE, FOLDER]
+          - name: name
+            summary: name of file or directory, regex accepted
+            type: string
+          - name: creator
+            summary: The creator id or username
+            type: string
+          - name: long-listing
+            summary: use long-listing format to show owner, modification timestamp and size
+          - name: time
+            summary: sort items by time
+          - name: reverse
+            summary: reverse order
       s3-sync-download:
         summary: Upload a folder to icav2 using aws s3 sync.
         parameters:
@@ -204,6 +236,34 @@ subcommands:
           - name: s3-sync-arg
             summary: Other arguments are sent to aws s3 sync, specify multiple times for multiple arguments
             multiple: true
+            type: string
+      create-download-script:
+        summary: Create download script
+        parameters:
+          - name: data_path
+            summary: ICAv2 Directory to download
+            type: string
+            completion:
+              command_string: |
+                __list_folders.sh
+        options:
+          - name: name
+            summary: name of file or directory, regex accepted
+            type: string
+          - name: output-directory
+            summary: directory to output the file
+            type: string
+          - name: public-key
+            summary: path to public key
+            type: string
+          - name: keybase-username
+            summary: Name of keybase user to encrypt for
+            type: string
+          - name: keybase-team
+            summary: name of keybase team to encrypt for
+            type: string
+          - name: file-regex
+            summary: Expression to select only certain files
             type: string
 
   projectpipelines:
