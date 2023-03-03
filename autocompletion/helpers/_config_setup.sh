@@ -3,7 +3,7 @@ if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
     --unwrapScalar \
     '
       .access-token
-    ' "${HOME}/.icav2/.session.ica.yaml"
+    ' < "${HOME}/.icav2/.session.ica.yaml"
   )"
 fi
 
@@ -13,7 +13,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' "${HOME}/.icav2/.session.ica.yaml"
+      ' < "${HOME}/.icav2/.session.ica.yaml"
   )"
 fi
 
