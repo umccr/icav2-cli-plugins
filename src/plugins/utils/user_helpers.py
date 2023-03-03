@@ -22,7 +22,6 @@ def get_user_from_user_id(user_id: str) -> User:
     with ApiClient(get_libicav2_configuration()) as api_client:
         # Create an instance of the API class
         api_instance = UserApi(api_client)
-    user_id = "userId_example"  # str |
 
     # Get the user
     try:
