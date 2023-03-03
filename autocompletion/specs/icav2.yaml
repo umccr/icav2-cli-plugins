@@ -3,77 +3,56 @@ name: icav2
 
 subcommands:
   analysisstorages:
-    summary: |
-      Analysis storages commands
+    summary: Analysis storages commands
     subcommands:
       list:
-        summary: |
-          list of storage id's
+        summary: list of storage id's
   # FIXME override completion subcommand
   config:
-    summary: |
-      Config actions
+    summary: Config actions
     subcommands:
       get:
-        summary: |
-          Get configuration information
+        summary: Get configuration information
       reset:
-        summary: |
-          Remove the configuration information
+        summary: Remove the configuration information
       set:
-        summary: |
-          Set configuration information
+        summary: Set configuration information
   dataformats:
-    summary: |
-      Data format commands
+    summary: Data format commands
     subcommands:
       list:
-        summary: |
-          List data formats
+        summary: List data formats
   help:
-    summary: |
-      Help about any command
+    summary: Help about any command
 
   metadatamodels:
-    summary: |
-      Metadata model commands
+    summary: Metadata model commands
     subcommands:
       list:
-        summary: |
-          list of metadata models
+        summary: list of metadata models
   pipelines:
-    summary: |
-      Pipeline commands
+    summary: Pipeline commands
     subcommands:
       get:
-        summary: |
-          Get details of a pipeline
+        summary: Get details of a pipeline
       list:
-        summary: |
-          List pipelines
+        summary: List pipelines
   projectanalyses:
-    summary: |
-      Project analyses commands
+    summary: Project analyses commands
     subcommands:
       get:
-        summary: |
-          Get the details of an analysis
+        summary: Get the details of an analysis
       input:
-        summary: |
-          Retrieve input of analyses commands
+        summary: Retrieve input of analyses commands
       list:
-        summary: |
-          List of analyses for a project
+        summary: List of analyses for a project
       output:
-        summary: |
-          Retrieve output of analyses commands
+        summary: Retrieve output of analyses commands
       update:
-        summary: |
-          Update tags of analyses
+        summary: Update tags of analyses
       # CUSTOM FUNCTIONS
       list-analysis-steps:
-        summary: |
-          List analysis steps
+        summary: List analysis steps
         parameters:
           - name: analysis_id
             summary: analysis id
@@ -85,8 +64,7 @@ subcommands:
           - name: show-technical-steps
             summary: Also list technical steps
       get-cwl-analysis-input-json:
-        summary: |
-          List cwl analysis input json
+        summary: List cwl analysis input json
         parameters:
           - name: analysis_id
             summary: analysis id
@@ -95,8 +73,7 @@ subcommands:
               command_string: |
                 __list_analysis_ids.sh
       get-cwl-analysis-output-json:
-        summary: |
-          List cwl analysis output json
+        summary: List cwl analysis output json
         parameters:
           - name: analysis_id
             summary: analysis id
@@ -105,8 +82,7 @@ subcommands:
               command_string: |
                 __list_analysis_ids.sh
       get-analysis-step-logs:
-        summary: |
-          List analysis step logs
+        summary: List analysis step logs
         parameters:
           - name: analysis_id
             summary: analysis id
@@ -126,61 +102,43 @@ subcommands:
             summary: Write output to file
             type: file
   projectdata:
-    summary: |
-      Project Data commands
+    summary: Project Data commands
     subcommands:
       archive:
-        summary: | 
-          archive data
+        summary: archive data
       create:
-        summary: | 
-          Create data id for a project
+        summary: Create data id for a project
       delete:
-        summary: | 
-          delete data
+        summary: delete data
       download:
-        summary: | 
-          Download a file/folder
+        summary: Download a file/folder
       downloadurl:
-        summary: | 
-          get download url
+        summary: get download url
       folderuploadsession:
-        summary: | 
-          Get details of a folder upload
+        summary: Get details of a folder upload
       get:
-        summary: | 
-          Get details of a data
+        summary: Get details of a data
       link:
-        summary: | 
-          Link data to a project
+        summary: Link data to a project
       list:
-        summary: | 
-          List data
+        summary: List data
       mount:
-        summary: | 
-          Mount project data
+        summary: Mount project data
       temporarycredentials:
-        summary: | 
-          fetch temporal credentials for data
+        summary: fetch temporal credentials for data
       unarchive:
-        summary: | 
-          unarchive data
+        summary: unarchive data
       unlink:
-        summary: | 
-          Unlink data to a project
+        summary: Unlink data to a project
       unmount:
-        summary: | 
-          Unmount project data
+        summary: Unmount project data
       update:
-        summary: | 
-          Updates the details of a data
+        summary: Updates the details of a data
       upload:
-        summary: | 
-          Upload a file/folder
+        summary: Upload a file/folder
       # CUSTOM FUNCTIONS
       ls:
-        summary: |
-          List data in directory, similar to ls in a posix file system
+        summary: List data in directory, similar to ls in a posix file system
         parameters:
           - name: data_path
             summary: Folder path
@@ -190,17 +148,13 @@ subcommands:
                 __list_files_and_folders.sh
         options:
           - name: long-listing
-            summary: |
-              use long-listing format to show owner, modification timestamp and size
+            summary: use long-listing format to show owner, modification timestamp and size
           - name: time
-            summary: |
-              sort items by time
+            summary: sort items by time
           - name: reverse
-            summary: |
-              reverse order
+            summary: reverse order
       view:
-        summary: |
-          View a file to stdout
+        summary: View a file to stdout
         parameters:
           - name: data_path
             summary: Folder path
@@ -210,11 +164,41 @@ subcommands:
                 __list_files_and_folders.sh
         options:
           - name: browser
-            summary: |
-              Display file in browser
+            summary: Display file in browser
+      find:
+        summary: Find files and directories in icav2 directory
+        parameters:
+          - name: data_path
+            summary: Folder path
+            type: string
+            completion:
+              command_string: |
+                __list_folders.sh
+        options:
+          - name: min-depth
+            summary: minimum depth to search
+            type: string
+          - name: max-depth
+            summary: maximum depth to search
+            type: string
+          - name: type
+            summary: data type
+            type: string
+            enum: [FILE, FOLDER]
+          - name: name
+            summary: name of file or directory, regex accepted
+            type: string
+          - name: creator
+            summary: The creator id or username
+            type: string
+          - name: long-listing
+            summary: use long-listing format to show owner, modification timestamp and size
+          - name: time
+            summary: sort items by time
+          - name: reverse
+            summary: reverse order
       s3-sync-download:
-        summary: |
-          Upload a folder to icav2 using aws s3 sync.
+        summary: Upload a folder to icav2 using aws s3 sync.
         parameters:
           - name: data_path
             summary: ICAV2 Source directory
@@ -227,17 +211,14 @@ subcommands:
             type: dir
         options:
           - name: write-script-path
-            summary: |
-              Optional, write out a script instead of invoking aws s3 command
+            summary: Optional, write out a script instead of invoking aws s3 command
             type: file
           - name: s3-sync-arg
-            summary: |
-              Other arguments are sent to aws s3 sync, specify multiple times for multiple arguments
+            summary: Other arguments are sent to aws s3 sync, specify multiple times for multiple arguments
             multiple: true
             type: string
       s3-sync-upload:
-        summary: |
-          Upload a folder to icav2 using aws s3 sync.
+        summary: Upload a folder to icav2 using aws s3 sync.
         parameters:
           - name: upload_path
             summary: Upload directory
@@ -250,41 +231,59 @@ subcommands:
                 __list_folders.sh
         options:
           - name: write-script-path
-            summary: |
-              Optional, write out a script instead of invoking aws s3 command
+            summary: Optional, write out a script instead of invoking aws s3 command
             type: file
           - name: s3-sync-arg
-            summary: |
-              Other arguments are sent to aws s3 sync, specify multiple times for multiple arguments
+            summary: Other arguments are sent to aws s3 sync, specify multiple times for multiple arguments
             multiple: true
+            type: string
+      create-download-script:
+        summary: Create download script
+        parameters:
+          - name: data_path
+            summary: ICAv2 Directory to download
+            type: string
+            completion:
+              command_string: |
+                __list_folders.sh
+        options:
+          - name: name
+            summary: name of file or directory, regex accepted
+            type: string
+          - name: output-directory
+            summary: directory to output the file
+            type: string
+          - name: public-key
+            summary: path to public key
+            type: string
+          - name: keybase-username
+            summary: Name of keybase user to encrypt for
+            type: string
+          - name: keybase-team
+            summary: name of keybase team to encrypt for
+            type: string
+          - name: file-regex
+            summary: Expression to select only certain files
             type: string
 
   projectpipelines:
-    summary: |
-      Project pipeline commands
+    summary: Project pipeline commands
     subcommands:
       create:
-        summary: |
-          Create a pipeline
+        summary: Create a pipeline
       input:
-        summary: |
-          Retrieve input parameters of pipeline
+        summary: Retrieve input parameters of pipeline
       link:
-        summary: |
-          Link pipeline to a project
+        summary: Link pipeline to a project
       list:
-        summary: |
-          List of pipelines for a project
+        summary: List of pipelines for a project
       start:
-        summary: |
-          Start a pipeline
+        summary: Start a pipeline
       unlink:
-        summary: |
-          Unlink pipeline from a project
+        summary: Unlink pipeline from a project
       # CUSTOM FUNCTIONS
       create-cwl-workflow-from-zip:
-        summary: |
-          From a zip file, deploy a workflow to icav2
+        summary: From a zip file, deploy a workflow to icav2
         parameters:
           - name: zipped_workflow_path
             summary: Path to zipped workflow file
@@ -298,8 +297,7 @@ subcommands:
             type: string
             enum: [Small, Medium, Large]
       create-cwl-workflow-from-github-release:
-        summary: |
-          From a github release, deploy a workflow to icav2
+        summary: From a github release, deploy a workflow to icav2
         parameters:
           - name: github_release_url
             summary: Github release url
@@ -313,213 +311,162 @@ subcommands:
             type: string
             enum: [ Small, Medium, Large ]
       create-cwl-wes-input-template:
-        summary: |
-          Create a WES input template for a CWL workflow ready for launch
+        summary: Create a WES input template for a CWL workflow ready for launch
         options:
           - name: pipeline-id
-            summary: |
-              Optional, id of the pipeline you wish to launch
+            summary: Optional, id of the pipeline you wish to launch
             completion:
               command_string: |
                 __list_project_pipeline_ids.sh
           - name: pipeline-code
-            summary: |
-              Optional, name of the pipeline you wish to launch
+            summary: Optional, name of the pipeline you wish to launch
             completion:
               command_string: |
                 __list_project_pipeline_codes.sh
           - name: user-reference
-            summary: |
-              Optional, name of the workflow analysis
+            summary: Optional, name of the workflow analysis
             type: string
           - name: name
-            summary: |
-              Optional, name of the workflow analysis
+            summary: Optional, name of the workflow analysis
             type: string
           - name: output-template-yaml-path
-            summary: |
-              Required, Output template yaml path, parent directory must exist
+            summary: Required, Output template yaml path, parent directory must exist
             type: file
           - name: output-parent-folder-id
-            summary: |
-              Optional, the id of the parent folder to write outputs to
+            summary: Optional, the id of the parent folder to write outputs to
             type: string
           - name: output-parent-folder-path
-            summary: |
-              Optional, the path to the parent folder to write outputs to (will be created if it doesn't exist)
+            summary: Optional, the path to the parent folder to write outputs to (will be created if it doesn't exist)
             type: string
             completion:
               command_string: |
                 __list_folders.sh
           - name: analysis-storage-id
-            summary: |
-              Optional, analysis storage id, overrides default analysis storage size
+            summary: Optional, analysis storage id, overrides default analysis storage size
           - name: analysis-storage-size
-            summary: |
-              Optional, analysis storage size, one of Small, Medium, Large
+            summary: Optional, analysis storage size, one of Small, Medium, Large
             type: string
             enum: [Small, Medium, Large]
           - name: activation-id
-            summary: |
-              Optional, the activation id used by the pipeline analysis
+            summary: Optional, the activation id used by the pipeline analysis
             type: string
           - name: user-tag
-            summary: |
-              User tags to attach to the analysis pipeline, specify multiple times for multiple user tags
+            summary: User tags to attach to the analysis pipeline, specify multiple times for multiple user tags
             multiple: true
             type: string
           - name: technical-tag
-            summary: |
-              User tags to attach to the analysis pipeline, specify multiple times for multiple technical tags
+            summary: User tags to attach to the analysis pipeline, specify multiple times for multiple technical tags
             multiple: true
             type: string
           - name: reference-tag
-            summary: |
-              User tags to attach to the analysis pipeline, specify multiple times for multiple reference tags
+            summary: User tags to attach to the analysis pipeline, specify multiple times for multiple reference tags
             multiple: true
             type: string
 
       start-cwl-wes:
-        summary: |
-          Launch an analysis on icav2
+        summary: Launch an analysis on icav2
         options:
           - name: launch-yaml
-            summary: |
-              Required, input json similar to v1
+            summary: Required, input json similar to v1
             type: file
           - name: pipeline-id
-            summary: |
-              Optional, id of the pipeline you wish to launch
+            summary: Optional, id of the pipeline you wish to launch
             type: string
             completion:
               command_string: |
                 __list_project_pipeline_ids.sh
           - name: pipeline-code
-            summary: |
-              Optional, name of the pipeline you wish to launch
+            summary: Optional, name of the pipeline you wish to launch
             type: string
             completion:
               command_string: |
                 __list_project_pipeline_codes.sh
           - name: output-parent-folder-id
-            summary: |
-              Optional, the id of the parent folder to write outputs to
+            summary: Optional, the id of the parent folder to write outputs to
           - name: output-parent-folder-path
-            summary: |
-              Optional, the path to the parent folder to write outputs to (will be created if it doesn't exist)
+            summary: Optional, the path to the parent folder to write outputs to (will be created if it doesn't exist)
             completion:
               command_string: |
                 __list_folders.sh
           - name: analysis-storage-id
-            summary: |
-              Optional, analysis storage id, overrides default analysis storage size
+            summary: Optional, analysis storage id, overrides default analysis storage size
             type: string
           - name: analysis-storage-size
-            summary: |
-              Optional, analysis storage size, one of Small, Medium, Large
+            summary: Optional, analysis storage size, one of Small, Medium, Large
             type: string
             enum: [ Small, Medium, Large ]
           - name: activation-id
-            summary: |
-              Optional, the activation id used by the pipeline analysis
+            summary: Optional, the activation id used by the pipeline analysis
           - name: create-cwl-analysis-json-output-path
-            summary: |
-              Optional, Path to output a json file that contains the body for a create cwl analysis (https://ica.illumina.com/ica/api/swagger/index.html#/Project%20Analysis/createCwlAnalysis)
+            summary: Optional, Path to output a json file that contains the body for a create cwl analysis (https://ica.illumina.com/ica/api/swagger/index.html#/Project%20Analysis/createCwlAnalysis)
             type: string
 
   projects:
-    summary: |
-      Project commands
+    summary: Project commands
     subcommands:
       create:
-        summary: |
-          Create a project
+        summary: Create a project
       enter:
-        summary: |
-          Enter project context
+        summary: Enter project context
         parameters:
           - name: project_name
-            summary: |
-              Name of project to enter
+            summary: Name of project to enter
             type: string
             completion:
               command_string: | 
                 __list_project_names.sh
       exit:
-        summary: |
-          Exit project context
+        summary: Exit project context
       get:
-        summary: |
-          Get details of a project
+        summary: Get details of a project
       list:
-        summary: |
-          List projects
+        summary: List projects
 
   projectsamples:
-    summary: |
-      Project samples commands
+    summary: Project samples commands
     subcommands:
       complete:
-        summary: |
-          Set sample to complete
+        summary: Set sample to complete
       create:
-        summary: |
-          Create a sample for a project
+        summary: Create a sample for a project
       delete:
-        summary: |
-          Delete a sample for a project
+        summary: Delete a sample for a project
       get:
-        summary: |
-          Get details of a sample
+        summary: Get details of a sample
       link:
-        summary: |
-          Link data to a sample for a project
+        summary: Link data to a sample for a project
       list:
-        summary: |
-          List of samples for a project
+        summary: List of samples for a project
       listdata:
-        summary: |
-          List data from given sample
+        summary: List data from given sample
       unlink:
-        summary: |
-          Unlink data from a sample for a project
+        summary: Unlink data from a sample for a project
       update:
-        summary: |
-          Update a sample for a project
+        summary: Update a sample for a project
   regions:
-    summary: |
-      Region commands
+    summary: Region commands
     subcommands:
       list:
-        summary: |
-          list of regions
+        summary: list of regions
 
   storagebundles:
-    summary: |
-      Storage bundle commands
+    summary: Storage bundle commands
     subcommands:
       list:
-        summary: |
-          list of storage bundles
+        summary: list of storage bundles
 
   storageconfigurations:
-    summary: |
-      Storage configurations commands
+    summary: Storage configurations commands
     subcommands:
       list:
-        summary: |
-          list of storage configurations
+        summary: list of storage configurations
   tokens:
-    summary: |
-      Tokens commands
+    summary: Tokens commands
     subcommands:
       create:
-        summary: |
-          Create a JWT token
+        summary: Create a JWT token
       refresh:
-        summary: |
-          Refresh a JWT token from basic authentication
+        summary: Refresh a JWT token from basic authentication
 
   version:
-    summary: |
-      The version of this application
+    summary: The version of this application

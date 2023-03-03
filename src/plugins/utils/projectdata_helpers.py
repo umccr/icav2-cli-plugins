@@ -75,6 +75,87 @@ def get_data_obj_from_project_id_and_path(project_id: str, data_path: str) -> Pr
         raise FileNotFoundError(f"Found multiple results for {data_path} in project {project_id}")
 
 
+def bulk_presign_directory(project_id: str, folder_path: str, folder_id: str) -> List[Dict]:
+    """
+    Given a folder ID, return a relative path and presigned URL for every file in the directory
+    :param folder_path: /path/to/directory (used to create relative paths to the directory)
+    :param folder_id: fol.123456
+    :return: [
+        {
+          "path": "subdirectory/filename.txt",
+          "presigned_url": "https://..."
+        },
+        {
+        }
+    ]
+    """
+    import pandas as pd
+
+    # Folder df map
+    data_ids_df = pd.DataFrame(
+        map(
+            lambda x: {
+                "data_type": x.data.details.data_type,
+                "data_id": x.data.id,
+                "path": x.data.details.path
+            },
+            find_data_recursively(
+                project_id=project_id,
+                parent_folder_path=folder_path,
+                data_type="FILE",
+                name=".*"
+            )
+        )
+    )
+
+    # Get list of data ids
+    data_ids = data_ids_df["data_id"]
+
+    # Get configuration
+    configuration = get_libicav2_configuration()
+
+    # Launch get ids
+    returncode, stdout, stderr = run_subprocess_proc(
+        [
+            "curl", "--fail", "--silent", "--location", "--show-error",
+            "--request", "POST",
+            "--header", "Accept: application/vnd.illumina.v3+json",
+            "--header", f"Authorization: Bearer {get_libicav2_configuration().access_token}",
+            "--header", "Content-Type: application/vnd.illumina.v3+json",
+            "--data", str(json.dumps({"dataIds": data_ids.tolist()})),
+            "--url", f"{configuration.host}/api/projects/{project_id}/data:createDownloadUrls"
+        ],
+        capture_output=True
+    )
+    if not returncode == 0:
+        logger.error(f"Could not get list of presigned urls for data path {folder_path}")
+        logger.error(f"Stderr was:{stderr}")
+        raise ChildProcessError
+
+    # Stdout items is a list of dicts with the following attributes
+    # dataId
+    # urn
+    # url
+    # So need to remap path from data Id
+
+    # Map IDs to paths to get presigned urls
+    paths_urls_df = pd.merge(
+        data_ids_df,
+        pd.DataFrame(
+            json.loads(stdout).get("items")
+        ),
+        left_on="data_id",
+        right_on="dataId"
+    ).rename(
+        columns={"url": "presigned_url"},
+    )[["path", "data_id", "presigned_url"]]
+
+    # Get path as a relative path to the input folder path
+    paths_urls_df["path"] = paths_urls_df["path"].apply(lambda x: str(Path(x).relative_to(folder_path)))
+
+    return paths_urls_df
+
+
 def list_data_non_recursively(project_id: str, parent_folder_id: Optional[str] = None, parent_folder_path: Optional[str] = None, sort: Optional[str] = "") -> List[ProjectData]:
     """
     List data non recursively
@@ -162,7 +243,7 @@ def check_is_file(project_id: str, file_path: str) -> bool:
 def find_data_recursively(project_id: str,
                           parent_folder_id: Optional[str] = None, parent_folder_path: Optional[str] = None,
                           name: Optional[str] = "", data_type: Optional[str] = None,
-                          mindepth: int = 0, maxdepth: int = 0) -> List[ProjectData]:
+                          mindepth: Optional[int] = None, maxdepth: Optional[int] = None) -> List[ProjectData]:
     """
     Run a find on a data name
     :return:
@@ -171,18 +252,20 @@ def find_data_recursively(project_id: str,
     matched_data_items: List[ProjectData] = []
 
     # Get top level items
-    data_items: List[ProjectData] = list_data_non_recursively(project_id, parent_folder_id, parent_folder_path)
+    data_items: List[ProjectData] = list_data_non_recursively(project_id, parent_folder_path=parent_folder_path)
 
     # Check if we can pull out any items in the top directory
-    if mindepth == 0:
+    if mindepth is None or mindepth <= 0:
         name_regex_obj = re.compile(name)
         for data_item in data_items:
             data_item_match = name_regex_obj.match(data_item.data.details.name)
+            if data_type is not None and not data_item.data.details.data_type == data_type:
+                continue
             if data_item_match is not None:
                 matched_data_items.append(data_item)
 
     # Otherwise look recursively
-    if not maxdepth == 0:
+    if maxdepth is None or not maxdepth <= 0:
         # Listing subfolders
         subfolders = filter(
             lambda x: x.data.details.data_type == "FOLDER",
@@ -190,12 +273,15 @@ def find_data_recursively(project_id: str,
         )
         for subfolder in subfolders:
             matched_data_items.extend(
-                find_data_recursively(project_id=project_id,
-                                      parent_folder_id=subfolder.data.id,
-                                      name=name,
-                                      data_type=data_type,
-                                      mindepth=mindepth-1,
-                                      maxdepth=maxdepth-1)
+                find_data_recursively(
+                    project_id=project_id,
+                    parent_folder_id=subfolder.data.id,
+                    parent_folder_path=subfolder.data.details.path,
+                    name=name,
+                    data_type=data_type,
+                    mindepth=mindepth-1 if mindepth is not None else None,
+                    maxdepth=maxdepth-1 if maxdepth is not None else None
+                )
             )
 
     return matched_data_items

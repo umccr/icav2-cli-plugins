@@ -27,13 +27,7 @@ MacOS users, please install greadlink through 'brew install coreutils'
 
 ICAV2_CLI_PLUGINS_HOME="$HOME/.icav2-cli-plugins"
 PLUGIN_VERSION="__PLUGIN_VERSION__"
-if [[ "${PLUGIN_VERSION}" == "__PLUGIN_VERSION__" ]]; then
-  echo "Installing from source" 1>&2
-  latest_tag="$(git describe --abbrev=0 --tags)"
-  latest_commit="$(git log --format="%H" -n 1 | cut -c1-7)"
-  PLUGIN_VERSION="${latest_tag}--patch-${latest_commit}"
-  echo "Setting plugin version as '${PLUGIN_VERSION}'"
-fi
+LIBICA_VERSION="__LIBICA_VERSION__"
 
 ###########
 # Functions
@@ -117,7 +111,24 @@ get_this_path() {
   echo "${this_dir}"
 }
 
-
+################
+# GET VERSIONS
+################
+if [[ "${PLUGIN_VERSION}" == "__PLUGIN_VERSION__" ]]; then
+  echo "Installing from source" 1>&2
+  latest_tag="$(git describe --abbrev=0 --tags)"
+  latest_commit="$(git log --format="%H" -n 1 | cut -c1-7)"
+  PLUGIN_VERSION="${latest_tag}--patch-${latest_commit}"
+  echo "Setting plugin version as '${PLUGIN_VERSION}'"
+fi
+if [[ "${LIBICA_VERSION}" == "__LIBICA_VERSION__" ]]; then
+  echo "Getting libica version from requirements.txt" 1>&2
+  LIBICA_VERSION="$( \
+    grep libica "$(get_this_path)/src/plugins/requirements.txt" |
+    cut -f3 -d'=' \
+  )"
+  echo "Setting libica version as '${LIBICA_VERSION}'"
+fi
 
 #########
 # CHECKS
@@ -228,10 +239,20 @@ rsync --delete --archive \
 rsync --delete --archive \
   "$(get_this_path)/src/plugins/subcommands/" "${SITE_PACKAGES_DIR}/subcommands/"
 rsync --delete --archive \
+  "$(get_this_path)/templates/" "${ICAV2_CLI_PLUGINS_HOME}/plugins/templates/"
+rsync --delete --archive \
   "$(get_this_path)/shell_functions/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/"
 # Update shell function
 sed -i "s/__PLUGIN_VERSION__/${PLUGIN_VERSION}/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/icav2.sh"
 
+######################
+# LINK PANDOC BINARY
+######################
+# Link pandoc binary from site-packages/pypandoc/files/pandoc to ${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin
+( \
+  cd "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/";
+  ln -sf "${SITE_PACKAGES_DIR}/pypandoc/files/pandoc" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/pandoc}"
+)
 
 ######################
 # COPY AUTOCOMPLETIONS

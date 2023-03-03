@@ -14,22 +14,12 @@ Usage:
   icav2 projectpipelines <command> <args...>
 
 Available Commands:
-  archive              archive data
-  create               Create data id for a project
-  delete               delete data
-  download             Download a file/folder
-  downloadurl          get download url
-  folderuploadsession  Get details of a folder upload
-  get                  Get details of a data
-  link                 Link data to a project
-  list                 List data
-  mount                Mount project data
-  temporarycredentials fetch temporal credentials for data
-  unarchive            unarchive data
-  unlink               Unlink data to a project
-  unmount              Unmount project data
-  update               Updates the details of a data
-  upload               Upload a file/folder
+  create      Create a pipeline
+  input       Retrieve input parameters of pipeline
+  link        Link pipeline to a project
+  list        List of pipelines for a project
+  start       Start a pipeline
+  unlink      Unlink pipeline from a project
 
 Plugin Commands:
   create-cwl-workflow-from-zip             Upload a CWL Workflow to ICAv2 from a local zip path
