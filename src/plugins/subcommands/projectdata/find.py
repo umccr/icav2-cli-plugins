@@ -29,6 +29,7 @@ class ProjectDataFind(Command):
                            [-x=<max_depth> | --max-depth=<max_depth]
                            [--type=<type>]
                            [-n=<name> | --name=<name>]
+                           [-c=<creator_username_or_id> | --creator=<creator_username_or_id>]
                            [-l | --long-listing]
                            [-t | --time]
                            [-r | --reverse]
@@ -192,6 +193,15 @@ Example: icav2 projectdata find /reference_data/
             data_items.sort(
                 key=lambda x: x.data.details.path,
                 reverse=self.reverse
+            )
+
+        # If creator id is set, filter on creator id
+        if self.creator_id is not None:
+            data_items = list(
+                filter(
+                    lambda x: x.data.details.get("creator_id", None) == self.creator_id,
+                    data_items
+                )
             )
 
         logger.debug("Writing output")
