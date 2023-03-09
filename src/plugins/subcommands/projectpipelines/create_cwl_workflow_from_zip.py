@@ -8,8 +8,7 @@ Given a zip file, upload a workflow to ICAV2
 Create technical tags for
     inputs logic and override steps
 """
-
-from argparse import ArgumentError
+import json
 import os
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -58,6 +57,11 @@ Example:
         self.zipped_workflow_obj: Optional[ZippedCWLWorkflow] = None
         self.project_id: Optional[str] = None
         self.analysis_storage_id: Optional[str] = None
+
+        # For printing
+        self.pipeline_id: Optional[str] = None
+        self.pipeline_code: Optional[str] = None
+        self.is_output_json: Optional[bool] = None
 
         super().__init__(command_argv)
 
@@ -108,10 +112,21 @@ Example:
             html_documentation_path=html_doc
         )
 
-        logger.info(f"Successfully created pipeline with pipeline id {pipeline_id} and pipeline code {pipeline_code}")
+        logger.info(f"Successfully created pipeline with pipeline id {self.pipeline_id} and pipeline code {self.pipeline_code}")
+
+        if self.is_output_json:
+            self.print_to_stdout()
 
     def __exit__(self):
         os.remove(self.params_xml)
+
+    def print_to_stdout(self):
+        print(
+            json.dumps({
+                "pipeline_id": self.pipeline_id,
+                "pipeline_code": self.pipeline_code
+            })
+        )
 
     def check_args(self):
         # Check zipped workflow path exists
@@ -138,6 +153,12 @@ Example:
             self.analysis_storage_id = get_analysis_storage_id_from_analysis_storage_size(
                 ICAv2AnalysisStorageSize(analysis_storage_size_arg)
             )
+
+        # Get the --json parameter
+        if self.args.get("--json", False):
+            self.is_output_json = True
+        else:
+            self.is_output_json = False
 
     def get_zipped_workflow_obj(self) -> ZippedCWLWorkflow:
         return ZippedCWLWorkflow(self.zipped_workflow_path)
