@@ -10,15 +10,15 @@ This is entirely the wrong spot for this, but the code was already all here!
 import json
 import os
 
-from utils import is_project_id_format
+from utils import is_uuid_format
 from utils.config_helpers import get_project_id
+from utils.errors import InvalidArgumentError
 
 from utils.projectanalysis_helpers import \
     get_workflow_steps, filter_analysis_steps
 
 from subcommands import Command
 from utils.logger import get_logger
-from argparse import ArgumentError
 from typing import Optional, Dict, List
 
 
@@ -67,11 +67,11 @@ Example:
         # Check analysis id is not None
         if self.analysis_id is None:
             logger.error("Must specify analysis-id positional argument")
-            raise ArgumentError
+            raise InvalidArgumentError
 
-        if not is_project_id_format(self.analysis_id):
+        if not is_uuid_format(self.analysis_id):
             logger.error(f"Got --analysis-id parameter as {self.analysis_id} but is not in UUID format")
-            raise ArgumentError
+            raise InvalidArgumentError
 
         # Check if show technical steps has been specified
         if self.args.get("--show-technical-steps", False):

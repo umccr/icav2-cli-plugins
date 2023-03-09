@@ -19,7 +19,7 @@ def sanitise_dict_keys(input_dict: Dict) -> Dict:
     return output_dict
 
 
-def is_project_id_format(project_id: str) -> bool:
+def is_uuid_format(project_id: str) -> bool:
     try:
         _ = UUID(project_id, version=4)
         return True

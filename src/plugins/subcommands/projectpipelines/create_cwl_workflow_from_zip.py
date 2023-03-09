@@ -16,6 +16,7 @@ from tempfile import NamedTemporaryFile
 from typing import Optional, Dict
 import math
 
+from utils.errors import InvalidArgumentError
 from utils.config_helpers import get_project_id
 from utils.cwl_helpers import ZippedCWLWorkflow, generate_plot_png, generate_markdown_doc, \
     generate_standalone_html_through_pandoc
@@ -117,10 +118,10 @@ Example:
         self.zipped_workflow_path = Path(self.args.get("<zipped_workflow_path>"))
         if not self.zipped_workflow_path.is_file():
             logger.error(f"Could not access zipped workflow path {self.zipped_workflow_path}")
-            raise ArgumentError
+            raise InvalidArgumentError
         if not self.zipped_workflow_path.name.endswith(".zip"):
             logger.error(f"zipped-workflow-path parameter {self.zipped_workflow_path} does not end with '.zip'")
-            raise ArgumentError
+            raise InvalidArgumentError
 
         # Check we can get project id
         self.project_id = get_project_id()
