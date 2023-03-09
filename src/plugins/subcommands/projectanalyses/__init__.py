@@ -51,6 +51,8 @@ Use "icav2 projectanalyses [command] --help" for more information about a comman
             from subcommands.projectanalyses.list_steps import ProjectAnalysesListAnalysisSteps as subcommand
         elif cmd == "get-analysis-step-logs":
             from subcommands.projectanalyses.get_step_logs import ProjectAnalysesGetStepLogs as subcommand
+        elif cmd == "gantt-plot":
+            from subcommands.projectanalyses.gantt_plot import ProjectAnalysesGanttPlot as subcommand
         else:
             print(self.__doc__)
             print(f"Could not find cmd \"{cmd}\". Please refer to usage above")
