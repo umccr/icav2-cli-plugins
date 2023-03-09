@@ -1,16 +1,12 @@
 #!/usr/bin/env python3
 
-import argparse
-import logging
-from argparse import ArgumentError
-import os
 from typing import List, Optional
-import math
 import re
 
 from libica.openapi.v2.model.project_data import ProjectData
 
-from utils import is_project_id_format
+from utils import is_uuid_format
+from utils.errors import InvalidArgumentError
 from utils.config_helpers import get_project_id_from_session_file, get_project_id
 from utils.projectdata_helpers import check_is_directory, list_data_non_recursively, list_files_short, list_files_long, \
     find_data_recursively
@@ -97,7 +93,7 @@ Example: icav2 projectdata find /reference_data/
         # Check data path ends with a '/'
         if not data_path.endswith("/"):
             logger.error("data path parameter should end in a '/'")
-            raise ArgumentError
+            raise InvalidArgumentError
         self.data_path = data_path
 
         # Get project id
@@ -118,21 +114,21 @@ Example: icav2 projectdata find /reference_data/
         if min_depth_arg is not None:
             if not str(min_depth_arg).isdigit():
                 logger.error(f"Expecting a numeric value for --min-depth but got '{min_depth_arg}'")
-                raise ArgumentError
+                raise InvalidArgumentError
             self.min_depth = int(self.args.get("--min-depth"))
 
         max_depth_arg = self.args.get("--max-depth", None)
         if max_depth_arg is not None:
             if not str(max_depth_arg).isdigit():
                 logger.error(f"Expecting a numeric value for --max-depth but got '{max_depth_arg}'")
-                raise ArgumentError
+                raise InvalidArgumentError
             self.max_depth = int(self.args.get("--max-depth"))
 
         type_arg = self.args.get("--type", None)
         if type_arg is not None:
             if not str(type_arg).upper() in [ "FILE", "DIRECTORY" ]:
                 logger.error(f"Expected type arg to be one of 'FILE' or 'DIRECTORY' but got '{type_arg}'")
-                raise ArgumentError
+                raise InvalidArgumentError
             self.type = type_arg
 
         name_arg = self.args.get("--name", None)
@@ -143,7 +139,7 @@ Example: icav2 projectdata find /reference_data/
 
         creator_arg = self.args.get("--creator", None)
         if creator_arg is not None:
-            if is_project_id_format(creator_arg):
+            if is_uuid_format(creator_arg):
                 self.creator_id = creator_arg
                 self.creator_name = get_user_from_user_id(self.creator_id).username
             else:

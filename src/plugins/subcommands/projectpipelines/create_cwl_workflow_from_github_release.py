@@ -10,11 +10,11 @@ Create technical tags for
 """
 import os
 import shutil
-from argparse import ArgumentError
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Optional
 
+from utils.errors import InvalidArgumentError
 from utils.config_helpers import get_project_id
 from utils.cwl_helpers import ZippedCWLWorkflow
 from utils.gh_helpers import download_zipped_workflow_from_github_release, get_release_repo_and_tag_from_release_url
@@ -131,7 +131,7 @@ Example:
         url_obj = requests.get(github_release_url_arg)
         if not url_obj.status_code == 200:
             logger.error(f"Got status code {url_obj.status_code}, reason {url_obj.reason}")
-            raise ArgumentError
+            raise InvalidArgumentError
 
         # Set release url
         self.github_release_url = github_release_url_arg

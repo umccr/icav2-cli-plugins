@@ -8,7 +8,6 @@ Given a pipeline id or pipeline code, create a wes input template that comprises
 * engine parameters
 """
 import os
-from argparse import ArgumentError
 from fileinput import FileInput
 from tempfile import NamedTemporaryFile
 from typing import Optional, List, Dict, Tuple
@@ -18,6 +17,7 @@ from ruamel.yaml import YAML, \
 
 from pathlib import Path
 
+from utils.errors import InvalidArgumentError
 from utils.config_helpers import get_project_id
 from utils.gh_helpers import get_release_markdown_file_doc_as_html, get_inputs_template_from_html_doc, \
     get_overrides_template_from_html_doc, get_release_repo_and_tag_from_release_url
@@ -186,7 +186,7 @@ Example:
             self.user_reference = name_arg
         else:
             logger.error("Must specify one of --user-reference or --name")
-            raise ArgumentError
+            raise InvalidArgumentError
 
         # Get pipeline id / code
         pipeline_id_arg = self.args.get("--pipeline-id", None)
@@ -198,7 +198,7 @@ Example:
             self.pipeline_id = get_pipeline_id_from_pipeline_code(self.project_id, pipeline_code_arg)
         else:
             logger.error("Must specify one of --pipeline-id or --pipeline-code")
-            raise ArgumentError
+            raise InvalidArgumentError
 
         # Get pipeline description
         self.pipeline_description = get_pipeline_description_from_pipeline_id(self.project_id, self.pipeline_id)
@@ -217,10 +217,10 @@ Example:
         if not self.output_template_yaml_path.parent.is_dir():
             logger.error(f"Please ensure parent directory of "
                          f"--output-template-yaml-path parameter {self.output_template_yaml_path} is set")
-            raise ArgumentError
+            raise InvalidArgumentError
         if self.output_template_yaml_path.is_dir():
             logger.error(f"Cannot create file at {self.output_template_yaml_path}, is a directory")
-            raise ArgumentError
+            raise InvalidArgumentError
 
         # Get output parent folder path / id (don't need to evaluate)
         output_parent_folder_id_arg = self.args.get("--output-parent-folder-id", None)

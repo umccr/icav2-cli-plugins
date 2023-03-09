@@ -7,7 +7,6 @@ encoded into a base64 script
 import json
 import shutil
 
-from argparse import ArgumentError
 import os
 import stat
 from base64 import b64encode
@@ -35,6 +34,7 @@ from utils.projectdata_helpers import check_is_directory, find_data_recursively,
     get_data_obj_from_project_id_and_path
 from utils.subprocess_handler import run_subprocess_proc
 from utils.template_helpers import get_templates_dir
+from utils.errors import InvalidArgumentError
 
 logger = get_logger()
 
@@ -134,13 +134,13 @@ Examples: icav2 projectdata create-download-script /test_data/outputs/
         data_path_arg = self.args.get("<data_path>", None)
         if data_path_arg is None:
             logger.error("Could not get arg for <data_path>")
-            raise ArgumentError
+            raise InvalidArgumentError
         self.data_path = Path(data_path_arg)
 
         # check data_path is real and accessible in project id
         if not check_is_directory(self.project_id, str(self.data_path) + "/"):
             logger.error(f"Could not find data path {self.data_path} in project '{self.project_id}'")
-            raise ArgumentError
+            raise InvalidArgumentError
 
         self.data_id = get_data_obj_from_project_id_and_path(
             project_id=self.project_id,
@@ -151,11 +151,11 @@ Examples: icav2 projectdata create-download-script /test_data/outputs/
         name_arg = self.args.get("--name", None)
         if name_arg is None:
             logger.error("Could not get arg for --name")
-            raise ArgumentError
+            raise InvalidArgumentError
         # Check --name matches file friendly regex
         if re.fullmatch(r"[\w.\-_]+", name_arg) is None:
             logger.error("Please ensure --name argument contains only the characters 'A-Za-z0-9.-_'")
-            raise ArgumentError
+            raise InvalidArgumentError
         self.name = name_arg
 
         # Get output directory
@@ -164,7 +164,7 @@ Examples: icav2 projectdata create-download-script /test_data/outputs/
             output_directory_arg = os.getcwd()
         elif not Path(output_directory_arg).is_dir():
             logger.error(f"--output-directory specified as '{output_directory_arg}' but directory does not exist")
-            raise ArgumentError
+            raise InvalidArgumentError
 
         # Get date
         self.date = datetime.utcnow()
@@ -185,11 +185,11 @@ Examples: icav2 projectdata create-download-script /test_data/outputs/
             )
         ) > 1:
             logger.error("Please specify no more than one of --public-key, --keybase-username or --keybase-team")
-            raise ArgumentError
+            raise InvalidArgumentError
         if public_key_arg is not None:
             if not Path(public_key_arg).is_file():
                 logger.error(f"--public-key value specified as '{public_key_arg}' but file does not exist")
-                raise ArgumentError
+                raise InvalidArgumentError
             self.public_key = Path(public_key_arg)
             self.is_encrypted = True
         if keybase_username_arg is not None:
@@ -214,7 +214,7 @@ Examples: icav2 projectdata create-download-script /test_data/outputs/
                 logger.error(
                     "Cannot find keybase binary but --keybase-username or --keybase-team was selected"
                 )
-                raise ArgumentError
+                raise InvalidArgumentError
 
         # Get the file regex
         file_regex_arg = self.args.get("--file-regex", None)

@@ -22,7 +22,7 @@ from libica.openapi.v2.model.temp_credentials import TempCredentials
 from libica.openapi.v2.model.create_data import CreateData
 from libica.openapi.v2.model.project_data import ProjectData
 from libica.openapi.v2.api.project_data_api import ProjectDataApi
-from utils import is_project_id_format
+from utils import is_uuid_format
 
 from utils.config_helpers import get_libicav2_configuration, get_project_id_from_project_name
 from utils.globals import LIBICAV2_DEFAULT_PAGE_SIZE
@@ -658,7 +658,7 @@ def convert_icav2_uri_to_data_obj(uri: str) -> ProjectData:
     data_path = uri_obj.path
 
     # Get project id
-    if is_project_id_format(project_name_or_id):
+    if is_uuid_format(project_name_or_id):
         project_id = project_name_or_id
     else:
         project_id = get_project_id_from_project_name(project_name_or_id)

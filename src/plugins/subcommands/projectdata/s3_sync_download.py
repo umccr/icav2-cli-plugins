@@ -4,9 +4,10 @@
 Use AWS sync command to download data from ICAv2
 """
 
-from argparse import ArgumentError
 from pathlib import Path
 from typing import List, Optional, Dict
+
+from utils.errors import InvalidArgumentError
 
 from subcommands import Command
 
@@ -78,7 +79,7 @@ Examples: icav2 projectdata s3-sync-download /test_data/outputs/ $HOME/outputs/
         # Check data path ends with a '/'
         if not self.data_path.endswith("/"):
             logger.error("data path parameter should end in a '/'")
-            raise ArgumentError
+            raise InvalidArgumentError
 
         self.project_id = get_project_id()
 
@@ -102,24 +103,24 @@ Examples: icav2 projectdata s3-sync-download /test_data/outputs/ $HOME/outputs/
         if not self.download_path.parent.is_dir() and \
                 self.write_script_path is None:
             logger.error(f"Please ensure parent folder of download path parameter '{self.download_path}' exists")
-            raise ArgumentError
+            raise InvalidArgumentError
 
         # Check download path is not a file
         if self.download_path.is_file() and \
                 self.write_script_path is not None:
             logger.error(f"Cannot download data to {self.download_path}, file exists")
-            raise ArgumentError
+            raise InvalidArgumentError
 
         # Check write script path is not a folder
         if self.write_script_path is not None and self.write_script_path.is_dir():
             logger.error(f"Cannot write script to {self.write_script_path}, is a directory")
-            raise ArgumentError
+            raise InvalidArgumentError
 
         # Check if parent script path exists
         if self.write_script_path is not None and \
             not self.write_script_path.parent.is_dir():
             logger.error(f"Please ensure parent folder of the write-script-path parameter '{self.write_script_path}' exists")
-            raise ArgumentError
+            raise InvalidArgumentError
 
         # Check awsv2 is installed if write script path is not set
         if self.write_script_path is None:

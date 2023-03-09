@@ -5,11 +5,11 @@ View a file
 """
 
 import argparse
-from argparse import ArgumentError
 import os
 from subprocess import SubprocessError
 from typing import Optional
 
+from utils.errors import InvalidArgumentError
 from utils.config_helpers import get_project_id_from_session_file, get_project_id
 from utils.projectdata_helpers import check_is_file, \
     create_data_download_url, get_data_obj_from_project_id_and_path, view_in_browser, write_url_contents_to_stdout
@@ -76,7 +76,7 @@ Example: icav2 projectdata view /output_data/tiny.fastq.gz | zcat | head
         # Check data path ends with a '/'
         if self.data_path.endswith("/"):
             logger.error("view subcommand can only view files not folders")
-            raise ArgumentError
+            raise InvalidArgumentError
 
         # Check data path is a file
         if not check_is_file(

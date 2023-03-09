@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 
 import sys
-from argparse import ArgumentError
 
 from docopt import docopt
+from utils.errors import InvalidArgumentError
 from utils.logger import get_logger
-from utils import version
 from utils.docopt_helpers import clean_multi_args
 
 # Collect logger
@@ -31,7 +30,7 @@ class Command:
         # Confirm 'required' arguments are present and valid
         try:
             self.check_args()
-        except ArgumentError:
+        except InvalidArgumentError:
             self._help(fail=True)
 
     def get_args(self, command_argv):

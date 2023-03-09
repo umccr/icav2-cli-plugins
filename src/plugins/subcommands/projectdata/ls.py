@@ -1,18 +1,13 @@
 #!/usr/bin/env python3
 
-import argparse
-import logging
-from argparse import ArgumentError
-import os
 from typing import List, Optional
-import math
 
 from libica.openapi.v2.model.project_data import ProjectData
 
-from utils.config_helpers import get_project_id_from_session_file, get_project_id
+from utils.errors import InvalidArgumentError
+from utils.config_helpers import get_project_id
 from utils.projectdata_helpers import check_is_directory, list_data_non_recursively, list_files_short, list_files_long
 from utils.logger import get_logger
-from utils.user_helpers import get_user_from_user_id
 
 from subcommands import Command
 
@@ -71,7 +66,7 @@ Example: icav2 projectdata ls /reference_data/
         # Check data path ends with a '/'
         if not data_path.endswith("/"):
             logger.error("data path parameter should end in a '/'")
-            raise ArgumentError
+            raise InvalidArgumentError
         self.data_path = data_path
 
         # Get project id
