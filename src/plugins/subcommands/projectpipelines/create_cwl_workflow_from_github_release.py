@@ -8,13 +8,14 @@ Given a zip file, upload a workflow to ICAV2
 Create technical tags for
     inputs logic and override steps
 """
+import json
 import os
 import shutil
-from argparse import ArgumentError
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Optional
 
+from utils.errors import InvalidArgumentError
 from utils.config_helpers import get_project_id
 from utils.cwl_helpers import ZippedCWLWorkflow
 from utils.gh_helpers import download_zipped_workflow_from_github_release, get_release_repo_and_tag_from_release_url
@@ -35,6 +36,7 @@ class ProjectDataCreateCWLWorkflowFromGitHubRelease(Command):
     icav2 projectpipelines create-cwl-workflow-from-github-release help
     icav2 projectpipelines create-cwl-workflow-from-github-release <github_release_url>
                                                                    [--analysis-storage-id=<analysis_storage_id> | --analysis-storage-size=<analysis_storage_size>]
+                                                                   [--json]
 
 Description:
     From a GitHub release, deploy a workflow to ICAv2
@@ -43,6 +45,7 @@ Options:
     <github_release_url>                               Required, path to GitHub release url
     --analysis-storage-id=<analysis_storage_id>        Optional, takes precedence over analysis-storage-size
     --analysis-storage-size=<analysis_storage_size>    Optional, default is set to Small
+    --json                                             Optional, input json
 
 Environment variables:
     ICAV2_BASE_URL           Optional, default set as https://ica.illumina.com/ica/rest
@@ -76,6 +79,11 @@ Example:
 
         # Set the description as the url from the release page
         self.description: Optional[str] = None
+
+        # For printing
+        self.pipeline_id: Optional[str] = None
+        self.pipeline_code: Optional[str] = None
+        self.is_output_json: Optional[bool] = None
 
         super().__init__(command_argv)
 
@@ -125,13 +133,24 @@ Example:
         shutil.rmtree(self.zipped_workflow_tmp_dir.name)
         os.remove(self.params_xml_file)
 
+        if self.is_output_json:
+            self.print_to_stdout()
+
+    def print_to_stdout(self):
+        print(
+            json.dumps({
+                "pipeline_id": self.pipeline_id,
+                "pipeline_code": self.pipeline_code
+            })
+        )
+
     def check_args(self):
         # Check the url exists
         github_release_url_arg = unquote(self.args.get("<github_release_url>"))
         url_obj = requests.get(github_release_url_arg)
         if not url_obj.status_code == 200:
             logger.error(f"Got status code {url_obj.status_code}, reason {url_obj.reason}")
-            raise ArgumentError
+            raise InvalidArgumentError
 
         # Set release url
         self.github_release_url = github_release_url_arg
@@ -164,6 +183,12 @@ Example:
 
         # Set the description as the GitHub release url
         self.description = f"GitHub Release URL: {self.github_release_url}"
+
+        # Get the --json parameter
+        if self.args.get("--json", False):
+            self.is_output_json = True
+        else:
+            self.is_output_json = False
 
     def set_zipped_workflow_obj(self):
         self.zipped_workflow_obj: ZippedCWLWorkflow = ZippedCWLWorkflow(self.zipped_workflow_path)

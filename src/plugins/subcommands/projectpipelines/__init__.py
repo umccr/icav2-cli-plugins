@@ -36,7 +36,7 @@ Global Flags:
   -s, --server-url string      server url to direct commands
   -k, --x-api-key string       api key used to call rest service
 
-Use "icav2 projectdata [command] --help" for more information about a command.
+Use "icav2 projectpipelines [command] --help" for more information about a command.
     """
 
     def __init__(self, command_argv):

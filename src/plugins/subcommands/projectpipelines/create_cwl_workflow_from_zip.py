@@ -8,14 +8,14 @@ Given a zip file, upload a workflow to ICAV2
 Create technical tags for
     inputs logic and override steps
 """
-
-from argparse import ArgumentError
+import json
 import os
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 from typing import Optional, Dict
 import math
 
+from utils.errors import InvalidArgumentError
 from utils.config_helpers import get_project_id
 from utils.cwl_helpers import ZippedCWLWorkflow, generate_plot_png, generate_markdown_doc, \
     generate_standalone_html_through_pandoc
@@ -57,6 +57,11 @@ Example:
         self.zipped_workflow_obj: Optional[ZippedCWLWorkflow] = None
         self.project_id: Optional[str] = None
         self.analysis_storage_id: Optional[str] = None
+
+        # For printing
+        self.pipeline_id: Optional[str] = None
+        self.pipeline_code: Optional[str] = None
+        self.is_output_json: Optional[bool] = None
 
         super().__init__(command_argv)
 
@@ -107,20 +112,31 @@ Example:
             html_documentation_path=html_doc
         )
 
-        logger.info(f"Successfully created pipeline with pipeline id {pipeline_id} and pipeline code {pipeline_code}")
+        logger.info(f"Successfully created pipeline with pipeline id {self.pipeline_id} and pipeline code {self.pipeline_code}")
+
+        if self.is_output_json:
+            self.print_to_stdout()
 
     def __exit__(self):
         os.remove(self.params_xml)
+
+    def print_to_stdout(self):
+        print(
+            json.dumps({
+                "pipeline_id": self.pipeline_id,
+                "pipeline_code": self.pipeline_code
+            })
+        )
 
     def check_args(self):
         # Check zipped workflow path exists
         self.zipped_workflow_path = Path(self.args.get("<zipped_workflow_path>"))
         if not self.zipped_workflow_path.is_file():
             logger.error(f"Could not access zipped workflow path {self.zipped_workflow_path}")
-            raise ArgumentError
+            raise InvalidArgumentError
         if not self.zipped_workflow_path.name.endswith(".zip"):
             logger.error(f"zipped-workflow-path parameter {self.zipped_workflow_path} does not end with '.zip'")
-            raise ArgumentError
+            raise InvalidArgumentError
 
         # Check we can get project id
         self.project_id = get_project_id()
@@ -137,6 +153,12 @@ Example:
             self.analysis_storage_id = get_analysis_storage_id_from_analysis_storage_size(
                 ICAv2AnalysisStorageSize(analysis_storage_size_arg)
             )
+
+        # Get the --json parameter
+        if self.args.get("--json", False):
+            self.is_output_json = True
+        else:
+            self.is_output_json = False
 
     def get_zipped_workflow_obj(self) -> ZippedCWLWorkflow:
         return ZippedCWLWorkflow(self.zipped_workflow_path)

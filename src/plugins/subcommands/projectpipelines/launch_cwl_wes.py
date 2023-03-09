@@ -4,7 +4,6 @@
 Launch a workflow through CWL WES
 """
 import json
-from argparse import ArgumentError
 from typing import Optional
 
 from libica.openapi.v2.model.create_cwl_analysis import CreateCwlAnalysis
@@ -13,6 +12,7 @@ from ruamel.yaml import YAML
 
 from pathlib import Path
 
+from utils.errors import InvalidArgumentError
 from utils.config_helpers import get_project_id
 from utils.logger import get_logger
 from utils.projectdata_helpers import check_is_directory, create_data_in_project
@@ -34,6 +34,7 @@ class ProjectDataStartCWLWES(Command):
                                          [--analysis-storage-size=<analysis_storage_size> | --analysis-storage-id=<analysis_storage_id>]
                                          [--activation-id=<activation_id>]
                                          [--create-cwl-analysis-json-output-path=<output_path>]
+                                         [--json]
 
 Description:
     Launch an analysis on icav2.
@@ -84,6 +85,7 @@ Options:
 
     --create-cwl-analysis-json-output-path=<output_path>     Optional, Path to output a json file that contains the body for a create cwl analysis (https://ica.illumina.com/ica/api/swagger/index.html#/Project%20Analysis/createCwlAnalysis)
                                                              Useful for reproducibility and debugging
+    --json                                                   Optional, Write json to stdout, useful for debugging
 
 Environment:
     ICAV2_BASE_URL (optional, defaults to ica.illumina.com)
@@ -104,6 +106,11 @@ Example:
         self.activation_id: Optional[str] = None
         self.create_cwl_analysis_json_output_path: Optional[Path] = None
 
+        self.is_output_json: Optional[bool] = None
+
+        self.analysis_id: Optional[str] = None
+        self.user_reference: Optional[str] = None
+
         super().__init__(command_argv)
 
     def __call__(self):
@@ -116,7 +123,7 @@ Example:
         self.launch_yaml_path = self.args.get("--launch-yaml", None)
         if self.launch_yaml_path is None:
             logger.error("Please specify launch yaml for input")
-            raise ArgumentError
+            raise InvalidArgumentError
         self.input_launch_json: ICAv2LaunchJson = self.read_launch_yaml()
 
         # Check output path for launch body
@@ -125,7 +132,7 @@ Example:
             self.create_cwl_analysis_json_output_path = Path(create_cwl_analysis_json_output_path_arg)
             if not self.create_cwl_analysis_json_output_path.parent.is_dir():
                 logger.error("Please ensure the parent directory of the --create-cwl-analysis-json-output-path parameter exists")
-                raise ArgumentError
+                raise InvalidArgumentError
             if self.create_cwl_analysis_json_output_path.is_dir():
                 logger.error(f"Cannot create file at {self.create_cwl_analysis_json_output_path} for --create-cwl-analysis-json-output-path parameter, is a directory")
                 raise IsADirectoryError
@@ -155,7 +162,7 @@ Example:
             )
         else:
             logger.error("Must specify one of --pipeline-id or --pipeline-code")
-            raise ArgumentError
+            raise InvalidArgumentError
 
         # Get the output parent folder id
         output_parent_folder_arg = self.args.get("--output-parent-folder-id", None)
@@ -197,6 +204,12 @@ Example:
         # Get the activation id
         self.activation_id = self.args.get("--activation-id", None)
 
+        # Get the --json parameter
+        if self.args.get("--json", False):
+            self.is_output_json = True
+        else:
+            self.is_output_json = False
+
     def launch_workflow(self):
         # Update engine parameters
         self.input_launch_json.collect_overrides_from_engine_parameters()
@@ -226,12 +239,23 @@ Example:
 
         # Launch workflow
         logger.info("Launching analysis")
-        analysis_id, user_reference = launch_cwl_workflow(
+        self.analysis_id, self.user_reference = launch_cwl_workflow(
             project_id=self.project_id,
             cwl_analysis=cwl_analysis
         )
 
-        logger.info(f"Successfully launched analysis pipeline '{self.pipeline_id}' with analysis id '{analysis_id}' and user reference '{user_reference}'")
+        logger.info(f"Successfully launched analysis pipeline '{self.pipeline_id}' with analysis id '{self.analysis_id}' and user reference '{self.user_reference}'")
+
+        if self.is_output_json:
+            self.print_to_stdout()
+
+    def print_to_stdout(self):
+        print(
+            json.dumps({
+                "analysis_id": self.analysis_id,
+                "user_reference": self.user_reference
+            })
+        )
 
     def read_launch_yaml(self) -> ICAv2LaunchJson:
         # Import json object

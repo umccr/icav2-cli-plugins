@@ -4,7 +4,7 @@
 Get output json
 """
 import json
-from argparse import ArgumentError
+from utils.errors import InvalidArgumentError
 from typing import Optional, Dict
 
 from utils.config_helpers import get_project_id
@@ -54,7 +54,7 @@ Example:
 
         if self.analysis_id is None:
             logger.error("Please specify the analysis id")
-            raise ArgumentError
+            raise InvalidArgumentError
 
         self.project_id = get_project_id()
 

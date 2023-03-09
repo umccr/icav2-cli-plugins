@@ -12,9 +12,10 @@ import os
 from libica.openapi.v2.model.analysis_step_logs import AnalysisStepLogs
 from libica.openapi.v2.model.create_cwl_analysis import CreateCwlAnalysis
 
-from utils import is_project_id_format
+from utils import is_uuid_format
 from utils.config_helpers import get_project_id_from_project_name, \
     get_libicav2_configuration, get_project_id
+from utils.errors import InvalidArgumentError
 
 from utils.projectanalysis_helpers import \
     get_workflow_steps, filter_analysis_steps, write_analysis_step_logs
@@ -22,7 +23,6 @@ from utils.projectanalysis_helpers import \
 from subcommands import Command
 from utils.logger import get_logger
 from pathlib import Path
-from argparse import ArgumentError
 from typing import Optional, Dict, List
 
 
@@ -87,11 +87,11 @@ Example:
         # Check analysis id is not None
         if self.analysis_id is None:
             logger.error("Must specify --analysis-id parameter")
-            raise ArgumentError
+            raise InvalidArgumentError
 
-        if not is_project_id_format(self.analysis_id):
+        if not is_uuid_format(self.analysis_id):
             logger.error(f"Got --analysis-id parameter as {self.analysis_id} but is not in UUID format")
-            raise ArgumentError
+            raise InvalidArgumentError
 
         # Get analysis storage size
         self.step_name = self.args.get("--step-name", None)
@@ -100,17 +100,17 @@ Example:
         if self.step_name is None:
             logger.error("Must specify --step-name parameter, please use the cwl-ica icav2-list-analysis-steps"
                          "and use the 'name' attribute of the step youd like to see")
-            raise ArgumentError
+            raise InvalidArgumentError
         if self.step_name == "cwltool":
             self.step_name = "pipeline_runner.0"
 
         # Check not both stderr and stdout have been specified
         if self.args.get("--stderr", False) and self.args.get("--stdout", False):
             logger.error("Please specify one and only one of --stderr and --stdout")
-            raise ArgumentError
+            raise InvalidArgumentError
         if not self.args.get("--stderr", False) and not self.args.get("--stdout", False):
             logger.error("Please specify one and only one of --stderr and --stdout")
-            raise ArgumentError
+            raise InvalidArgumentError
 
         # Check if stderr has been specified
         if self.args.get("--stderr", False):
@@ -128,7 +128,7 @@ Example:
                 self.output_path = None
             elif not self.output_path.parent.is_dir():
                 logger.error(f"Parent of {self.output_path} does not exist, please create it first")
-                raise ArgumentError
+                raise InvalidArgumentError
 
     def get_analysis_logs(self) -> AnalysisStepLogs:
         # Get workflow steps
