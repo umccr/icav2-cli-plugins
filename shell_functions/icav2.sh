@@ -37,6 +37,7 @@ icav2() {
     "_projectanalyses__get-cwl-analysis-input-json_" \
     "_projectanalyses__get-cwl-analysis-output-json_" \
     "_projectanalyses__get-analysis-step-logs_" \
+    "_projectanalyses__gantt-plot_" \
     "_projectanalyses__help_" \
     "_projectanalyses__-h_" \
     "_projectanalyses__--help_" \

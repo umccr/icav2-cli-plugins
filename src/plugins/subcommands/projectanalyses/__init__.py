@@ -25,6 +25,7 @@ Plugin Commands:
   get-cwl-analysis-output-json     Get output json for cwl analysis
   list-analysis-steps              List the steps for a cwl analysis
   get-analysis-step-logs           Get the log outputs for a cwl analysis step
+  gantt-plot                       Create a gantt-plot for analysis
 
 Flags:
   -h, --help   help for projectanalyses
