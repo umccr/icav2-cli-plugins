@@ -215,7 +215,7 @@ def get_project_id_from_project_name(project_name: str) -> str:
     project_list = list(filter(lambda x: x.name == project_name, project_list))
 
     if len(project_list) == 0:
-        raise ValueError("Could not find project")
+        raise ValueError(f"Could not find project '{project_name}'")
     elif len(project_list) == 1:
         return project_list[0].id
     else:
