@@ -118,7 +118,7 @@ Example:
         self.create_params_xml()
 
         # Create output file from zipped workflow apth
-        pipeline_id, pipeline_code = self.zipped_workflow_obj.create_icav2_workflow_from_zip(
+        self.pipeline_id, self.pipeline_code = self.zipped_workflow_obj.create_icav2_workflow_from_zip(
             project_id=self.project_id,
             analysis_storage_id=self.analysis_storage_id,
             workflow_description=self.description,
@@ -126,22 +126,25 @@ Example:
             html_documentation_path=None
         )
 
-        logger.info(f"Successfully created pipeline with pipeline id {pipeline_id} and pipeline code {pipeline_code}")
+        logger.info(f"Successfully created pipeline with pipeline id '{self.pipeline_id}' and pipeline code '{self.pipeline_code}'")
+
+        if self.is_output_json:
+            self.print_to_stdout()
 
     def __exit__(self):
         # Delete tmp file
         shutil.rmtree(self.zipped_workflow_tmp_dir.name)
         os.remove(self.params_xml_file)
 
-        if self.is_output_json:
-            self.print_to_stdout()
-
     def print_to_stdout(self):
         print(
-            json.dumps({
-                "pipeline_id": self.pipeline_id,
-                "pipeline_code": self.pipeline_code
-            })
+            json.dumps(
+                {
+                    "pipeline_id": self.pipeline_id,
+                    "pipeline_code": self.pipeline_code
+                },
+                indent=2
+            )
         )
 
     def check_args(self):

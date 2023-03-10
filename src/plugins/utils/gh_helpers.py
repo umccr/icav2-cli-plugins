@@ -54,7 +54,6 @@ def download_zipped_workflow_from_github_release(repo: str, tag_name: str, outpu
             raise ChildProcessError
 
         try:
-            print(Path(tmp_dir).is_dir())
             zip_path: Path = next(Path(tmp_dir).glob("*.zip"))
             shutil.copy2(zip_path, output_path)
         except StopIteration:

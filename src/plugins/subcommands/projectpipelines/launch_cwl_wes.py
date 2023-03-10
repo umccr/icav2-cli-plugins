@@ -251,10 +251,13 @@ Example:
 
     def print_to_stdout(self):
         print(
-            json.dumps({
-                "analysis_id": self.analysis_id,
-                "user_reference": self.user_reference
-            })
+            json.dumps(
+                {
+                    "analysis_id": self.analysis_id,
+                    "user_reference": self.user_reference
+                },
+                indent=2
+            )
         )
 
     def read_launch_yaml(self) -> ICAv2LaunchJson:
