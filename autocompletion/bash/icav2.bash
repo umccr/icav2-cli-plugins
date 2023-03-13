@@ -798,8 +798,11 @@ _icav2() {
             __comp_current_options true || return # no subcmds, no params/opts
           ;;
           enter)
+            OPTIONS+=('--global' 'Update context in session yaml file')
             __icav2_handle_options_flags
             case ${MYWORDS[$INDEX-1]} in
+              --global)
+              ;;
 
             esac
             case $INDEX in

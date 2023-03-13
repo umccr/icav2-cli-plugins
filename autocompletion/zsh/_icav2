@@ -1095,6 +1095,7 @@ _files
                             '3: :->project_name' \
                             '--help[Show command help]' \
                             '-h[Show command help]' \
+                            '--global[Update context in session yaml file]:global' \
                             && ret=0
 
                         case $state in
