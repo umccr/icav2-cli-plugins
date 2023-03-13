@@ -14,7 +14,7 @@ icav2() {
   local bottom
 
   plugin_subfunctions_array=( \
-    "projects__enter"
+    "_projects__enter_"
   )
 
   plugin_subcommands_top_only_array=( \
@@ -82,7 +82,7 @@ icav2() {
     eval command icav2 '"${@}"'
   # Run the shell function
   elif [[ " ${plugin_subfunctions_array[*]} " =~ ${top}__${bottom} ]]; then
-    eval "_icav2__plugins__cli__${top}__${bottom%_}" '"${@:3}"'
+    eval "_icav2__plugins__cli__${top#_}__${bottom%_}" '"${@:3}"'
   # Run the wrapped python command
   elif [[ " ${plugin_subcommands_array[*]} " =~ ${top}__${bottom} ]]; then
     eval PATH="'${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/:$PATH'" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" "${ICAV2_CLI_PLUGINS_HOME}/plugins/bin/icav2-cli-plugins.py" "${top#_}" "${bottom%_}" '"${@:3}"'

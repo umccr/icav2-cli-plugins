@@ -38,10 +38,11 @@ if [[ \
 
  # Replace token
  ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
- yq --inplace \
+ yq --prettyPrint \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' "${HOME}/.icav2/.session.ica.yaml"
+   ' < "${HOME}/.icav2/.session.ica.yaml" > "${HOME}/.icav2/.session.ica.yaml.tmp" && \
+   mv "${HOME}/.icav2/.session.ica.yaml.tmp" "${HOME}/.icav2/.session.ica.yaml"
 fi
 
 ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
