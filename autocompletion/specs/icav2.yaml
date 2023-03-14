@@ -101,6 +101,19 @@ subcommands:
           - name: output-path
             summary: Write output to file
             type: file
+      gantt-plot:
+        summary: Create a gantt chart for an analysis
+        parameters:
+          - name: analysis_id
+            summary: analysis id
+            type: string
+            completion:
+              command_string: |
+                __list_analysis_ids.sh
+        options:
+          - name: output-path
+            summary: Write output to file
+            type: file
   projectdata:
     summary: Project Data commands
     subcommands:
@@ -415,6 +428,9 @@ subcommands:
             completion:
               command_string: | 
                 __list_project_names.sh
+        options:
+          - name: global
+            summary: Update context in session yaml file
       exit:
         summary: Exit project context
       get:

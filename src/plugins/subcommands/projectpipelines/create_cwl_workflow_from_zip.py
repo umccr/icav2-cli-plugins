@@ -122,10 +122,13 @@ Example:
 
     def print_to_stdout(self):
         print(
-            json.dumps({
-                "pipeline_id": self.pipeline_id,
-                "pipeline_code": self.pipeline_code
-            })
+            json.dumps(
+                {
+                    "pipeline_id": self.pipeline_id,
+                    "pipeline_code": self.pipeline_code
+                },
+                indent=2
+            )
         )
 
     def check_args(self):

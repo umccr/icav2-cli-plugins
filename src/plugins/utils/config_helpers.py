@@ -77,6 +77,7 @@ def get_access_token_from_session_file(refresh: bool = True) -> str:
     if not check_access_token_expiry(access_token):
         if not refresh:
             logger.error(f"Could not refresh access token in session file {ICAV2_SESSION_FILE_PATH}")
+            raise KeyError
         else:
             access_token = refresh_access_token()
 
@@ -139,15 +140,18 @@ def get_jwt_token_obj(jwt_token, audience):
 def check_access_token_expiry(access_token: str) -> bool:
     """
     Check access token hasn't expired
+    True if has not expired, otherwise false
     :param access_token:
     :return:
     """
     current_epoch_time = int(datetime.now().strftime("%s"))
 
-    if get_jwt_token_obj(access_token, ICAV2_ACCESS_TOKEN_AUDIENCE).get("exp") < current_epoch_time:
-        logger.debug("Token has expired")
-        return False
-    return True
+    if current_epoch_time < get_jwt_token_obj(access_token, ICAV2_ACCESS_TOKEN_AUDIENCE).get("exp"):
+        return True
+
+    # Otherwise
+    logger.info("Token has expired")
+    return False
 
 
 def refresh_access_token() -> str:
@@ -175,7 +179,7 @@ def set_libicav2_configuration():
     host = os.environ.get("ICAV2_BASE_URL", DEFAULT_ICAV2_BASE_URL)
     access_token = os.environ.get("ICAV2_ACCESS_TOKEN", None)
 
-    if access_token is None or check_access_token_expiry(access_token):
+    if access_token is None or not check_access_token_expiry(access_token):
         access_token = get_access_token_from_session_file()
 
     LIBICAV2_CONFIGURATION = Configuration(
@@ -215,7 +219,7 @@ def get_project_id_from_project_name(project_name: str) -> str:
     project_list = list(filter(lambda x: x.name == project_name, project_list))
 
     if len(project_list) == 0:
-        raise ValueError("Could not find project")
+        raise ValueError(f"Could not find project '{project_name}'")
     elif len(project_list) == 1:
         return project_list[0].id
     else:

@@ -187,5 +187,9 @@ Example:
         )
 
         if self.output_path is None:
-            with open(output_path, 'r') as f_h:
-                print(f_h.read())
+            try:
+                with open(output_path, 'r') as f_h:
+                    print(f_h.read())
+            except BrokenPipeError:
+                # Chances are we were piped into head command
+                pass
