@@ -321,7 +321,12 @@ Example:
         )
         engine_parameters_map.yaml_add_eol_comment(
             key="cwltool_overrides",
-            comment="Available overrides keys are as follows: \n      # " + "\n      # ".join(self.analysis_overrides_template)
+            comment="Please comment out '{}' above before using, available overrides keys are: \n      # " + "\n      # ".join(
+                map(
+                    lambda x: f"\"{x}\":",
+                    self.analysis_overrides_template
+                )
+            )
         )
 
         # Additional keys
