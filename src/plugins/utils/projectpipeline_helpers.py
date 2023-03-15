@@ -1,4 +1,5 @@
 import json
+from json import JSONDecodeError
 from pathlib import Path
 from typing import Dict, Optional, List, Any, Union, Tuple
 from urllib.parse import urlparse
@@ -754,7 +755,12 @@ def get_cwl_analysis_output_json(project_id: str, analysis_id: str):
         logger.error(f"Could not collect input json for analysis id '{analysis_id}'")
         raise ChildProcessError
 
-    return json.loads(json.loads(command_stdout).get("outputJson"))
+    output_json = json.loads(command_stdout).get("outputJson")
+    try:
+        return json.loads(output_json)
+    except JSONDecodeError:
+        logger.error(f"Could not decode '{output_json}' as valid json")
+        return None
 
 
 def create_params_xml(inputs: List[WorkflowInputParameter], output_path: Path):
