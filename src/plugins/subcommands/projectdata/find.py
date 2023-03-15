@@ -46,7 +46,7 @@ Options:
     <data_path>                                                Optional, data path, defaults to '/'
     -w=<min_depth>, --min-depth=<min_depth>                    Optional, minimum depth to search
     -x=<max_depth>, --max-depth=<max_depth>                    Optional, maximum depth to search
-    --type=<type>                                              Optional, one of "FILE" or "DIRECTORY"
+    --type=<type>                                              Optional, one of "FILE" or "FOLDER"
     -n=<name>, --name=<name>                                   Optional, name of file or directory, regex expressions are possible here
     -c=<creator_id_or_name>, --creator=<creator_id_or_name>    Optional, creator username or id
     -l, --long-listing                                         Optional, use long-listing format to show owner, modification timestamp and size
@@ -126,8 +126,8 @@ Example: icav2 projectdata find /reference_data/
 
         type_arg = self.args.get("--type", None)
         if type_arg is not None:
-            if not str(type_arg).upper() in [ "FILE", "DIRECTORY" ]:
-                logger.error(f"Expected type arg to be one of 'FILE' or 'DIRECTORY' but got '{type_arg}'")
+            if not str(type_arg).upper() in [ "FILE", "FOLDER" ]:
+                logger.error(f"Expected type arg to be one of 'FILE' or 'FOLDER' but got '{type_arg}'")
                 raise InvalidArgumentError
             self.type = type_arg
 
