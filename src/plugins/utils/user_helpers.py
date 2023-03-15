@@ -38,7 +38,7 @@ def get_user_from_user_name(user_name: str) -> User:
     try:
         return next(
             filter(
-                lambda x: x.name == user_name,
+                lambda x: x.firstname + " " + x.lastname == user_name,
                 api_response.items
             )
         )
