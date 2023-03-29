@@ -23,7 +23,7 @@ _icav2() {
 
     0)
         __comp_current_options || return
-        __icav2_dynamic_comp 'commands' 'analysisstorages'$'\t''Analysis storages commands'$'\n''config'$'\t''Config actions'$'\n''dataformats'$'\t''Data format commands'$'\n''help'$'\t''Help about any command'$'\n''metadatamodels'$'\t''Metadata model commands'$'\n''pipelines'$'\t''Pipeline commands'$'\n''projectanalyses'$'\t''Project analyses commands'$'\n''projectdata'$'\t''Project Data commands'$'\n''projectpipelines'$'\t''Project pipeline commands'$'\n''projects'$'\t''Project commands'$'\n''projectsamples'$'\t''Project samples commands'$'\n''regions'$'\t''Region commands'$'\n''storagebundles'$'\t''Storage bundle commands'$'\n''storageconfigurations'$'\t''Storage configurations commands'$'\n''tokens'$'\t''Tokens commands'$'\n''version'$'\t''The version of this application'
+        __icav2_dynamic_comp 'commands' 'analysisstorages'$'\t''Analysis storages commands'$'\n''config'$'\t''Config actions'$'\n''dataformats'$'\t''Data format commands'$'\n''help'$'\t''Help about any command'$'\n''metadatamodels'$'\t''Metadata model commands'$'\n''pipelines'$'\t''Pipeline commands'$'\n''projectanalyses'$'\t''Project analyses commands'$'\n''projectdata'$'\t''Project Data commands'$'\n''projectpipelines'$'\t''Project pipeline commands'$'\n''projects'$'\t''Project commands'$'\n''projectsamples'$'\t''Project samples commands'$'\n''regions'$'\t''Region commands'$'\n''storagebundles'$'\t''Storage bundle commands'$'\n''storageconfigurations'$'\t''Storage configurations commands'$'\n''tenants'$'\t''Handle tenant switching'$'\n''tokens'$'\t''Tokens commands'$'\n''version'$'\t''The version of this application'
 
     ;;
     *)
@@ -944,6 +944,83 @@ _icav2() {
           list)
             __icav2_handle_options_flags
             __comp_current_options true || return # no subcmds, no params/opts
+          ;;
+        esac
+
+        ;;
+        esac
+      ;;
+      tenants)
+        __icav2_handle_options_flags
+        case $INDEX in
+
+        1)
+            __comp_current_options || return
+            __icav2_dynamic_comp 'commands' 'enter'$'\t''enter a tenant'$'\n''init'$'\t''initialise a tenant'$'\n''list'$'\t''list tenants'$'\n''set-default-project'$'\t''Set default project for a given tenant'$'\n''set-default-tenant'$'\t''Set the default tenant by running icav2 config set under the hood'
+
+        ;;
+        *)
+        # subcmds
+        case ${MYWORDS[1]} in
+          enter)
+            OPTIONS+=('--global' 'enter tenant globally')
+            __icav2_handle_options_flags
+            case ${MYWORDS[$INDEX-1]} in
+              --global)
+              ;;
+
+            esac
+            case $INDEX in
+
+            *)
+                __comp_current_options || return
+            ;;
+            esac
+          ;;
+          init)
+            __icav2_handle_options_flags
+            __comp_current_options true || return # no subcmds, no params/opts
+          ;;
+          list)
+            __icav2_handle_options_flags
+            __comp_current_options true || return # no subcmds, no params/opts
+          ;;
+          set-default-project)
+            OPTIONS+=('--project_name' 'Name of project')
+            __icav2_handle_options_flags
+            case ${MYWORDS[$INDEX-1]} in
+              --project_name)
+              ;;
+
+            esac
+            case $INDEX in
+              2)
+                  __comp_current_options || return
+                    _icav2_tenants_set-default-project_param_tenant_name_completion
+              ;;
+
+
+            *)
+                __comp_current_options || return
+            ;;
+            esac
+          ;;
+          set-default-tenant)
+            __icav2_handle_options_flags
+            case ${MYWORDS[$INDEX-1]} in
+
+            esac
+            case $INDEX in
+              2)
+                  __comp_current_options || return
+                    _icav2_tenants_set-default-tenant_param_tenant_name_completion
+              ;;
+
+
+            *)
+                __comp_current_options || return
+            ;;
+            esac
           ;;
         esac
 
@@ -2767,6 +2844,20 @@ jq \
 ## INVOKE PROJECT FUNCTION ##
 )"
     _icav2_compreply "$param_project_name"
+}
+_icav2_tenants_set-default-project_param_tenant_name_completion() {
+    local CURRENT_WORD="${words[$cword]}"
+    local param_tenant_name="$(
+find "${ICAV2_CLI_PLUGINS_HOME}/tenants/" -mindepth 1 -maxdepth 1 -type d -exec basename {} \;
+)"
+    _icav2_compreply "$param_tenant_name"
+}
+_icav2_tenants_set-default-tenant_param_tenant_name_completion() {
+    local CURRENT_WORD="${words[$cword]}"
+    local param_tenant_name="$(
+find "${ICAV2_CLI_PLUGINS_HOME}/tenants/" -mindepth 1 -maxdepth 1 -type d -exec basename {} \;
+)"
+    _icav2_compreply "$param_tenant_name"
 }
 
 __icav2_dynamic_comp() {

@@ -459,6 +459,7 @@ subcommands:
         summary: Unlink data from a sample for a project
       update:
         summary: Update a sample for a project
+
   regions:
     summary: Region commands
     subcommands:
@@ -476,6 +477,42 @@ subcommands:
     subcommands:
       list:
         summary: list of storage configurations
+
+  tenants:
+    summary: Handle tenant switching
+    subcommands:
+      init:
+        summary: initialise a tenant
+      list:
+        summary: list tenants
+      enter:
+        summary: enter a tenant
+        options:
+          - name: global
+            summary: enter tenant globally
+      set-default-project:
+        summary: Set default project for a given tenant
+        parameters:
+          - name: tenant_name
+            summary: Name of tenant
+            type: string
+            completion:
+              command_string: |
+                __list_tenants.sh
+        options:
+          - name: project_name
+            summary: Name of project
+            type: string
+      set-default-tenant:
+        summary: Set the default tenant by running icav2 config set under the hood
+        parameters:
+          - name: tenant_name
+            summary: Name of tenant
+            type: string
+            completion:
+              command_string: |
+                __list_tenants.sh
+
   tokens:
     summary: Tokens commands
     subcommands:

@@ -27,6 +27,11 @@ Command:
     Project Pipelines
     ##########################
     projectpipelines                    Collection of subfunctions relating to creating / deploying pipelines
+
+    ######################
+    Tenants
+    #######################
+    tenants                             Collection of tenant handling scripts
 """
 
 from docopt import docopt
@@ -69,6 +74,8 @@ def _dispatch():
         from subcommands.projectdata import ProjectData as subcommand
     elif cmd == "projectpipelines":
         from subcommands.projectpipelines import ProjectPipelines as subcommand
+    elif cmd == "tenants":
+        from subcommands.tenants import Tenants as subcommand
     # NotImplemented Error
     else:
         print(__doc__)

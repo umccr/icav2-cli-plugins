@@ -7,6 +7,7 @@ From collecting configuration from ~/.session.ica.yaml through ruamel to creatin
 """
 import os
 from collections import OrderedDict
+import json
 
 from libica.openapi.v2.api.project_api import ProjectApi
 
@@ -224,3 +225,89 @@ def get_project_id_from_project_name(project_name: str) -> str:
         return project_list[0].id
     else:
         raise ValueError(f"Got multiple IDs for project name {project_name}")
+
+
+def create_access_token_from_api_key(api_key: str) -> str:
+    get_api_key_returncode, get_api_key_stdout, get_api_key_stderr = run_subprocess_proc(
+        [
+            "curl", "--fail", "--silent", "--location", "--show-error",
+            "--url", "https://ica.illumina.com/ica/rest/api/tokens",
+            "--header", "Accept: application/vnd.illumina.v3+json",
+            "--header", f"X-API-Key: {api_key}",
+            "--data", ""
+        ],
+        capture_output=True
+    )
+
+    if not get_api_key_returncode == 0:
+        logger.error("Unable to create an api key, error was")
+        logger.error(get_api_key_stderr)
+        raise ValueError
+
+    return json.loads(get_api_key_stdout).get("token")
+
+
+def get_project_id_from_project_name_curl(project_name: str, access_token: str) -> str:
+    """
+    Quick use of curl when the access token is not yet set in the configuration file (tenants init)
+    Args:
+        access_token:
+
+    Returns:
+
+    """
+
+    list_projects_returncode, list_projects_stdout, list_projects_stderr = run_subprocess_proc(
+        [
+            "curl", "--fail", "--location", "--silent",
+            "--request", "GET",
+            "--header", "Accept: application/vnd.illumina.v3+json",
+            "--header", f"Authorization: Bearer {access_token}",
+            "--url", "https://ica.illumina.com/ica/rest/api/projects/"
+        ],
+        capture_output=True
+    )
+
+    if not list_projects_returncode == 0:
+        logger.error("Unable to list projects, error was")
+        logger.error(list_projects_stderr)
+        raise ValueError
+
+    project_list = json.loads(list_projects_stdout).get("items")
+
+    for project in project_list:
+        if project.get("name") == project_name:
+            return project.get("id")
+
+    logger.error(f"Could not find project '{project_name}'")
+    raise ValueError
+
+
+def get_project_name_from_project_id_curl(project_id: str, access_token: str) -> str:
+    """
+    Quick use of curl when the access token is not yet set in the configuration file (tenants init)
+    Args:
+        access_token:
+
+    Returns:
+
+    """
+
+    get_project_returncode, get_project_stdout, get_project_stderr = run_subprocess_proc(
+        [
+            "curl", "--fail", "--location", "--silent",
+            "--request", "GET",
+            "--header", "Accept: application/vnd.illumina.v3+json",
+            "--header", f"Authorization: Bearer {access_token}",
+            "--url", f"https://ica.illumina.com/ica/rest/api/projects/{project_id}"
+        ],
+        capture_output=True
+    )
+
+    if not get_project_returncode == 0:
+        logger.error("Unable to get projects, error was")
+        logger.error(get_project_stderr)
+        raise ValueError
+
+    return json.loads(get_project_stdout).get("name")
+
