@@ -86,7 +86,16 @@ Example:
     def __call__(self):
         # Collect the api key from the tenant config file
         self.read_tenant_config()
-        self.read_current_config()
+
+        if self.current_config_path.is_file():
+            self.read_current_config()
+        else:
+            self.current_config_yaml_object = {
+                "server-url": "ica.illumina.com",
+                "x-api-key": None,
+                "output-format": None,
+                "colormode": None
+            }
 
         # Fill out prompts
         self.fill_prompts()
@@ -151,20 +160,38 @@ Example:
             response=self.current_config_yaml_object.get("server-url") + "\n"
         )
 
-        icav2_config_set_api_key = Responder(
-            pattern="API key \(press enter to keep the current one\) :",
-            response=self.x_api_key + "\n"
-        )
+        if self.current_config_yaml_object.get("x-api-key") is not None:
+            icav2_config_set_api_key = Responder(
+                pattern="API key \(press enter to keep the current one\) :",
+                response=self.x_api_key + "\n"
+            )
+        else:
+            icav2_config_set_api_key = Responder(
+                pattern="API key :",
+                response=self.x_api_key + "\n"
+            )
 
-        icav2_config_set_output_format = Responder(
-            pattern=f"output-format \[{self.current_config_yaml_object.get('output-format')}\]:",
-            response=self.current_config_yaml_object.get("output-format") + "\n"
-        )
+        if self.current_config_yaml_object.get("output-format") is not None:
+            icav2_config_set_output_format = Responder(
+                pattern=f"output-format \[{self.current_config_yaml_object.get('output-format')}\]:",
+                response=self.current_config_yaml_object.get("output-format") + "\n"
+            )
+        else:
+            icav2_config_set_output_format = Responder(
+                pattern=f"output-format \(allowed values table,yaml,json defaults to table\) :",
+                response="\n"
+            )
 
-        icav2_config_set_color_mode = Responder(
-            pattern=f"colormode \[{self.current_config_yaml_object.get('colormode')}\]:",
-            response=self.current_config_yaml_object.get("colormode") + "\n"
-        )
+        if self.current_config_yaml_object.get('colormode') is not None:
+            icav2_config_set_color_mode = Responder(
+                pattern=f"colormode \[{self.current_config_yaml_object.get('colormode')}\]:",
+                response=self.current_config_yaml_object.get("colormode") + "\n"
+            )
+        else:
+            icav2_config_set_color_mode = Responder(
+                pattern="colormode \(allowed values none,dark,light defaults to none\) :",
+                response="\n"
+            )
 
         run(
             "icav2 config set",
