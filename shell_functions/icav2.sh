@@ -15,12 +15,14 @@ icav2() {
 
   plugin_subfunctions_array=( \
     "_projects__enter_"
+    "_tenants__enter_"
   )
 
   plugin_subcommands_top_only_array=( \
     "_projectdata" \
     "_projectanalyses" \
     "_projectpipelines" \
+    "_tenants" \
   )
 
   plugin_subcommands_array=( \
@@ -48,6 +50,13 @@ icav2() {
     "_projectpipelines__help_"
     "_projectpipelines__-h_" \
     "_projectpipelines__--help_" \
+    "_tenants__help_" \
+    "_tenants__-h_" \
+    "_tenants__--help_" \
+    "_tenants__init_" \
+    "_tenants__list_" \
+    "_tenants__set-default-project_" \
+    "_tenants__set-default-tenant_" \
   )
 
   # Check env var is set

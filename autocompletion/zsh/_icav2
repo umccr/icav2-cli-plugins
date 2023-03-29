@@ -17,7 +17,7 @@ _icav2() {
 
         case $state in
         cmd1)
-            _alternative 'args:cmd2:((analysisstorages\:"Analysis storages commands" config\:"Config actions" dataformats\:"Data format commands" help\:"Help about any command" metadatamodels\:"Metadata model commands" pipelines\:"Pipeline commands" projectanalyses\:"Project analyses commands" projectdata\:"Project Data commands" projectpipelines\:"Project pipeline commands" projects\:"Project commands" projectsamples\:"Project samples commands" regions\:"Region commands" storagebundles\:"Storage bundle commands" storageconfigurations\:"Storage configurations commands" tokens\:"Tokens commands" version\:"The version of this application"))'
+            _alternative 'args:cmd2:((analysisstorages\:"Analysis storages commands" config\:"Config actions" dataformats\:"Data format commands" help\:"Help about any command" metadatamodels\:"Metadata model commands" pipelines\:"Pipeline commands" projectanalyses\:"Project analyses commands" projectdata\:"Project Data commands" projectpipelines\:"Project pipeline commands" projects\:"Project commands" projectsamples\:"Project samples commands" regions\:"Region commands" storagebundles\:"Storage bundle commands" storageconfigurations\:"Storage configurations commands" tenants\:"Handle tenant switching" tokens\:"Tokens commands" version\:"The version of this application"))'
         ;;
 
         args)
@@ -1375,6 +1375,103 @@ _icav2_projects_enter_param_project_name_completion
                             '-h[Show command help]' \
                             && ret=0
 
+
+                    ;;
+                    esac
+
+                ;;
+
+                esac
+            ;;
+            tenants)
+
+                # ---- Command: tenants
+                _arguments -s -C \
+                    '1: :->cmd1' \
+                    '2: :->cmd2' \
+                    '*: :->args' \
+                    && ret=0
+
+
+                case $state in
+                cmd2)
+                    _alternative 'args:cmd3:((enter\:"enter a tenant" init\:"initialise a tenant" list\:"list tenants" set-default-project\:"Set default project for a given tenant" set-default-tenant\:"Set the default tenant by running icav2 config set under the hood"))'
+                ;;
+
+                args)
+                    case $line[2] in
+                    enter)
+
+                        # ---- Command: tenants enter
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            '--global[enter tenant globally]:global' \
+                            && ret=0
+
+
+                    ;;
+                    init)
+
+                        # ---- Command: tenants init
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    list)
+
+                        # ---- Command: tenants list
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+
+                    ;;
+                    set-default-project)
+
+                        # ---- Command: tenants set-default-project
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '3: :->tenant_name' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            '--project_name[Name of project]:project_name' \
+                            && ret=0
+
+                        case $state in
+                        tenant_name)
+_icav2_tenants_set-default-project_param_tenant_name_completion
+                        ;;
+                        esac
+
+                    ;;
+                    set-default-tenant)
+
+                        # ---- Command: tenants set-default-tenant
+                        _arguments -s -C \
+                            '1: :->cmd1' \
+                            '2: :->cmd2' \
+                            '3: :->tenant_name' \
+                            '--help[Show command help]' \
+                            '-h[Show command help]' \
+                            && ret=0
+
+                        case $state in
+                        tenant_name)
+_icav2_tenants_set-default-tenant_param_tenant_name_completion
+                        ;;
+                        esac
 
                     ;;
                     esac
@@ -3252,6 +3349,24 @@ jq \
 
  ) )
     compadd -X "project_name:" $__dynamic_completion
+}
+_icav2_tenants_set-default-project_param_tenant_name_completion() {
+    local __dynamic_completion
+    local CURRENT_WORD="$words[CURRENT]"
+    IFS=$'\n' __dynamic_completion=( $( 
+find "${ICAV2_CLI_PLUGINS_HOME}/tenants/" -mindepth 1 -maxdepth 1 -type d -exec basename {} \;
+
+ ) )
+    compadd -X "tenant_name:" $__dynamic_completion
+}
+_icav2_tenants_set-default-tenant_param_tenant_name_completion() {
+    local __dynamic_completion
+    local CURRENT_WORD="$words[CURRENT]"
+    IFS=$'\n' __dynamic_completion=( $( 
+find "${ICAV2_CLI_PLUGINS_HOME}/tenants/" -mindepth 1 -maxdepth 1 -type d -exec basename {} \;
+
+ ) )
+    compadd -X "tenant_name:" $__dynamic_completion
 }
 
 __icav2_dynamic_comp() {

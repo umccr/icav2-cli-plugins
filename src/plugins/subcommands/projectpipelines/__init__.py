@@ -46,7 +46,7 @@ Use "icav2 projectpipelines [command] --help" for more information about a comma
 
         if cmd == "create-cwl-workflow-from-zip":
             from subcommands.projectpipelines.create_cwl_workflow_from_zip import ProjectDataCreateCWLWorkflow as subcommand
-        if cmd == "create-cwl-workflow-from-github-release":
+        elif cmd == "create-cwl-workflow-from-github-release":
             from subcommands.projectpipelines.create_cwl_workflow_from_github_release import ProjectDataCreateCWLWorkflowFromGitHubRelease as subcommand
         elif cmd == "create-cwl-wes-input-template":
             from subcommands.projectpipelines.create_wes_input_template import ProjectDataCreateWESInputTemplate as subcommand

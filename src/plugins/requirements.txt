@@ -19,3 +19,5 @@ pypandoc==1.10
 pypandoc_binary==1.10
 humanfriendly==10.0
 matplotlib==3.7.1
+invoke==2.0.0
+fabric==3.0.0
