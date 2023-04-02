@@ -534,7 +534,7 @@ def get_activation_id(project_id: str, pipeline_id: str, input_json: Dict,
                 "pipelineId": pipeline_id,
                 "analysisInput": {
                     "objectType": "JSON",
-                    "inputJson": json.dumps(input_json),
+                    "inputJson": json.dumps(input_json, indent=2),
                     "dataIds": list(map(lambda x: x.data_id, mount_list)),
                     "mounts": [
                         {
