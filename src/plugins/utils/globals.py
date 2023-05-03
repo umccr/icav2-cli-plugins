@@ -8,9 +8,11 @@ from enum import Enum
 
 DEFAULT_ICAV2_BASE_URL = "https://ica.illumina.com/ica/rest"
 
+ICAV2_CONFIG_FILE_SERVER_URL_KEY = "server-url"
 ICAV2_SESSION_FILE_ACCESS_TOKEN_KEY = "access-token"
 ICAV2_SESSION_FILE_PROJECT_ID_KEY = "project-id"
 
+ICAV2_CONFIG_FILE_PATH = "{HOME}/.icav2/config.yaml"
 ICAV2_SESSION_FILE_PATH = "{HOME}/.icav2/.session.ica.yaml"
 
 ICAV2_ACCESS_TOKEN_AUDIENCE = "ica"

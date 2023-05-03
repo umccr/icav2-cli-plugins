@@ -31,6 +31,37 @@ logger = get_logger()
 LIBICAV2_CONFIGURATION: Optional[Configuration] = None
 
 
+def get_config_file_path() -> Path:
+    """
+    Get path for the config file and asser it exists
+    :return:
+    """
+    config_file_path: Path = Path(ICAV2_CONFIG_FILE_PATH.format(
+      HOME=os.environ["HOME"]
+    ))
+
+    if not config_file_path.is_file():
+        logger.error(f"Could not get file path {config_file_path}")
+        raise FileNotFoundError
+
+    return config_file_path
+
+
+def read_config_file() -> OrderedDict:
+    """
+    Get the contents of the session file (~/.icav2/config.ica.yaml)
+    :return:
+    """
+
+    logger.debug("Reading in the config file")
+    yaml = YAML()
+
+    with open(get_config_file_path(), "r") as file_h:
+        data = yaml.load(file_h)
+
+    return data
+
+
 def get_session_file_path() -> Path:
     """
     Get path for session file and assert file exists
@@ -171,13 +202,34 @@ def refresh_access_token() -> str:
     return get_access_token_from_session_file(refresh=False)
 
 
+def get_icav2_base_url():
+    """
+    Collect the icav2 base url for the configuration
+    Likely 'https://ica.illumina.com/ica/rest'
+    :return:
+    """
+    # Check env
+    icav2_base_url_env = os.environ.get("ICAV2_BASE_URL", None)
+    if icav2_base_url_env is not None:
+        return icav2_base_url_env
+
+    # Read config file
+    config_yaml_dict = read_config_file()
+    if ICAV2_CONFIG_FILE_SERVER_URL_KEY in config_yaml_dict.keys():
+        return f"https://{config_yaml_dict[ICAV2_CONFIG_FILE_SERVER_URL_KEY]}/ica/rest"
+    else:
+        logger.warning("Could not get server-url from config yaml")
+
+    return DEFAULT_ICAV2_BASE_URL
+
+
 def set_libicav2_configuration():
     # Use the global attribute to set the object from within the function
     global LIBICAV2_CONFIGURATION
 
     logger.debug("Setting the libicav2 configuration object")
 
-    host = os.environ.get("ICAV2_BASE_URL", DEFAULT_ICAV2_BASE_URL)
+    host = get_icav2_base_url()
     access_token = os.environ.get("ICAV2_ACCESS_TOKEN", None)
 
     if access_token is None or not check_access_token_expiry(access_token):
