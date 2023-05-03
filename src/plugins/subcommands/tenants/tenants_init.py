@@ -4,11 +4,7 @@
 Initialise a tenant from an api key
 """
 
-import json
-import os
-import shutil
 from pathlib import Path
-from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Optional
 from getpass import getpass
 
@@ -16,17 +12,11 @@ from ruamel.yaml import YAML
 
 from utils import is_uuid_format
 from utils.errors import InvalidArgumentError
-from utils.config_helpers import get_project_id, create_access_token_from_api_key, get_jwt_token_obj, \
-    get_project_name_from_project_id_curl, get_project_id_from_project_name_curl
-from utils.cwl_helpers import ZippedCWLWorkflow
-from utils.gh_helpers import download_zipped_workflow_from_github_release, get_release_repo_and_tag_from_release_url
-from utils.globals import ICAV2_DEFAULT_ANALYSIS_STORAGE_SIZE, ICAv2AnalysisStorageSize, ICAV2_ACCESS_TOKEN_AUDIENCE
+from utils.config_helpers import create_access_token_from_api_key, get_jwt_token_obj, \
+    get_project_name_from_project_id_curl, get_project_id_from_project_name_curl, get_icav2_base_url
+from utils.globals import ICAV2_ACCESS_TOKEN_AUDIENCE
 from utils.logger import get_logger
-from utils.plugin_helpers import get_plugins_directory, get_tenants_directory
-from utils.projectpipeline_helpers import get_analysis_storage_id_from_analysis_storage_size, create_params_xml
-import requests
-
-from urllib.parse import unquote
+from utils.plugin_helpers import get_tenants_directory
 
 from subcommands import Command
 
@@ -65,7 +55,7 @@ Example:
         self.access_token: Optional[str] = None
         self.tenant_namespace: Optional[str] = None
         self.tenant_id: Optional[str] = None
-        self.server_url: Optional[str] = "ica.illumina.com"
+        self.server_url: Optional[str] = None  # "ica.illumina.com"
 
         # Add in the project id and name
         self.project_id: Optional[str] = None
@@ -91,9 +81,9 @@ Example:
 
         # Use the access token to collect the project name if set
         if self.project_id is not None:
-            self.project_name = get_project_name_from_project_id_curl(self.project_id, self.access_token)
+            self.project_name = get_project_name_from_project_id_curl(get_icav2_base_url(), self.project_id, self.access_token)
         elif self.project_name is not None:
-            self.project_id = get_project_id_from_project_name_curl(self.project_name, self.access_token)
+            self.project_id = get_project_id_from_project_name_curl(get_icav2_base_url(), self.project_name, self.access_token)
 
         # Write out configuration yaml to file
         self.write_session_file()

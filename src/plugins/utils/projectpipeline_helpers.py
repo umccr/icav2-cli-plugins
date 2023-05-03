@@ -438,7 +438,7 @@ def create_download_url(project_id: str, data_id: str) -> str:
         "curl",
         "--fail", "--silent", "--location",
         "--request", "POST",
-        "--url", f"https://ica.illumina.com/ica/rest/api/projects/{project_id}/data/{data_id}:createDownloadUrl",
+        "--url", f"{configuration.host}/api/projects/{project_id}/data/{data_id}:createDownloadUrl",
         "--header", "Accept: application/vnd.illumina.v3+json",
         "--header", f"Authorization: Bearer {configuration.access_token}",
         "--data", ""
@@ -523,7 +523,7 @@ def get_activation_id(project_id: str, pipeline_id: str, input_json: Dict,
         "curl",
         "--fail", "--silent", "--location",
         "--request", "POST",
-        "--url", "https://ica.illumina.com/ica/rest/api/activationCodes:findBestMatchingForCwl",
+        "--url", f"{configuration.host}/api/activationCodes:findBestMatchingForCwl",
         "--header", "Accept: application/vnd.illumina.v3+json",
         "--header", f"Authorization: Bearer {icav2_access_token}",
         "--header", "Content-Type: application/vnd.illumina.v3+json",
@@ -717,7 +717,7 @@ def get_cwl_analysis_input_json(project_id: str, analysis_id: str):
         "curl",
         "--fail", "--silent", "--location",
         "--request", "GET",
-        "--url", f"https://ica.illumina.com/ica/rest/api/projects/{project_id}/analyses/{analysis_id}/cwl/inputJson",
+        "--url", f"{configuration.host}/api/projects/{project_id}/analyses/{analysis_id}/cwl/inputJson",
         "--header", "Accept: application/vnd.illumina.v3+json",
         "--header", f"Authorization: Bearer {configuration.access_token}"
     ]
@@ -744,7 +744,7 @@ def get_cwl_analysis_output_json(project_id: str, analysis_id: str):
         "curl",
         "--fail", "--silent", "--location",
         "--request", "GET",
-        "--url", f"https://ica.illumina.com/ica/rest/api/projects/{project_id}/analyses/{analysis_id}/cwl/outputJson",
+        "--url", f"{configuration.host}/api/projects/{project_id}/analyses/{analysis_id}/cwl/outputJson",
         "--header", "Accept: application/vnd.illumina.v3+json",
         "--header", f"Authorization: Bearer {configuration.access_token}"
     ]

@@ -110,6 +110,7 @@ Parameters:
   tenant_name=""
   x_api_key=""
   access_token=""
+  server_url=""
   project_id=""
 
   # Get args from command line
@@ -229,16 +230,20 @@ Parameters:
   project_id="$( \
     yq --unwrapScalar '.project-id' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.ica.yaml"
   )"
+  server_url="$( \
+    yq --unwrapScalar '.server-url' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/config.yaml"
+  )"
+  export ICAV2_BASE_URL="https://${server_url-ica.illumina.com}/ica/rest"
 
   # Check project id
   if [[ -n "${ICAV2_PROJECT_ID-}" ]]; then
-    echo "ICAV2_PROJECT_ID is set checking if project id is in tenant '${tenant_name}'" 1>&2
+    echo "ICAV2_PROJECT_ID is set, checking if project id is in tenant '${tenant_name}'" 1>&2
     if ! \
       curl --fail --location --silent \
         --request "GET" \
         --header 'Accept: application/vnd.illumina.v3+json' \
         --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
-        --url "https://ica.illumina.com/ica/rest/api/projects/${ICAV2_PROJECT_ID}"; then
+        --url "${ICAV2_BASE_URL}/api/projects/${ICAV2_PROJECT_ID}" 1>/dev/null 2>&1; then
       echo "Project ID '${ICAV2_PROJECT_ID}' is not in tenant '${tenant_name}'" 1>&2
       if [[ -z "${project_id}" || "${project_id}" == "null" ]]; then
         echo "No project id set in session yaml" 1>&2
@@ -249,6 +254,8 @@ Parameters:
         echo "Setting ICAV2_PROJECT_ID env var to '${project_id}'" 1>&2
         export ICAV2_PROJECT_ID="${project_id}"
       fi
+    else
+      echo "Confirmed current project is in tenant '${tenant_name}'" 1>&2
     fi
   else
     if [[ -z "${project_id}" || "${project_id}" == "null" ]]; then
@@ -260,6 +267,5 @@ Parameters:
         export ICAV2_PROJECT_ID="${project_id}"
     fi
   fi
-
   # Done
 }

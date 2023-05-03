@@ -285,7 +285,7 @@ class ZippedCWLWorkflow:
             "--header", "Accept: application/vnd.illumina.v3+json",
             "--header", f"Authorization: Bearer {configuration.access_token}",
             "--header", "Content-Type: multipart/form-data",
-            "--url", f"https://ica.illumina.com/ica/rest/api/projects/{project_id}/pipelines:createCwlPipeline",
+            "--url", f"{configuration.host}/api/projects/{project_id}/pipelines:createCwlPipeline",
             "--form", f"code={workflow_code}",
             "--form", f"description={workflow_description}",
             "--form", f"workflowCwlFile=@{self.cwl_file_path};filename=workflow.cwl",
