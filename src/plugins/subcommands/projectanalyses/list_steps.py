@@ -40,7 +40,7 @@ Options:
 
 Environment:
     ICAV2_ACCESS_TOKEN (optional, set as ~/.icav2/.session.ica.yaml if not set)
-    ICAV2_BASE_URL (optional, defaults to ica.illumina.com)
+    ICAV2_BASE_URL (optional, defaults to https://ica.illumina.com/ica/rest)
     ICAV2_PROJECT_ID (optional, set as ~/.icav2/.session.ica.yaml if not set)
 
 
