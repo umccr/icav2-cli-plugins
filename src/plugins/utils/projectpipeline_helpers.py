@@ -264,7 +264,7 @@ class ICAv2LaunchJson:
             activation_code_detail_id=self.engine_parameters.activation_id,
             analysis_input=CwlAnalysisInput(
                 object_type="JSON",
-                input_json=json.dumps(self.input_json_deferenced),
+                input_json=json.dumps(self.input_json_deferenced, indent=2),
                 mounts=self.mount_paths,
                 data_ids=self.data_ids
             ),
