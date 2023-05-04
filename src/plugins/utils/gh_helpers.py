@@ -44,7 +44,8 @@ def download_zipped_workflow_from_github_release(repo: str, tag_name: str, outpu
                 "--dir", tmp_dir,
                 "--pattern", "*.zip",
                 tag_name
-            ]
+            ],
+            capture_output=True
         )
 
         if not gh_zip_download_returncode == 0:

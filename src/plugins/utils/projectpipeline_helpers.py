@@ -453,7 +453,9 @@ def create_download_url(project_id: str, data_id: str) -> str:
         "--data", ""
     ]
 
-    command_returncode, command_stdout, command_stderr = run_subprocess_proc(curl_command_list, capture_output=True)
+    command_returncode, command_stdout, command_stderr = run_subprocess_proc(
+        curl_command_list, capture_output=True
+    )
 
     if not command_returncode == 0:
         logger.error(f"Could not create a download url for project id '{project_id}', data id '{data_id}'")
@@ -557,7 +559,9 @@ def get_activation_id(project_id: str, pipeline_id: str, input_json: Dict,
         )
     ]
 
-    command_returncode, command_stdout, command_stderr = run_subprocess_proc(curl_command_list, capture_output=True)
+    command_returncode, command_stdout, command_stderr = run_subprocess_proc(
+        curl_command_list, capture_output=True
+    )
 
     if not command_returncode == 0:
         logger.error("Could not collect activation id")
@@ -731,7 +735,9 @@ def get_cwl_analysis_input_json(project_id: str, analysis_id: str):
         "--header", f"Authorization: Bearer {configuration.access_token}"
     ]
 
-    command_returncode, command_stdout, command_stderr = run_subprocess_proc(curl_command_list, capture_output=True)
+    command_returncode, command_stdout, command_stderr = run_subprocess_proc(
+        curl_command_list, capture_output=True
+    )
 
     if not command_returncode == 0:
         logger.error(f"Could not collect input json for analysis id '{analysis_id}'")
@@ -758,7 +764,9 @@ def get_cwl_analysis_output_json(project_id: str, analysis_id: str):
         "--header", f"Authorization: Bearer {configuration.access_token}"
     ]
 
-    command_returncode, command_stdout, command_stderr = run_subprocess_proc(curl_command_list, capture_output=True)
+    command_returncode, command_stdout, command_stderr = run_subprocess_proc(
+        curl_command_list, capture_output=True
+    )
 
     if not command_returncode == 0:
         logger.error(f"Could not collect input json for analysis id '{analysis_id}'")
