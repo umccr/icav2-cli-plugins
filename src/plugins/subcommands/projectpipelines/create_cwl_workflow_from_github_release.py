@@ -45,7 +45,7 @@ Options:
     <github_release_url>                               Required, path to GitHub release url
     --analysis-storage-id=<analysis_storage_id>        Optional, takes precedence over analysis-storage-size
     --analysis-storage-size=<analysis_storage_size>    Optional, default is set to Small
-    --json                                             Optional, input json
+    --json                                             Optional, write pipeline id and code to stdout in json format
 
 Environment variables:
     ICAV2_BASE_URL           Optional, default set as https://ica.illumina.com/ica/rest
