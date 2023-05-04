@@ -391,12 +391,6 @@ def convert_icav2_uris_to_data_ids(input_obj: Union[str, int, bool, Dict, List])
                     logger.error("Got mismatch on data type and class for input object")
                     logger.error(f"Class of {input_obj.get('location')} is set to directory but found file id {data_id} instead")
 
-                # Mount folder at top of directory
-                if data_type == "FOLDER":
-                    # Folders can only be mounted at the top dir now
-                    # See https://github.com/umccr-illumina/ica_v2/issues/99
-                    mount_path = str(Path(mount_path).name) + "/"
-
                 # Set file to presigned url
                 if data_type == "FILE" and is_presign:
                     input_obj["location"] = create_download_url(owning_project_id, data_id)
