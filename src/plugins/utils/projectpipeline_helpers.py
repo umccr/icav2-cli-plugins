@@ -338,6 +338,7 @@ def create_data_obj_from_project_id_and_path(project_id: str, data_path: str) ->
 def convert_icav2_uris_to_data_ids(input_obj: Union[str, int, bool, Dict, List]) -> Tuple[
     Union[str, Dict, List], List[Dict]]:
     # Set default mount_list
+    input_obj_new_list = []
     mount_list = []
 
     # Convert basic types
@@ -346,7 +347,6 @@ def convert_icav2_uris_to_data_ids(input_obj: Union[str, int, bool, Dict, List])
 
     # Convert dict or list types recursively
     if isinstance(input_obj, List):
-        input_obj_new_list = []
         for input_item in input_obj:
             input_obj_new_item, mount_list_new = convert_icav2_uris_to_data_ids(input_item)
             mount_list.extend(mount_list_new)
@@ -354,8 +354,8 @@ def convert_icav2_uris_to_data_ids(input_obj: Union[str, int, bool, Dict, List])
         return input_obj_new_list, mount_list
     if isinstance(input_obj, Dict):
         if "class" in input_obj.keys() and input_obj["class"] in ["File", "Directory"]:
+            # Resolve location
             if input_obj.get("location", "").startswith("icav2://"):
-
                 # Get relative location path
                 input_obj_new: ProjectData = convert_icav2_uri_to_data_obj(input_obj.get("location"))
                 data_type: str = input_obj_new.get("data").get("details").get('data_type')  # One of FILE | FOLDER
@@ -416,7 +416,16 @@ def convert_icav2_uris_to_data_ids(input_obj: Union[str, int, bool, Dict, List])
 
                     input_obj["location"] = mount_path
 
-                return input_obj, mount_list
+            # Get secondary Files
+            if not len(input_obj.get("secondaryFiles", [])) == 0:
+                old_secondary_files = input_obj.get("secondaryFiles", [])
+                input_obj["secondaryFiles"] = []
+                for input_item in old_secondary_files:
+                    input_obj_new_item, mount_list_new = convert_icav2_uris_to_data_ids(input_item)
+                    mount_list.extend(mount_list_new)
+                    input_obj["secondaryFiles"].append(input_obj_new_item)
+
+            return input_obj, mount_list
         else:
             input_obj_dict = {}
             for key, value in input_obj.items():
