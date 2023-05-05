@@ -9,6 +9,7 @@ from tempfile import NamedTemporaryFile
 from typing import List, Dict
 
 import requests
+from libica.openapi.v2.model.analysis import Analysis
 from libica.openapi.v2.model.analysis_step_logs import AnalysisStepLogs
 
 from libica.openapi.v2.model.analysis_step_list import AnalysisStepList
@@ -22,6 +23,33 @@ from utils.logger import get_logger
 from utils.projectpipeline_helpers import create_download_url
 
 logger = get_logger()
+
+
+def get_analysis(project_id: str, analysis_id: str) -> Analysis:
+    """
+    Get analaysis object
+    Args:
+        project_id:
+        analysis_id:
+
+    Returns:
+
+    """
+    with ApiClient(get_libicav2_configuration()) as api_client:
+        # Create an instance of the API class
+        api_instance = ProjectAnalysisApi(api_client)
+
+        # example passing only required values which don't have defaults set
+        try:
+            # Retrieve the individual steps of an analysis.
+            api_response: Analysis = api_instance.get_analysis(
+                project_id,
+                analysis_id
+            )
+        except ApiException as e:
+            raise ValueError("Exception when calling ProjectAnalysisApi->get_analysis: %s\n" % e)
+
+    return api_response
 
 
 def get_workflow_steps(project_id: str, analysis_id: str) -> List[AnalysisStep]:

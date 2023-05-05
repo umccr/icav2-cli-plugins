@@ -21,6 +21,8 @@ from datetime import datetime
 
 from libica.openapi.v2.model.analysis_step import AnalysisStep
 
+from utils.projectanalysis_helpers import get_analysis
+
 STATUS_TO_COLOUR_MAP = {
     "FAILED": "#E71414",  # Bright Red
     "DONE": "#77E714", # Pastel Green
@@ -229,7 +231,7 @@ def add_task_colour_column(workflow_steps_df: pd.DataFrame) -> pd.DataFrame:
     return workflow_steps_df
 
 
-def plot_workflow_steps_df(workflow_steps_df: pd.DataFrame, output_path: Path, workflow_id: str):
+def plot_workflow_steps_df(workflow_steps_df: pd.DataFrame, output_path: Path, project_id: str, analysis_id: str):
     """
 
     Args:
@@ -245,7 +247,7 @@ def plot_workflow_steps_df(workflow_steps_df: pd.DataFrame, output_path: Path, w
             * task_pending_td
             * task_duration_td
         output_path: Path to the output png file
-
+        analysis_id: The workflow ID
     Returns:
         None
     """
@@ -254,11 +256,13 @@ def plot_workflow_steps_df(workflow_steps_df: pd.DataFrame, output_path: Path, w
     workflow_steps_df = workflow_steps_df.copy().\
         sort_values(by="task_queue_date", ascending=False).reset_index()
 
+    # Use timeCreated as the start of the analysis
+    analysis_creation_time = get_analysis(project_id, analysis_id).time_created
     # Add in queue date td and start date td for date time
     # task queue date is the first one to start up
-    workflow_steps_df["task_queue_td"] = workflow_steps_df["task_queue_date"] - workflow_steps_df["task_queue_date"].min()
-    workflow_steps_df["task_start_td"] = workflow_steps_df["task_start_date"] - workflow_steps_df["task_queue_date"].min()
-    workflow_steps_df["task_end_td"] = workflow_steps_df["task_end_date"] - workflow_steps_df["task_queue_date"].min()
+    workflow_steps_df["task_queue_td"] = workflow_steps_df["task_queue_date"] - analysis_creation_time
+    workflow_steps_df["task_start_td"] = workflow_steps_df["task_start_date"] - analysis_creation_time
+    workflow_steps_df["task_end_td"] = workflow_steps_df["task_end_date"] - analysis_creation_time
 
     # Convert time deltas to numbers
     zero_date = datetime.fromtimestamp(0, tz=pytz.utc)
@@ -341,7 +345,7 @@ def plot_workflow_steps_df(workflow_steps_df: pd.DataFrame, output_path: Path, w
     ax.set_xlim(date2num(zero_date), workflow_steps_df["task_end_tdn"].max())
 
     # Set titles
-    fig.suptitle(f"Gantt Chart of analysis '{workflow_id}'")
+    fig.suptitle(f"Gantt Chart of analysis '{analysis_id}'")
     ax.set_ylabel("")
     ax.set_xlabel("Duration (HH:MM)")
 
