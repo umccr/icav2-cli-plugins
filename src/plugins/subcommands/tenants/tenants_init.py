@@ -64,6 +64,13 @@ Example:
         super().__init__(command_argv)
 
     def __call__(self):
+        # Ask the user for the server url?
+        server_url_input = input("server-url [ica.illumina.com]: ")
+        if server_url_input == "":
+            self.server_url = "ica.illumina.com"
+        else:
+            self.server_url = server_url_input
+
         # Ask user (kindly) for the api key
         self.x_api_key = getpass(
             prompt=f"Please enter your api key for tenant '{self.tenant_name}' followed by the enter key: "
