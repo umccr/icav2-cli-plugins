@@ -146,20 +146,20 @@ Parameters:
   if [[ -z "${ICAV2_CLI_PLUGINS_HOME-}" ]]; then
     echo "Could not get the env var ICAV2_CLI_PLUGINS_HOME" 1>&2
     echo "Please ensure you have added the icav2 cli plugins source chunk to your rc file"
-    exit 1
+    return 1
   fi
 
   # Check the tenant directory for this tenant id
   if [[ ! -d "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}" ]]; then
     echo "Could not find the tenant '${tenant_name}'" 1>&2
     echo "Please run 'icav2 tenants list' to view the list of available tenants or alternatively run 'icav2 tenants init \"${tenant_name}\"' to initialise this tenant" 1>&2
-    exit 1
+    return 1
   fi
 
   # Check the config yaml exists
   if [[ ! -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/config.yaml" ]]; then
     echo "Could not read '${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/config.yaml' please re-initialise this tenant with 'icav2 tenants init \"${tenant_name}\"'" 1>&2
-    exit 1
+    return 1
   fi
 
   # Read config
@@ -186,7 +186,7 @@ Parameters:
     # Check the api key
     if [[ -z "${x_api_key}" || "${x_api_key}" == "null" ]]; then
       echo "Could not get the api key from '${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/config.yaml'" 1>&2
-      exit 1
+      return 1
     fi
 
     # Create the token from the api key
@@ -195,7 +195,7 @@ Parameters:
       __icav2__create_token_from_api_key "${x_api_key}"
     )"; then
       echo "Failed to create access token from api-key in '${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/config.yaml'" 1>&2
-      exit 1
+      return 1
     fi
 
     echo "Successfully created new access token" 1>&2
