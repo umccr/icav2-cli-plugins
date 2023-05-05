@@ -28,6 +28,7 @@ MacOS users, please install greadlink through 'brew install coreutils'
 ICAV2_CLI_PLUGINS_HOME="$HOME/.icav2-cli-plugins"
 PLUGIN_VERSION="__PLUGIN_VERSION__"
 LIBICA_VERSION="__LIBICA_VERSION__"
+YQ_VERSION="4.18.1"
 
 ###########
 # Functions
@@ -74,6 +75,32 @@ binaries_check(){
   Check each of the required binaries are available
   '
   if ! (type aws curl jq python3 yq gh 1>/dev/null); then
+    return 1
+  fi
+}
+
+verlte() {
+    [ "$1" = "$(echo -e "$1\n$2" | sort -V | head -n1)" ]
+  }
+
+verlt() {
+    [ "$1" = "$2" ] && return 1 || verlte "$1" "$2"
+}
+
+get_yq_version(){
+  # Input: yq (https://github.com/mikefarah/yq/) version 4.27.3
+  # Output: 4.27.3
+  yq --version 2>/dev/null | \
+  tr ' ' '\n' | \
+  grep --extended-regexp --only-matching '[0-9\.]+$' 
+}
+
+check_yq_version() {
+  : '
+  Make sure at the latest conda version
+  '
+  if ! verlte "${YQ_VERSION}" "$(get_yq_version)"; then
+    echo_stderr "Your yq version is too old"
     return 1
   fi
 }
@@ -141,6 +168,12 @@ fi
 
 if ! binaries_check; then
   echo_stderr "ERROR: Failed installation at the binaries check stage. Please check the requirements highlighted in usage."
+  print_help
+  exit 1
+fi
+
+if ! check_yq_version; then
+  echo_stderr "Please update your version of yq and then rerun the installation"
   print_help
   exit 1
 fi
