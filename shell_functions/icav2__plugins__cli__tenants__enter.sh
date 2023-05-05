@@ -233,7 +233,14 @@ Parameters:
   server_url="$( \
     yq --unwrapScalar '.server-url' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/config.yaml"
   )"
-  export ICAV2_BASE_URL="https://${server_url-ica.illumina.com}/ica/rest"
+  if [[ -z "${server_url}" || "${server_url}" == "null" ]]; then
+    echo "Could not collect server-url attribute from config.yaml" 1>&2
+    echo "Setting server-url as default ica.illumina.com"
+    server_url="ica.illumina.com"
+  fi
+  ICAV2_BASE_URL="https://${server_url}/ica/rest"
+  echo "Exporting env var ICAV2_BASE_URL as '${ICAV2_BASE_URL}'" 1>&2
+  export ICAV2_BASE_URL
 
   # Check project id
   if [[ -n "${ICAV2_PROJECT_ID-}" ]]; then
