@@ -50,7 +50,7 @@ Environment:
 
 
 Example:
-    icav2 projectanalyses gantt-plot abc12345 --output-plot gantt.png
+    icav2 projectanalyses gantt-plot abc12345 --output-path gantt.png
     """
 
     def __init__(self, command_argv):
