@@ -356,6 +356,11 @@ def convert_icav2_uris_to_data_ids(input_obj: Union[str, int, bool, Dict, List])
         if "class" in input_obj.keys() and input_obj["class"] in ["File", "Directory"]:
             # Resolve location
             if input_obj.get("location", "").startswith("icav2://"):
+                # Check directory has a trailing slash
+                if input_obj["Directory"] and not input_obj["location"].endswith("/"):
+                    logger.error("Please ensure directories end with a trailing slash!")
+                    logger.error(f"Got location '{input_obj.get('location')}' for directory object. Please add a trailing slash and try again")
+                    raise ValueError
                 # Get relative location path
                 input_obj_new: ProjectData = convert_icav2_uri_to_data_obj(input_obj.get("location"))
                 data_type: str = input_obj_new.get("data").get("details").get('data_type')  # One of FILE | FOLDER
