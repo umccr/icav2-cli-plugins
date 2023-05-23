@@ -799,3 +799,48 @@ def create_blank_params_xml(output_file_path: Path):
     with open(output_file_path, "w") as params_h:
         for line in BLANK_PARAMS_XML_V2_FILE_CONTENTS:
             params_h.write(line + "\n")
+
+
+def release_pipeline(project_id: str, pipeline_id: str):
+    """
+    Release pipeline
+    Args:
+        project_id:
+        pipeline_id:
+
+    Returns:
+
+    """
+    # FIXME
+    # with ApiClient(get_libicav2_configuration()) as api_client:
+    #     # Create an instance of the API class
+    #     api_instance = ProjectPipelineApi(api_client)
+    #
+    # # example passing only required values which don't have defaults set
+    # try:
+    #     # Release a pipeline.
+    #     api_instance.release_pipeline(project_id, pipeline_id)
+    # except ApiException as e:
+    #     logger.error("Exception when calling ProjectPipelineApi->release_pipeline: %s\n" % e)
+    #     raise ApiException
+
+    # Use the curl api for now
+    curl_returncode, curl_stdout, curl_stderr = run_subprocess_proc(
+        [
+            "curl",
+            "--fail", "--silent", "--request", "--location", "--show-error",
+            "--request", "POST",
+            "--url", f"{get_libicav2_configuration().host}/api/projects/{project_id}/pipelines/{pipeline_id}:release",
+            "--header", "Accept: application/vnd.illumina.v3+json",
+            "--header", f"Authorization: Bearer {get_libicav2_configuration().access_token}",
+            "--data", ""
+        ],
+        capture_output=True
+    )
+
+    if not curl_returncode == 0:
+        logger.error(f"Got the following error while trying to release pipeline")
+        logger.error(curl_stderr)
+        raise ChildProcessError
+
+    logger.info(f"Successfully released {pipeline_id}")
