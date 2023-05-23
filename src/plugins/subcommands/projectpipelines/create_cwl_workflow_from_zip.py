@@ -28,7 +28,7 @@ from subcommands import Command
 logger = get_logger()
 
 
-class ProjectDataCreateCWLWorkflow(Command):
+class ProjectPipelinesCreateCWLWorkflow(Command):
     """Usage:
     icav2 projectpipelines create-cwl-workflow-from-zip help
     icav2 projectpipelines create-cwl-workflow-from-zip <zipped_workflow_path>
