@@ -105,6 +105,7 @@ Parameters:
   local x_api_key
   local access_token
   local project_id
+  local server_url_prefix
 
   global="false"
   tenant_name=""
@@ -162,6 +163,29 @@ Parameters:
     return 1
   fi
 
+  server_url="$( \
+    yq \
+      --unwrapScalar \
+      '
+        .server-url
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/config.yaml" \
+  )"
+
+  if [[ -z "${server_url}" || "${server_url}" == "null" ]]; then
+    echo "Could not collect server-url attribute from config.yaml" 1>&2
+    echo "Setting server-url as default ica.illumina.com"
+    server_url="ica.illumina.com"
+  fi
+
+  server_url_prefix="$( yq \
+    --unwrapScalar \
+    '
+      .server-url
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/config.yaml" | \
+    cut -d'.' -f1
+  )"
+
+
   # Read config
   x_api_key="$( \
     yq \
@@ -171,9 +195,9 @@ Parameters:
   )"
 
   # Get the access token from .session.ica.yaml
-  if [[ -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.ica.yaml" ]]; then
+  if [[ -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml" ]]; then
     if ! access_token="$( \
-      yq '.access-token' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.ica.yaml"
+      yq '.access-token' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml"
     )"; then
       access_token=""
     else
@@ -199,19 +223,19 @@ Parameters:
     fi
 
     echo "Successfully created new access token" 1>&2
-    if [[ -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.ica.yaml" ]]; then
+    if [[ -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml" ]]; then
       access_token="${access_token}" \
       yq --unwrapScalar \
-        '.access-token=env(access_token)' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.ica.yaml" \
-        > "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.ica.yaml.tmp"
-        mv "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.ica.yaml.tmp" \
-          "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.ica.yaml"
+        '.access-token=env(access_token)' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml" \
+        > "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml.tmp"
+        mv "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml.tmp" \
+          "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml"
     else
       access_token="${access_token}" \
       yq --null-input --unwrapScalar \
-        '.access-token=env(access_token)' > "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.ica.yaml.tmp"
-      mv "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.ica.yaml.tmp" \
-         "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.ica.yaml"
+        '.access-token=env(access_token)' > "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml.tmp"
+      mv "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml.tmp" \
+         "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml"
     fi
   fi
 
@@ -228,16 +252,8 @@ Parameters:
 
   # Get project id from tenant session yaml
   project_id="$( \
-    yq --unwrapScalar '.project-id' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.ica.yaml"
+    yq --unwrapScalar '.project-id' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml"
   )"
-  server_url="$( \
-    yq --unwrapScalar '.server-url' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/config.yaml"
-  )"
-  if [[ -z "${server_url}" || "${server_url}" == "null" ]]; then
-    echo "Could not collect server-url attribute from config.yaml" 1>&2
-    echo "Setting server-url as default ica.illumina.com"
-    server_url="ica.illumina.com"
-  fi
   ICAV2_BASE_URL="https://${server_url}/ica/rest"
   echo "Exporting env var ICAV2_BASE_URL as '${ICAV2_BASE_URL}'" 1>&2
   export ICAV2_BASE_URL

@@ -29,6 +29,7 @@ Parameters:
   # Initialise interal vars
   local global
   local name
+  local server_url
 
   global="false"
   name=""
@@ -88,7 +89,15 @@ Parameters:
   # Check if global set to true
   if [[ "${global}" == "true" ]]; then
     command icav2 projects enter "${name}"
-    echo "Updated project-id attribute in ~/.icav2/.session.ica.yaml" 1>&2
+    # Get server url from config yaml file
+    server_url="$( \
+      yq \
+      --unwrapScalar \
+      '
+        .server-url
+      ' < "${HOME}/.icav2/config.yaml" \
+    )"
+    echo "Updated project-id attribute in ~/.icav2/.session.${server_url}.yaml" 1>&2
     if [[ -n "${ICAV2_PROJECT_ID-}" && "${ICAV2_PROJECT_ID}" != "${project_id}" ]]; then
       echo "Env var 'ICAV2_PROJECT_ID' is different" 1>&2
       echo "Also updating ICAV2_PROJECT_ID env var from '${ICAV2_PROJECT_ID}' to '${project_id}'" 1>&2
