@@ -69,7 +69,8 @@ def get_session_file_path() -> Path:
     :return:
     """
     session_file_path: Path = Path(ICAV2_SESSION_FILE_PATH.format(
-        HOME=os.environ["HOME"]
+        HOME=os.environ["HOME"],
+        server_url_midfix=get_icav2_base_url().netloc.split(".")[0]
     ))
 
     if not session_file_path.is_file():

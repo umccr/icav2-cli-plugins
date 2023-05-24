@@ -39,6 +39,7 @@ import requests
 from urllib.parse import unquote, urlparse
 
 from subcommands import Command
+from utils.tenant_helpers import get_session_file_path_from_config_file
 
 logger = get_logger()
 
@@ -73,7 +74,7 @@ Example:
         self.server_url = None
 
         self.current_config_path: Optional[Path] = Path.home() / ".icav2" / "config.yaml"
-        self.current_session_path: Optional[Path] = Path.home() / ".icav2" / ".session.ica.yaml"
+        self.current_session_path: Optional[Path] = get_session_file_path_from_config_file(self.current_config_path)
 
         # Store the tenant namespace and id in the configuration yaml
         self.x_api_key: Optional[str] = None
@@ -119,7 +120,7 @@ Example:
 
         # Set the tenant session and config files
         self.tenant_config_file = self.tenant_path / "config.yaml"
-        self.tenant_session_file = self.tenant_path / ".session.ica.yaml"
+        self.tenant_session_file = get_session_file_path_from_config_file(self.tenant_config_file)
 
     def read_tenant_config(self):
         """
