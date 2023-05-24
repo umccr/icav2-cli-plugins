@@ -99,6 +99,12 @@ Example:
         # Fill out prompts
         self.fill_prompts()
 
+        # Remove existing session files
+        for session_file in Path.glob(Path("~/.icav2/").expanduser(), ".session.*.yaml"):
+            if not session_file == Path("~/.icav2/").expanduser() / self.tenant_session_file.name:
+                logger.info(f"Deleting session file {session_file}. Midfix does not match server url prefix of this tenant")
+                shutil.rmtree(session_file)
+
         # Copy tenant session file
         if self.tenant_session_file.is_file():
             shutil.copy2(self.tenant_session_file, self.current_session_path)

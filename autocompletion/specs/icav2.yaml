@@ -7,6 +7,59 @@ subcommands:
     subcommands:
       list:
         summary: list of storage id's
+  bundles:
+    summary: Bundles commands
+    subcommands:
+      init:
+        summary: Initialise a bundle
+        parameters:
+          - name: bundle_name
+        options:
+          - name: short-description
+            summary: A short description of the bundle
+            type: string
+          - name: input-yaml
+            summary: Path to bundle yaml
+            type: string
+          - name: region
+            summary: List of regions
+            type: string
+            completion:
+              command_string: |
+                __list_region_city_names.sh
+          - name: json
+            summary: Return bundle as json object to stdout
+      list:
+        summary: List bundles
+      add-data:
+        summary: Add data to a bundle
+        parameters:
+          - name: bundle_id
+        options:
+          - name: input-yaml
+            summary: Path to bundle yaml
+            type: string
+          - name: data-id
+            summary: ID of data to add to bundle
+          - name: data-uri
+            summary: Data URI to add to bundle
+      add-pipeline:
+        summary: Add pipeline to a bundle
+        parameters:
+          - name: bundle_id
+        options:
+          - name: input-yaml
+            summary: Path to bundle yaml
+            type: string
+          - name: pipeline-id
+            summary: ID of pipeline to add to bundle
+          - name: pipeline-code
+            summary: Pipeline code to add to bundle
+      release:
+        summary: Release a bundle
+        parameters:
+          - name: bundle_id
+
   # FIXME override completion subcommand
   config:
     summary: Config actions
@@ -487,6 +540,13 @@ subcommands:
         summary: list tenants
       enter:
         summary: enter a tenant
+        parameters:
+          - name: tenant_name
+            summary: Name of tenant
+            type: string
+            completion:
+              command_string: |
+                __list_tenants.sh
         options:
           - name: global
             summary: enter tenant globally
