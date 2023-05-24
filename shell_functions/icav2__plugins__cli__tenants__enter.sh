@@ -53,9 +53,10 @@ Parameters:
   }
 
   __icav2__create_token_from_api_key() {
+    set -o pipefail
     curl --fail --silent --location --show-error \
       --request 'POST' \
-      --url "https://ica.illumina.com/ica/rest/api/tokens" \
+      --url "${ICAV2_BASE_URL}/api/tokens" \
       --header "Accept: application/vnd.illumina.v3+json" \
       --header "X-API-Key: $1" \
       -d '' |
@@ -177,6 +178,10 @@ Parameters:
     server_url="ica.illumina.com"
   fi
 
+  ICAV2_BASE_URL="https://${server_url}/ica/rest"
+  echo "Exporting env var ICAV2_BASE_URL as '${ICAV2_BASE_URL}'" 1>&2
+  export ICAV2_BASE_URL
+
   server_url_prefix="$( yq \
     --unwrapScalar \
     '
@@ -254,9 +259,6 @@ Parameters:
   project_id="$( \
     yq --unwrapScalar '.project-id' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml"
   )"
-  ICAV2_BASE_URL="https://${server_url}/ica/rest"
-  echo "Exporting env var ICAV2_BASE_URL as '${ICAV2_BASE_URL}'" 1>&2
-  export ICAV2_BASE_URL
 
   # Check project id
   if [[ -n "${ICAV2_PROJECT_ID-}" ]]; then
