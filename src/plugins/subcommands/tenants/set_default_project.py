@@ -20,6 +20,7 @@ from utils.logger import get_logger
 from utils.plugin_helpers import get_tenants_directory
 
 from subcommands import Command
+from utils.tenant_helpers import get_tenant_api_key_from_config_file, get_session_file_path_from_config_file
 
 logger = get_logger()
 
@@ -86,12 +87,6 @@ Example:
 
         # Set the tenant session and config files
         self.tenant_config_file = self.tenant_path / "config.yaml"
-        self.tenant_session_file = self.tenant_path / ".session.ica.yaml"
-
-        if self.tenant_session_file.is_file():
-            self.read_tenant_session_file()
-        else:
-            self.tenant_session_yaml_object = {}
 
         # Get the project name parameter
         project_name_arg = self.args.get("--project-name", None)
@@ -100,7 +95,13 @@ Example:
             raise InvalidArgumentError
 
         # Collect tenant api key
-        self.tenant_api_key = self.get_tenant_api_key()
+        self.tenant_api_key = get_tenant_api_key_from_config_file(self.tenant_config_file)
+        self.tenant_session_file = get_session_file_path_from_config_file(self.tenant_config_file)
+
+        if self.tenant_session_file.is_file():
+            self.read_tenant_session_file()
+        else:
+            self.tenant_session_yaml_object = {}
 
         # Create access token from api key
         self.tenant_access_token = create_access_token_from_api_key(self.tenant_api_key)
@@ -112,17 +113,6 @@ Example:
         else:
             # Get project id from project name
             self.project_id = get_project_id_from_project_name_curl(get_icav2_base_url(), project_name_arg, self.tenant_access_token)
-
-    def get_tenant_api_key(self) -> str:
-        """
-        Get the tenant api key
-        Returns:
-
-        """
-        yaml = YAML()
-
-        with open(self.tenant_config_file, "r") as file_h:
-            return yaml.load(file_h).get("x-api-key")
 
     def read_tenant_session_file(self):
         """

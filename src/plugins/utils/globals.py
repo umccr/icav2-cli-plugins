@@ -13,7 +13,7 @@ ICAV2_SESSION_FILE_ACCESS_TOKEN_KEY = "access-token"
 ICAV2_SESSION_FILE_PROJECT_ID_KEY = "project-id"
 
 ICAV2_CONFIG_FILE_PATH = "{HOME}/.icav2/config.yaml"
-ICAV2_SESSION_FILE_PATH = "{HOME}/.icav2/.session.ica.yaml"
+ICAV2_SESSION_FILE_PATH = "{HOME}/.icav2/.session.{server_url_prefix}.yaml"
 
 ICAV2_ACCESS_TOKEN_AUDIENCE = "ica"
 
