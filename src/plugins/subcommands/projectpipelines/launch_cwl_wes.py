@@ -25,7 +25,7 @@ from subcommands import Command
 logger = get_logger()
 
 
-class ProjectDataStartCWLWES(Command):
+class ProjectPipelinesStartCWLWES(Command):
     """Usage:
     icav2 projectpipelines start-cwl-wes help
     icav2 projectpipelines start-cwl-wes (--launch-yaml=<launch_yaml>)

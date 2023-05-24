@@ -31,7 +31,7 @@ from subcommands import Command
 logger = get_logger()
 
 
-class ProjectDataCreateCWLWorkflowFromGitHubRelease(Command):
+class ProjectPipelinesCreateCWLWorkflowFromGitHubRelease(Command):
     """Usage:
     icav2 projectpipelines create-cwl-workflow-from-github-release help
     icav2 projectpipelines create-cwl-workflow-from-github-release <github_release_url>
