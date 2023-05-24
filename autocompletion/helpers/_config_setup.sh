@@ -53,4 +53,4 @@ if [[ \
    mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"

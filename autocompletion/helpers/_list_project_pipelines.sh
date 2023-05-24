@@ -1,7 +1,7 @@
 curl \
   --fail --silent --location \
   --request "GET" \
-  --url "https://ica.illumina.com/ica/rest/api/projects/${ICAV2_PROJECT_ID}/pipelines" \
+  --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/pipelines" \
   --header "Accept: application/vnd.illumina.v3+json" \
   --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" | \
 jq \
