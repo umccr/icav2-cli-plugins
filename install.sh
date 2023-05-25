@@ -273,6 +273,7 @@ else
 fi
 
 cp "$(get_this_path)/src/plugins/requirements.txt" "${ICAV2_CLI_PLUGINS_HOME}/requirements.txt"
+cp "$(get_this_path)/src/plugins/requirements-pandoc.txt" "${ICAV2_CLI_PLUGINS_HOME}/requirements-pandoc.txt"
 "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" -m pip install --upgrade pip --quiet
 "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" -m pip install --requirement "${ICAV2_CLI_PLUGINS_HOME}/requirements.txt" --quiet
 
