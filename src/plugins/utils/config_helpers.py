@@ -26,6 +26,7 @@ from libica.openapi.v2 import Configuration, ApiClient, ApiException
 from typing import Optional, List
 
 from utils.subprocess_handler import run_subprocess_proc
+from urllib.parse import urlparse
 
 logger = get_logger()
 
@@ -70,7 +71,7 @@ def get_session_file_path() -> Path:
     """
     session_file_path: Path = Path(ICAV2_SESSION_FILE_PATH.format(
         HOME=os.environ["HOME"],
-        server_url_midfix=get_icav2_base_url().netloc.split(".")[0]
+        server_url_prefix=urlparse(get_icav2_base_url()).netloc.split(".")[0]
     ))
 
     if not session_file_path.is_file():
