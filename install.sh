@@ -23,6 +23,9 @@ You should have the following applications installed before continuing:
 * yq (version 4.18 or later)
 
 MacOS users, please install greadlink through 'brew install coreutils'
+
+Options:
+--install-pandoc:      Required for running the command icav2 projectpipelines create-cwl-from-zip
 "
 
 ICAV2_CLI_PLUGINS_HOME="$HOME/.icav2-cli-plugins"
@@ -137,6 +140,24 @@ get_this_path() {
   # Return directory name
   echo "${this_dir}"
 }
+
+################
+# ARGUMENTS
+################
+# Get args from command line
+install_pandoc="false"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --install-pandoc)
+      install_pandoc="true"
+      ;;
+    -h | --help)
+      print_help
+      exit 0
+      ;;
+  esac
+  shift 1
+done
 
 ################
 # GET VERSIONS
@@ -282,10 +303,16 @@ sed -i "s/__PLUGIN_VERSION__/${PLUGIN_VERSION}/" "${ICAV2_CLI_PLUGINS_HOME}/shel
 # LINK PANDOC BINARY
 ######################
 # Link pandoc binary from site-packages/pypandoc/files/pandoc to ${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin
-( \
-  cd "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/";
-  ln -sf "${SITE_PACKAGES_DIR}/pypandoc/files/pandoc" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/pandoc}"
-)
+if [[ "${install_pandoc}" == "true" ]]; then
+  echo_stderr "Installing pandoc requirements"
+  "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" -m pip install --requirement "${ICAV2_CLI_PLUGINS_HOME}/requirements-pandoc.txt" --quiet
+  if [[ -f "${SITE_PACKAGES_DIR}/pypandoc/files/pandoc" ]]; then
+    ( \
+      cd "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/";
+      ln -sf "${SITE_PACKAGES_DIR}/pypandoc/files/pandoc" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/pandoc}"
+    )
+  fi
+fi
 
 ######################
 # COPY AUTOCOMPLETIONS

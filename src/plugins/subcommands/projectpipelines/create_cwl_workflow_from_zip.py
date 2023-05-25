@@ -132,6 +132,12 @@ Example:
         )
 
     def check_args(self):
+        # Check pypandoc binary
+        try:
+            import pandoc
+        except ImportError:
+            logger.error("Could not find pandoc module, please re-run the installation script with --install-pandoc parameter")
+            raise ImportError
         # Check zipped workflow path exists
         self.zipped_workflow_path = Path(self.args.get("<zipped_workflow_path>"))
         if not self.zipped_workflow_path.is_file():

@@ -19,8 +19,6 @@ from utils.subprocess_handler import run_subprocess_proc
 
 from utils.logger import get_logger
 
-import pandoc
-
 logger = get_logger()
 
 
