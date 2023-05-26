@@ -31,13 +31,13 @@ Description:
     region:
       id: abcdefg
     pipelines:
-      - pipeline-code: abcdeg
-      - pipeline-id: a1b2c3de-uuid
+      - pipeline_code: abcdeg
+      - pipeline_id: a1b2c3de-uuid
     data:
-      - data-id: fil.12345567
-      - data-id: fol.12345678
-      - data-uri: icav2://playground/path-to-file/
-      - data-uri: icav2://playground/path-to-folder/
+      - data_id: fil.12345567
+      - data_id: fol.12345678
+      - data_uri: icav2://playground/path-to-file/
+      - data_uri: icav2://playground/path-to-folder/
 
 
 Options:
