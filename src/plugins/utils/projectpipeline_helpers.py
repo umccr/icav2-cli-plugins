@@ -109,6 +109,7 @@ class ICAv2EngineParameters:
         
         if self.analysis_storage_id is None:
             self.analysis_storage_id = get_set_analysis_storage_id_from_pipeline(
+                project_id,
                 pipeline_id
             )
         if self.activation_id is None:
@@ -575,20 +576,20 @@ def get_activation_id(project_id: str, pipeline_id: str, input_json: Dict,
     return json.loads(command_stdout).get("id")
 
 
-def get_set_analysis_storage_id_from_pipeline(pipeline_id: str) -> str:
+def get_set_analysis_storage_id_from_pipeline(project_id: str, pipeline_id: str) -> str:
     # Enter a context with an instance of the API client
     with ApiClient(get_libicav2_configuration()) as api_client:
         # Create an instance of the API class
-        api_instance = PipelineApi(api_client)
+        api_instance = ProjectPipelineApi(api_client)
 
     # example passing only required values which don't have defaults set
     try:
         # Retrieve a pipeline.
-        api_response: Pipeline = api_instance.get_pipeline(pipeline_id)
+        api_response: ProjectPipeline = api_instance.get_project_pipeline(project_id, pipeline_id)
     except ApiException as e:
-        raise ValueError("Exception when calling PipelineApi->get_pipeline: %s\n" % e)
+        raise ValueError("Exception when calling ProjectPipelineApi->get_project_pipeline: %s\n" % e)
 
-    return api_response.analysis_storage.id
+    return api_response.pipeline.analysis_storage.id
 
 
 def get_pipeline_id_from_pipeline_code(project_id: str, pipeline_code: str) -> str:
