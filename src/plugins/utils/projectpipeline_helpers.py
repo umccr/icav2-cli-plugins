@@ -357,7 +357,7 @@ def convert_icav2_uris_to_data_ids(input_obj: Union[str, int, bool, Dict, List])
             # Resolve location
             if input_obj.get("location", "").startswith("icav2://"):
                 # Check directory has a trailing slash
-                if input_obj["Directory"] and not input_obj["location"].endswith("/"):
+                if input_obj.get("Directory", None) is not None and not input_obj["location"].endswith("/"):
                     logger.error("Please ensure directories end with a trailing slash!")
                     logger.error(f"Got location '{input_obj.get('location')}' for directory object. Please add a trailing slash and try again")
                     raise ValueError
