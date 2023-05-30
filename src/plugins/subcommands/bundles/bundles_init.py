@@ -38,6 +38,10 @@ Description:
     The yaml file contains the following keys:
       * region: (optional)
         * A string containing either the region id or city-name
+        OR
+        * A dict containing one or more of the following attributes
+          * region_id  # Takes preference over region_city_name if both are specified
+          * region_city_name
       * pipelines
         * A list of pipeline ids or codes to add to the bundle
         * Where each item in the list must contain one of the following keys
@@ -59,7 +63,7 @@ Description:
 
     The yaml file may look like the following
     region:
-      id: abcdefg
+      region_id: abcdefg
     pipelines:
       - pipeline_code: abcdeg
       - pipeline_id: a1b2c3de-uuid

@@ -3,7 +3,7 @@
 """
 Region helpers (for those in multiple regions)
 """
-from typing import OrderedDict, Optional
+from typing import OrderedDict, Optional, Union, Dict
 
 from libica.openapi.v2 import ApiClient, ApiException
 from libica.openapi.v2.api.region_api import RegionApi
@@ -20,15 +20,21 @@ logger = get_logger()
 def get_region_id_from_input_yaml_list(input_yaml_obj: OrderedDict) -> Optional[str]:
     if input_yaml_obj.get("region", None) is None:
         return None
-    region_str: Optional[str] = input_yaml_obj.get("region")
+    region: Optional[Union[str | Dict]] = input_yaml_obj.get("region")
 
-    if not isinstance(region_str, str):
-        logger.error("Expected region value to be a string")
+    if not isinstance(region, str) and not isinstance(region, Dict):
+        logger.error("Expected region attribute to be either a string or a dict")
         raise AssertionError
 
-    if is_uuid_format(region_str):
-        return region_str
-    return get_region_id_from_city_name(region_str)
+    if isinstance(region, str):
+        if is_uuid_format(region):
+            return region
+        return get_region_id_from_city_name(region)
+    else:
+        if "region_city_name" in region.keys():
+            return get_region_id_from_city_name(region.get("region_city_name"))
+        else:
+            return region.get("region_id")
 
 
 def get_region_id_from_city_name(city_name: str) -> str:
