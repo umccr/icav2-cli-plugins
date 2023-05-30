@@ -33,6 +33,7 @@ icav2() {
 
   plugin_subcommands_array=( \
     "_bundles__init_" \
+    "_bundles__get_"
     "_bundles__release_" \
     "_bundles__list_" \
     "_bundles__add-data_" \

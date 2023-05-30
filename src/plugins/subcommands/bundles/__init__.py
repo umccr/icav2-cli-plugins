@@ -15,6 +15,7 @@ Usage:
 
 Plugin Commands:
     init                 Initialise a bundle
+    get                  Get a bundle
     list                 List bundles
     add-data             Add data to a bundle
     add-pipeline         Add pipeline to a bundle
@@ -40,6 +41,8 @@ Use "icav2 bundles [command] --help" for more information about a command.
 
         if cmd == "init":
             from subcommands.bundles.bundles_init import BundlesInit as subcommand
+        elif cmd == 'get':
+            from subcommands.bundles.bundles_get import BundlesGet as subcommand
         elif cmd == "release":
             from subcommands.bundles.bundles_release import BundlesRelease as subcommand
         elif cmd == "list":
@@ -48,7 +51,6 @@ Use "icav2 bundles [command] --help" for more information about a command.
             from subcommands.bundles.bundles_add_data import BundlesAddData as subcommand
         elif cmd == "add-pipeline":
             from subcommands.bundles.bundles_add_pipeline import BundlesAddPipeline as subcommand
-
         else:
             print(self.__doc__)
             print(f"Could not find cmd \"{cmd}\". Please refer to usage above")
