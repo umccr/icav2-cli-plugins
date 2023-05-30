@@ -580,9 +580,12 @@ def print_bundles(bundles_list: List[Bundle], json_output: bool = False):
         if creator_id is None:
             continue
         # Get user from user ids
-        user = get_user_from_user_id(creator_id)
-        # Set value as firstname ' ' lastname
-        creator_dict[user.id] = f"{user.firstname} {user.lastname}"
+        try:
+            user = get_user_from_user_id(creator_id)
+            # Set value as firstname ' ' lastname
+            creator_dict[user.id] = f"{user.firstname} {user.lastname}"
+        except ValueError:
+            creator_dict[creator_id] = "Unknown"
 
     bundle_items_df["creator_user"] = bundle_items_df["creator_id"].apply(
         lambda x: creator_dict.get(x, None)
