@@ -43,7 +43,7 @@ Environment variables:
     ICAV2_BASE_URL           Optional, default set as https://ica.illumina.com/ica/rest
 
 Example:
-    icav2 bundles release abcdefg.12345
+    icav2 bundles list
     """
 
     def __init__(self, command_argv):
@@ -104,3 +104,8 @@ Example:
             status=self.status,
             creator_id=self.creator_id
         )
+
+        # Check list
+        if self.bundles_list == 0:
+            logger.error("No bundles found")
+            raise AssertionError
