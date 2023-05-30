@@ -6,6 +6,7 @@ Configuration helpers
 From collecting configuration from ~/.session.ica.yaml through ruamel to creating configuration object for libicav2
 """
 import os
+from base64 import b64decode
 from collections import OrderedDict
 import json
 
@@ -366,3 +367,9 @@ def get_project_name_from_project_id_curl(base_url, project_id: str, access_toke
 
     return json.loads(get_project_stdout).get("name")
 
+
+def get_tenant_id_from_b64_tid(tenant_id):
+    # Very confusing way but we need the negative modulo
+    num_equals = (4 - len(tenant_id) % 4) % 4
+
+    return b64decode(tenant_id + ("=" * num_equals)).decode().split(":")[-1]

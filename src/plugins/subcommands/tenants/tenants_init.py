@@ -13,13 +13,16 @@ from ruamel.yaml import YAML
 from utils import is_uuid_format
 from utils.errors import InvalidArgumentError
 from utils.config_helpers import create_access_token_from_api_key, get_jwt_token_obj, \
-    get_project_name_from_project_id_curl, get_project_id_from_project_name_curl, get_icav2_base_url
+    get_project_name_from_project_id_curl, get_project_id_from_project_name_curl, get_icav2_base_url, \
+    get_tenant_id_from_b64_tid
 from utils.globals import ICAV2_ACCESS_TOKEN_AUDIENCE
 from utils.logger import get_logger
 from utils.plugin_helpers import get_tenants_directory
 
 from subcommands import Command
-from utils.tenant_helpers import get_session_file_path_from_config_file
+from utils.tenant_helpers import get_session_file_path_from_config_file, get_tenant_id_from_project_list, \
+    get_tenant_name_from_project_list
+from base64 import b64decode
 
 logger = get_logger()
 
@@ -55,7 +58,10 @@ Example:
         self.x_api_key: Optional[str] = None
         self.access_token: Optional[str] = None
         self.tenant_namespace: Optional[str] = None
+        self.tid: Optional[str] = None
+        self.tns: Optional[str] = None
         self.tenant_id: Optional[str] = None
+        self.tenant_name: Optional[str] = None
         self.server_url: Optional[str] = None  # "ica.illumina.com"
 
         # Add in the project id and name
@@ -84,21 +90,26 @@ Example:
 
         # From the access token, collect the namespace and id
         token_obj = get_jwt_token_obj(self.access_token, ICAV2_ACCESS_TOKEN_AUDIENCE)
-        self.tenant_namespace = token_obj.get("tns")
-        self.tenant_id = token_obj.get("tid")
+        self.tns = token_obj.get("tns")
+        self.tid = token_obj.get("tid")
 
         # Use the access token to collect the project name if set
         if self.project_id is not None:
-            self.project_name = get_project_name_from_project_id_curl(get_icav2_base_url(), self.project_id, self.access_token)
+            self.project_name = get_project_name_from_project_id_curl(f"https://{self.server_url}/ica/rest", self.project_id, self.access_token)
         elif self.project_name is not None:
-            self.project_id = get_project_id_from_project_name_curl(get_icav2_base_url(), self.project_name, self.access_token)
+            self.project_id = get_project_id_from_project_name_curl(f"https://{self.server_url}/ica/rest", self.project_name, self.access_token)
 
         # Write out configuration yaml to file
         self.write_config_file()
+        # Chmod of config file to 600
+        self.tenant_config_file.chmod(0o600)
 
         # Now define the session file
         self.tenant_session_file = get_session_file_path_from_config_file(self.tenant_config_file)
         self.write_session_file()
+
+        # Chmod of session file to 600
+        self.tenant_session_file.chmod(0o600)
 
 
     def write_session_file(self):
@@ -121,8 +132,10 @@ Example:
                 {
                     "server-url": self.server_url,
                     "x-api-key": self.x_api_key,
-                    "tid": self.tenant_id,
-                    "tns": self.tenant_namespace
+                    "token-tid": get_tenant_id_from_b64_tid(self.tid),
+                    "token-tns": self.tns,
+                    "api-tid": get_tenant_id_from_project_list(f"https://{self.server_url}/ica/rest", self.access_token),
+                    "api-tns": get_tenant_name_from_project_list(f"https://{self.server_url}/ica/rest", self.access_token)
                 },
                 file_h
             )
@@ -149,4 +162,3 @@ Example:
 
         # Set the tenant session and config files
         self.tenant_config_file = self.tenant_path / "config.yaml"
-
