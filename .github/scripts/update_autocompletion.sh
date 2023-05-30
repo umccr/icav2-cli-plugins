@@ -72,11 +72,15 @@ EOF
     --name "${ICAV2_NAMEROOT}" \
     --bash > "bash/${ICAV2_NAMEROOT}.bash"
 
+  # Dont sort values
+  sed --in-place '%scomplete -o default -F _icav2 icav2%complete -o default -o nosort -F _icav2 icav2' "bash/${ICAV2_NAMEROOT}.bash"
+
   # Run the zsh completion script
   appspec completion \
     "${EVAL_TEMPLATE_TEMPFILE}" \
     --name "${ICAV2_NAMEROOT}" \
     --zsh > "zsh/_${ICAV2_NAMEROOT}"
+
 )
 
 # Delete the 'global' tempfiles
