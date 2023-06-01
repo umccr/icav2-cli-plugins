@@ -73,7 +73,7 @@ EOF
     --bash > "bash/${ICAV2_NAMEROOT}.bash"
 
   # Dont sort values
-  sed --in-place '%scomplete -o default -F _icav2 icav2%complete -o default -o nosort -F _icav2 icav2' "bash/${ICAV2_NAMEROOT}.bash"
+  sed --in-place 's%complete -o default -F _icav2 icav2%complete -o default -o nosort -F _icav2 icav2%' "bash/${ICAV2_NAMEROOT}.bash"
 
   # Run the zsh completion script
   appspec completion \
