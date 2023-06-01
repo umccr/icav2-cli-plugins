@@ -23,11 +23,15 @@ You should have the following applications installed before continuing:
 * yq (version 4.18 or later)
 
 MacOS users, please install greadlink through 'brew install coreutils'
+
+Options:
+--install-pandoc:      Required for running the command icav2 projectpipelines create-cwl-from-zip
 "
 
 ICAV2_CLI_PLUGINS_HOME="$HOME/.icav2-cli-plugins"
 PLUGIN_VERSION="__PLUGIN_VERSION__"
 LIBICA_VERSION="__LIBICA_VERSION__"
+YQ_VERSION="4.18.1"
 
 ###########
 # Functions
@@ -78,6 +82,32 @@ binaries_check(){
   fi
 }
 
+verlte() {
+    [ "$1" = "$(echo -e "$1\n$2" | sort -V | head -n1)" ]
+  }
+
+verlt() {
+    [ "$1" = "$2" ] && return 1 || verlte "$1" "$2"
+}
+
+get_yq_version(){
+  # Input: yq (https://github.com/mikefarah/yq/) version 4.27.3
+  # Output: 4.27.3
+  yq --version 2>/dev/null | \
+  tr ' ' '\n' | \
+  grep --extended-regexp --only-matching '[0-9\.]+$' 
+}
+
+check_yq_version() {
+  : '
+  Make sure at the latest conda version
+  '
+  if ! verlte "${YQ_VERSION}" "$(get_yq_version)"; then
+    echo_stderr "Your yq version is too old"
+    return 1
+  fi
+}
+
 get_user_shell(){
   : '
   Quick one-liner to get user shell
@@ -112,6 +142,24 @@ get_this_path() {
 }
 
 ################
+# ARGUMENTS
+################
+# Get args from command line
+install_pandoc="false"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --install-pandoc)
+      install_pandoc="true"
+      ;;
+    -h | --help)
+      print_help
+      exit 0
+      ;;
+  esac
+  shift 1
+done
+
+################
 # GET VERSIONS
 ################
 if [[ "${PLUGIN_VERSION}" == "__PLUGIN_VERSION__" ]]; then
@@ -141,6 +189,12 @@ fi
 
 if ! binaries_check; then
   echo_stderr "ERROR: Failed installation at the binaries check stage. Please check the requirements highlighted in usage."
+  print_help
+  exit 1
+fi
+
+if ! check_yq_version; then
+  echo_stderr "Please update your version of yq and then rerun the installation"
   print_help
   exit 1
 fi
@@ -219,6 +273,7 @@ else
 fi
 
 cp "$(get_this_path)/src/plugins/requirements.txt" "${ICAV2_CLI_PLUGINS_HOME}/requirements.txt"
+cp "$(get_this_path)/src/plugins/requirements-pandoc.txt" "${ICAV2_CLI_PLUGINS_HOME}/requirements-pandoc.txt"
 "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" -m pip install --upgrade pip --quiet
 "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" -m pip install --requirement "${ICAV2_CLI_PLUGINS_HOME}/requirements.txt" --quiet
 
@@ -249,10 +304,16 @@ sed -i "s/__PLUGIN_VERSION__/${PLUGIN_VERSION}/" "${ICAV2_CLI_PLUGINS_HOME}/shel
 # LINK PANDOC BINARY
 ######################
 # Link pandoc binary from site-packages/pypandoc/files/pandoc to ${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin
-( \
-  cd "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/";
-  ln -sf "${SITE_PACKAGES_DIR}/pypandoc/files/pandoc" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/pandoc}"
-)
+if [[ "${install_pandoc}" == "true" ]]; then
+  echo_stderr "Installing pandoc requirements"
+  "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" -m pip install --requirement "${ICAV2_CLI_PLUGINS_HOME}/requirements-pandoc.txt" --quiet
+  if [[ -f "${SITE_PACKAGES_DIR}/pypandoc/files/pandoc" ]]; then
+    ( \
+      cd "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/";
+      ln -sf "${SITE_PACKAGES_DIR}/pypandoc/files/pandoc" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/pandoc}"
+    )
+  fi
+fi
 
 ######################
 # COPY AUTOCOMPLETIONS

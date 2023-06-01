@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 
-# Generated with perl module App::Spec v0.000
+# Generated with perl module App::Spec v0.014
 
 _icav2() {
 
     COMPREPLY=()
+    local IFS=$'\n'
     local program=icav2
     local cur prev words cword
     _init_completion -n : || return
@@ -23,7 +24,7 @@ _icav2() {
 
     0)
         __comp_current_options || return
-        __icav2_dynamic_comp 'commands' 'analysisstorages'$'\t''Analysis storages commands'$'\n''config'$'\t''Config actions'$'\n''dataformats'$'\t''Data format commands'$'\n''help'$'\t''Help about any command'$'\n''metadatamodels'$'\t''Metadata model commands'$'\n''pipelines'$'\t''Pipeline commands'$'\n''projectanalyses'$'\t''Project analyses commands'$'\n''projectdata'$'\t''Project Data commands'$'\n''projectpipelines'$'\t''Project pipeline commands'$'\n''projects'$'\t''Project commands'$'\n''projectsamples'$'\t''Project samples commands'$'\n''regions'$'\t''Region commands'$'\n''storagebundles'$'\t''Storage bundle commands'$'\n''storageconfigurations'$'\t''Storage configurations commands'$'\n''tenants'$'\t''Handle tenant switching'$'\n''tokens'$'\t''Tokens commands'$'\n''version'$'\t''The version of this application'
+        __icav2_dynamic_comp 'commands' 'analysisstorages'$'\t''Analysis storages commands'$'\n''bundles'$'\t''Bundles commands'$'\n''config'$'\t''Config actions'$'\n''dataformats'$'\t''Data format commands'$'\n''help'$'\t''Help about any command'$'\n''metadatamodels'$'\t''Metadata model commands'$'\n''pipelines'$'\t''Pipeline commands'$'\n''projectanalyses'$'\t''Project analyses commands'$'\n''projectdata'$'\t''Project Data commands'$'\n''projectpipelines'$'\t''Project pipeline commands'$'\n''projects'$'\t''Project commands'$'\n''projectsamples'$'\t''Project samples commands'$'\n''regions'$'\t''Region commands'$'\n''storagebundles'$'\t''Storage bundle commands'$'\n''storageconfigurations'$'\t''Storage configurations commands'$'\n''tenants'$'\t''Handle tenant switching'$'\n''tokens'$'\t''Tokens commands'$'\n''version'$'\t''The version of this application'
 
     ;;
     *)
@@ -115,6 +116,137 @@ _icav2() {
           list)
             __icav2_handle_options_flags
             __comp_current_options true || return # no subcmds, no params/opts
+          ;;
+        esac
+
+        ;;
+        esac
+      ;;
+      bundles)
+        __icav2_handle_options_flags
+        case $INDEX in
+
+        1)
+            __comp_current_options || return
+            __icav2_dynamic_comp 'commands' 'add-bundle-to-project'$'\t''Add a bundle to a project'$'\n''add-data'$'\t''Add data to a bundle'$'\n''add-pipeline'$'\t''Add pipeline to a bundle'$'\n''init'$'\t''Initialise a bundle'$'\n''list'$'\t''List bundles'$'\n''release'$'\t''Release a bundle'
+
+        ;;
+        *)
+        # subcmds
+        case ${MYWORDS[1]} in
+          add-bundle-to-project)
+            OPTIONS+=('--input-yaml' 'Path to input yaml' '--project' 'Project ID or name')
+            __icav2_handle_options_flags
+            case ${MYWORDS[$INDEX-1]} in
+              --input-yaml)
+              ;;
+              --project)
+                _icav2_bundles_add-bundle-to-project_option_project_completion
+              ;;
+
+            esac
+            case $INDEX in
+              2)
+                  __comp_current_options || return
+              ;;
+
+
+            *)
+                __comp_current_options || return
+            ;;
+            esac
+          ;;
+          add-data)
+            OPTIONS+=('--input-yaml' 'Path to bundle yaml' '--data-id' 'ID of data to add to bundle' '--data-uri' 'Data URI to add to bundle')
+            __icav2_handle_options_flags
+            case ${MYWORDS[$INDEX-1]} in
+              --input-yaml)
+              ;;
+              --data-id)
+              ;;
+              --data-uri)
+              ;;
+
+            esac
+            case $INDEX in
+              2)
+                  __comp_current_options || return
+              ;;
+
+
+            *)
+                __comp_current_options || return
+            ;;
+            esac
+          ;;
+          add-pipeline)
+            OPTIONS+=('--input-yaml' 'Path to bundle yaml' '--pipeline-id' 'ID of pipeline to add to bundle' '--pipeline-code' 'Pipeline code to add to bundle')
+            __icav2_handle_options_flags
+            case ${MYWORDS[$INDEX-1]} in
+              --input-yaml)
+              ;;
+              --pipeline-id)
+              ;;
+              --pipeline-code)
+              ;;
+
+            esac
+            case $INDEX in
+              2)
+                  __comp_current_options || return
+              ;;
+
+
+            *)
+                __comp_current_options || return
+            ;;
+            esac
+          ;;
+          init)
+            OPTIONS+=('--short-description' 'A short description of the bundle' '--input-yaml' 'Path to bundle yaml' '--region' 'List of regions' '--json' 'Return bundle as json object to stdout')
+            __icav2_handle_options_flags
+            case ${MYWORDS[$INDEX-1]} in
+              --short-description)
+              ;;
+              --input-yaml)
+              ;;
+              --region)
+                _icav2_bundles_init_option_region_completion
+              ;;
+              --json)
+              ;;
+
+            esac
+            case $INDEX in
+              2)
+                  __comp_current_options || return
+              ;;
+
+
+            *)
+                __comp_current_options || return
+            ;;
+            esac
+          ;;
+          list)
+            __icav2_handle_options_flags
+            __comp_current_options true || return # no subcmds, no params/opts
+          ;;
+          release)
+            __icav2_handle_options_flags
+            case ${MYWORDS[$INDEX-1]} in
+
+            esac
+            case $INDEX in
+              2)
+                  __comp_current_options || return
+              ;;
+
+
+            *)
+                __comp_current_options || return
+            ;;
+            esac
           ;;
         esac
 
@@ -971,6 +1103,11 @@ _icav2() {
 
             esac
             case $INDEX in
+              2)
+                  __comp_current_options || return
+                    _icav2_tenants_enter_param_tenant_name_completion
+              ;;
+
 
             *)
                 __comp_current_options || return
@@ -1065,9 +1202,8 @@ _icav2() {
 
 _icav2_compreply() {
     local prefix=""
-    local IFS=$'\n'
     cur="$(printf '%q' "$cur")"
-    IFS=$IFS COMPREPLY=($(compgen -P "$prefix" -W "$*" -- "$cur"))
+    COMPREPLY=($(compgen -P "$prefix" -W "$*" -- "$cur"))
     __ltrim_colon_completions "$prefix$cur"
 
     # http://stackoverflow.com/questions/7267185/bash-autocompletion-add-description-for-possible-completions
@@ -1077,17 +1213,44 @@ _icav2_compreply() {
     fi
 }
 
+_icav2_bundles_init_option_region_completion() {
+    local CURRENT_WORD="${words[$cword]}"
+    local param_region="$(
+curl \
+  --fail --silent --location \
+  --request "GET" \
+  --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/regions/" \
+  --header "Accept: application/vnd.illumina.v3+json" \
+  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" | \
+jq \
+  --raw-output \
+  '
+    .items |
+    map(.cityName) |
+    .[]
+  '
+)"
+    _icav2_compreply "$param_region"
+}
 _icav2_projectanalyses_gantt-plot_param_analysis_id_completion() {
     local CURRENT_WORD="${words[$cword]}"
     local param_analysis_id="$(
 ## CONFIG SETUP ##
+
+  __icav2_server_url_prefix="$( yq \
+    --unwrapScalar \
+    '
+      .server-url
+    ' < "${HOME}/.icav2/config.yaml" | \
+    cut -d'.' -f1
+  )"
 
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.ica.yaml"
+    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1097,7 +1260,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.ica.yaml"
+      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1125,28 +1288,63 @@ if [[ \
  yq --prettyPrint \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' < "${HOME}/.icav2/.session.ica.yaml" > "${HOME}/.icav2/.session.ica.yaml.tmp" && \
-   mv "${HOME}/.icav2/.session.ica.yaml.tmp" "${HOME}/.icav2/.session.ica.yaml"
+   ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml" > "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" && \
+   mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
 
 ## END CONFIG SETUP ##
 
 ## LIST ANALYSIS IDS
+page_offset=0
+page_size=1000
+total_item_count="$( \
+  curl \
+      --fail \
+      --silent \
+      --location \
+      --request 'GET' \
+      --header 'Accept: application/vnd.illumina.v3+json' \
+      --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
+      --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/analyses?pageOffset=0&pageSize=1" | \
+  jq --raw-output '.totalItemCount' \
+)"
 
-curl \
-  --fail --silent --location \
-  --request 'GET' \
-  --header 'Accept: application/vnd.illumina.v3+json' \
-  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
-  "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/analyses" | \
-jq --raw-output \
-  '
-   .items |
-   map(.id) |
-   .[]
-  '
+while :; do
+  eval "$( \
+    curl \
+      --fail \
+      --silent \
+      --location \
+      --request 'GET' \
+      --header 'Accept: application/vnd.illumina.v3+json' \
+      --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
+      --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/analyses?pageOffset=${page_offset}&pageSize=${page_size}&sort=startDate%20desc" | \
+    jq --raw-output \
+      --arg cols "$(tput cols)" \
+      '
+        .items |
+        (map(.id | length) | max) as $max_id_length |
+        (($cols | tonumber) - $max_id_length - 4) as $max_description_length |
+        map(
+          [
+            "printf",
+            "%-*s -- %.*s\n",
+            $max_id_length, .id,
+            $max_description_length, "UserRef: \(.userReference)  Date: \(.startDate)"
+          ] |
+          @sh
+        ) |
+        .[]
+      '
+  )"
+    (( page_offset += page_size ))
+
+    if ! (( page_offset < total_item_count )); then
+      break
+    fi
+done
 )"
     _icav2_compreply "$param_analysis_id"
 }
@@ -1155,12 +1353,20 @@ _icav2_projectanalyses_get-analysis-step-logs_param_analysis_id_completion() {
     local param_analysis_id="$(
 ## CONFIG SETUP ##
 
+  __icav2_server_url_prefix="$( yq \
+    --unwrapScalar \
+    '
+      .server-url
+    ' < "${HOME}/.icav2/config.yaml" | \
+    cut -d'.' -f1
+  )"
+
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.ica.yaml"
+    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1170,7 +1376,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.ica.yaml"
+      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1198,28 +1404,63 @@ if [[ \
  yq --prettyPrint \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' < "${HOME}/.icav2/.session.ica.yaml" > "${HOME}/.icav2/.session.ica.yaml.tmp" && \
-   mv "${HOME}/.icav2/.session.ica.yaml.tmp" "${HOME}/.icav2/.session.ica.yaml"
+   ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml" > "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" && \
+   mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
 
 ## END CONFIG SETUP ##
 
 ## LIST ANALYSIS IDS
+page_offset=0
+page_size=1000
+total_item_count="$( \
+  curl \
+      --fail \
+      --silent \
+      --location \
+      --request 'GET' \
+      --header 'Accept: application/vnd.illumina.v3+json' \
+      --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
+      --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/analyses?pageOffset=0&pageSize=1" | \
+  jq --raw-output '.totalItemCount' \
+)"
 
-curl \
-  --fail --silent --location \
-  --request 'GET' \
-  --header 'Accept: application/vnd.illumina.v3+json' \
-  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
-  "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/analyses" | \
-jq --raw-output \
-  '
-   .items |
-   map(.id) |
-   .[]
-  '
+while :; do
+  eval "$( \
+    curl \
+      --fail \
+      --silent \
+      --location \
+      --request 'GET' \
+      --header 'Accept: application/vnd.illumina.v3+json' \
+      --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
+      --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/analyses?pageOffset=${page_offset}&pageSize=${page_size}&sort=startDate%20desc" | \
+    jq --raw-output \
+      --arg cols "$(tput cols)" \
+      '
+        .items |
+        (map(.id | length) | max) as $max_id_length |
+        (($cols | tonumber) - $max_id_length - 4) as $max_description_length |
+        map(
+          [
+            "printf",
+            "%-*s -- %.*s\n",
+            $max_id_length, .id,
+            $max_description_length, "UserRef: \(.userReference)  Date: \(.startDate)"
+          ] |
+          @sh
+        ) |
+        .[]
+      '
+  )"
+    (( page_offset += page_size ))
+
+    if ! (( page_offset < total_item_count )); then
+      break
+    fi
+done
 )"
     _icav2_compreply "$param_analysis_id"
 }
@@ -1228,12 +1469,20 @@ _icav2_projectanalyses_get-cwl-analysis-input-json_param_analysis_id_completion(
     local param_analysis_id="$(
 ## CONFIG SETUP ##
 
+  __icav2_server_url_prefix="$( yq \
+    --unwrapScalar \
+    '
+      .server-url
+    ' < "${HOME}/.icav2/config.yaml" | \
+    cut -d'.' -f1
+  )"
+
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.ica.yaml"
+    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1243,7 +1492,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.ica.yaml"
+      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1271,28 +1520,63 @@ if [[ \
  yq --prettyPrint \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' < "${HOME}/.icav2/.session.ica.yaml" > "${HOME}/.icav2/.session.ica.yaml.tmp" && \
-   mv "${HOME}/.icav2/.session.ica.yaml.tmp" "${HOME}/.icav2/.session.ica.yaml"
+   ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml" > "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" && \
+   mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
 
 ## END CONFIG SETUP ##
 
 ## LIST ANALYSIS IDS
+page_offset=0
+page_size=1000
+total_item_count="$( \
+  curl \
+      --fail \
+      --silent \
+      --location \
+      --request 'GET' \
+      --header 'Accept: application/vnd.illumina.v3+json' \
+      --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
+      --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/analyses?pageOffset=0&pageSize=1" | \
+  jq --raw-output '.totalItemCount' \
+)"
 
-curl \
-  --fail --silent --location \
-  --request 'GET' \
-  --header 'Accept: application/vnd.illumina.v3+json' \
-  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
-  "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/analyses" | \
-jq --raw-output \
-  '
-   .items |
-   map(.id) |
-   .[]
-  '
+while :; do
+  eval "$( \
+    curl \
+      --fail \
+      --silent \
+      --location \
+      --request 'GET' \
+      --header 'Accept: application/vnd.illumina.v3+json' \
+      --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
+      --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/analyses?pageOffset=${page_offset}&pageSize=${page_size}&sort=startDate%20desc" | \
+    jq --raw-output \
+      --arg cols "$(tput cols)" \
+      '
+        .items |
+        (map(.id | length) | max) as $max_id_length |
+        (($cols | tonumber) - $max_id_length - 4) as $max_description_length |
+        map(
+          [
+            "printf",
+            "%-*s -- %.*s\n",
+            $max_id_length, .id,
+            $max_description_length, "UserRef: \(.userReference)  Date: \(.startDate)"
+          ] |
+          @sh
+        ) |
+        .[]
+      '
+  )"
+    (( page_offset += page_size ))
+
+    if ! (( page_offset < total_item_count )); then
+      break
+    fi
+done
 )"
     _icav2_compreply "$param_analysis_id"
 }
@@ -1301,12 +1585,20 @@ _icav2_projectanalyses_get-cwl-analysis-output-json_param_analysis_id_completion
     local param_analysis_id="$(
 ## CONFIG SETUP ##
 
+  __icav2_server_url_prefix="$( yq \
+    --unwrapScalar \
+    '
+      .server-url
+    ' < "${HOME}/.icav2/config.yaml" | \
+    cut -d'.' -f1
+  )"
+
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.ica.yaml"
+    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1316,7 +1608,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.ica.yaml"
+      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1344,28 +1636,63 @@ if [[ \
  yq --prettyPrint \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' < "${HOME}/.icav2/.session.ica.yaml" > "${HOME}/.icav2/.session.ica.yaml.tmp" && \
-   mv "${HOME}/.icav2/.session.ica.yaml.tmp" "${HOME}/.icav2/.session.ica.yaml"
+   ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml" > "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" && \
+   mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
 
 ## END CONFIG SETUP ##
 
 ## LIST ANALYSIS IDS
+page_offset=0
+page_size=1000
+total_item_count="$( \
+  curl \
+      --fail \
+      --silent \
+      --location \
+      --request 'GET' \
+      --header 'Accept: application/vnd.illumina.v3+json' \
+      --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
+      --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/analyses?pageOffset=0&pageSize=1" | \
+  jq --raw-output '.totalItemCount' \
+)"
 
-curl \
-  --fail --silent --location \
-  --request 'GET' \
-  --header 'Accept: application/vnd.illumina.v3+json' \
-  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
-  "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/analyses" | \
-jq --raw-output \
-  '
-   .items |
-   map(.id) |
-   .[]
-  '
+while :; do
+  eval "$( \
+    curl \
+      --fail \
+      --silent \
+      --location \
+      --request 'GET' \
+      --header 'Accept: application/vnd.illumina.v3+json' \
+      --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
+      --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/analyses?pageOffset=${page_offset}&pageSize=${page_size}&sort=startDate%20desc" | \
+    jq --raw-output \
+      --arg cols "$(tput cols)" \
+      '
+        .items |
+        (map(.id | length) | max) as $max_id_length |
+        (($cols | tonumber) - $max_id_length - 4) as $max_description_length |
+        map(
+          [
+            "printf",
+            "%-*s -- %.*s\n",
+            $max_id_length, .id,
+            $max_description_length, "UserRef: \(.userReference)  Date: \(.startDate)"
+          ] |
+          @sh
+        ) |
+        .[]
+      '
+  )"
+    (( page_offset += page_size ))
+
+    if ! (( page_offset < total_item_count )); then
+      break
+    fi
+done
 )"
     _icav2_compreply "$param_analysis_id"
 }
@@ -1374,12 +1701,20 @@ _icav2_projectanalyses_list-analysis-steps_param_analysis_id_completion() {
     local param_analysis_id="$(
 ## CONFIG SETUP ##
 
+  __icav2_server_url_prefix="$( yq \
+    --unwrapScalar \
+    '
+      .server-url
+    ' < "${HOME}/.icav2/config.yaml" | \
+    cut -d'.' -f1
+  )"
+
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.ica.yaml"
+    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1389,7 +1724,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.ica.yaml"
+      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1417,28 +1752,63 @@ if [[ \
  yq --prettyPrint \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' < "${HOME}/.icav2/.session.ica.yaml" > "${HOME}/.icav2/.session.ica.yaml.tmp" && \
-   mv "${HOME}/.icav2/.session.ica.yaml.tmp" "${HOME}/.icav2/.session.ica.yaml"
+   ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml" > "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" && \
+   mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
 
 ## END CONFIG SETUP ##
 
 ## LIST ANALYSIS IDS
+page_offset=0
+page_size=1000
+total_item_count="$( \
+  curl \
+      --fail \
+      --silent \
+      --location \
+      --request 'GET' \
+      --header 'Accept: application/vnd.illumina.v3+json' \
+      --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
+      --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/analyses?pageOffset=0&pageSize=1" | \
+  jq --raw-output '.totalItemCount' \
+)"
 
-curl \
-  --fail --silent --location \
-  --request 'GET' \
-  --header 'Accept: application/vnd.illumina.v3+json' \
-  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
-  "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/analyses" | \
-jq --raw-output \
-  '
-   .items |
-   map(.id) |
-   .[]
-  '
+while :; do
+  eval "$( \
+    curl \
+      --fail \
+      --silent \
+      --location \
+      --request 'GET' \
+      --header 'Accept: application/vnd.illumina.v3+json' \
+      --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
+      --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/analyses?pageOffset=${page_offset}&pageSize=${page_size}&sort=startDate%20desc" | \
+    jq --raw-output \
+      --arg cols "$(tput cols)" \
+      '
+        .items |
+        (map(.id | length) | max) as $max_id_length |
+        (($cols | tonumber) - $max_id_length - 4) as $max_description_length |
+        map(
+          [
+            "printf",
+            "%-*s -- %.*s\n",
+            $max_id_length, .id,
+            $max_description_length, "UserRef: \(.userReference)  Date: \(.startDate)"
+          ] |
+          @sh
+        ) |
+        .[]
+      '
+  )"
+    (( page_offset += page_size ))
+
+    if ! (( page_offset < total_item_count )); then
+      break
+    fi
+done
 )"
     _icav2_compreply "$param_analysis_id"
 }
@@ -1447,12 +1817,20 @@ _icav2_projectdata_create-download-script_param_data_path_completion() {
     local param_data_path="$(
 ## CONFIG SETUP ##
 
+  __icav2_server_url_prefix="$( yq \
+    --unwrapScalar \
+    '
+      .server-url
+    ' < "${HOME}/.icav2/config.yaml" | \
+    cut -d'.' -f1
+  )"
+
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.ica.yaml"
+    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1462,7 +1840,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.ica.yaml"
+      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1490,11 +1868,11 @@ if [[ \
  yq --prettyPrint \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' < "${HOME}/.icav2/.session.ica.yaml" > "${HOME}/.icav2/.session.ica.yaml.tmp" && \
-   mv "${HOME}/.icav2/.session.ica.yaml.tmp" "${HOME}/.icav2/.session.ica.yaml"
+   ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml" > "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" && \
+   mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
 
 ## END CONFIG SETUP ##
 
@@ -1530,7 +1908,7 @@ params="$( \
         "parentFolderPath": $parent_folder_path,
         "filename": $file_name,
         "filenameMatchMode": "FUZZY",
-        "page_size": $page_size,
+        "pageSize": $page_size,
         "type": $type
       } |
       # Drop nulls
@@ -1554,10 +1932,11 @@ curl \
   --request GET \
   --header "Accept: application/vnd.illumina.v3+json" \
   --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
-  --url "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
+  --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
 jq --raw-output \
   '
     .items |
+    sort_by(.data.details.path | ascii_downcase) |
     map(
       .data.details.path
     ) |
@@ -1573,12 +1952,20 @@ _icav2_projectdata_find_param_data_path_completion() {
     local param_data_path="$(
 ## CONFIG SETUP ##
 
+  __icav2_server_url_prefix="$( yq \
+    --unwrapScalar \
+    '
+      .server-url
+    ' < "${HOME}/.icav2/config.yaml" | \
+    cut -d'.' -f1
+  )"
+
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.ica.yaml"
+    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1588,7 +1975,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.ica.yaml"
+      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1616,11 +2003,11 @@ if [[ \
  yq --prettyPrint \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' < "${HOME}/.icav2/.session.ica.yaml" > "${HOME}/.icav2/.session.ica.yaml.tmp" && \
-   mv "${HOME}/.icav2/.session.ica.yaml.tmp" "${HOME}/.icav2/.session.ica.yaml"
+   ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml" > "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" && \
+   mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
 
 ## END CONFIG SETUP ##
 
@@ -1656,7 +2043,7 @@ params="$( \
         "parentFolderPath": $parent_folder_path,
         "filename": $file_name,
         "filenameMatchMode": "FUZZY",
-        "page_size": $page_size,
+        "pageSize": $page_size,
         "type": $type
       } |
       # Drop nulls
@@ -1680,10 +2067,11 @@ curl \
   --request GET \
   --header "Accept: application/vnd.illumina.v3+json" \
   --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
-  --url "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
+  --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
 jq --raw-output \
   '
     .items |
+    sort_by(.data.details.path | ascii_downcase) |
     map(
       .data.details.path
     ) |
@@ -1699,12 +2087,20 @@ _icav2_projectdata_ls_param_data_path_completion() {
     local param_data_path="$(
 ## CONFIG SETUP ##
 
+  __icav2_server_url_prefix="$( yq \
+    --unwrapScalar \
+    '
+      .server-url
+    ' < "${HOME}/.icav2/config.yaml" | \
+    cut -d'.' -f1
+  )"
+
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.ica.yaml"
+    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1714,7 +2110,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.ica.yaml"
+      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1742,11 +2138,11 @@ if [[ \
  yq --prettyPrint \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' < "${HOME}/.icav2/.session.ica.yaml" > "${HOME}/.icav2/.session.ica.yaml.tmp" && \
-   mv "${HOME}/.icav2/.session.ica.yaml.tmp" "${HOME}/.icav2/.session.ica.yaml"
+   ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml" > "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" && \
+   mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
 
 ## END CONFIG SETUP ##
 
@@ -1782,7 +2178,7 @@ params="$( \
         "parentFolderPath": $parent_folder_path,
         "filename": $file_name,
         "filenameMatchMode": "FUZZY",
-        "page_size": $page_size,
+        "pageSize": $page_size,
         "type": $type
       } |
       # Drop nulls
@@ -1806,10 +2202,11 @@ curl \
   --request GET \
   --header "Accept: application/vnd.illumina.v3+json" \
   --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
-  --url "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
+  --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
 jq --raw-output \
   '
     .items |
+    sort_by(.data.details.path | ascii_downcase) |
     map(
       .data.details.path
     ) |
@@ -1825,12 +2222,20 @@ _icav2_projectdata_s3-sync-download_param_data_path_completion() {
     local param_data_path="$(
 ## CONFIG SETUP ##
 
+  __icav2_server_url_prefix="$( yq \
+    --unwrapScalar \
+    '
+      .server-url
+    ' < "${HOME}/.icav2/config.yaml" | \
+    cut -d'.' -f1
+  )"
+
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.ica.yaml"
+    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1840,7 +2245,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.ica.yaml"
+      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1868,11 +2273,11 @@ if [[ \
  yq --prettyPrint \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' < "${HOME}/.icav2/.session.ica.yaml" > "${HOME}/.icav2/.session.ica.yaml.tmp" && \
-   mv "${HOME}/.icav2/.session.ica.yaml.tmp" "${HOME}/.icav2/.session.ica.yaml"
+   ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml" > "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" && \
+   mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
 
 ## END CONFIG SETUP ##
 
@@ -1908,7 +2313,7 @@ params="$( \
         "parentFolderPath": $parent_folder_path,
         "filename": $file_name,
         "filenameMatchMode": "FUZZY",
-        "page_size": $page_size,
+        "pageSize": $page_size,
         "type": $type
       } |
       # Drop nulls
@@ -1932,10 +2337,11 @@ curl \
   --request GET \
   --header "Accept: application/vnd.illumina.v3+json" \
   --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
-  --url "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
+  --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
 jq --raw-output \
   '
     .items |
+    sort_by(.data.details.path | ascii_downcase) |
     map(
       .data.details.path
     ) |
@@ -1951,12 +2357,20 @@ _icav2_projectdata_s3-sync-upload_param_data_path_completion() {
     local param_data_path="$(
 ## CONFIG SETUP ##
 
+  __icav2_server_url_prefix="$( yq \
+    --unwrapScalar \
+    '
+      .server-url
+    ' < "${HOME}/.icav2/config.yaml" | \
+    cut -d'.' -f1
+  )"
+
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.ica.yaml"
+    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1966,7 +2380,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.ica.yaml"
+      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1994,11 +2408,11 @@ if [[ \
  yq --prettyPrint \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' < "${HOME}/.icav2/.session.ica.yaml" > "${HOME}/.icav2/.session.ica.yaml.tmp" && \
-   mv "${HOME}/.icav2/.session.ica.yaml.tmp" "${HOME}/.icav2/.session.ica.yaml"
+   ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml" > "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" && \
+   mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
 
 ## END CONFIG SETUP ##
 
@@ -2034,7 +2448,7 @@ params="$( \
         "parentFolderPath": $parent_folder_path,
         "filename": $file_name,
         "filenameMatchMode": "FUZZY",
-        "page_size": $page_size,
+        "pageSize": $page_size,
         "type": $type
       } |
       # Drop nulls
@@ -2058,10 +2472,11 @@ curl \
   --request GET \
   --header "Accept: application/vnd.illumina.v3+json" \
   --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
-  --url "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
+  --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
 jq --raw-output \
   '
     .items |
+    sort_by(.data.details.path | ascii_downcase) |
     map(
       .data.details.path
     ) |
@@ -2077,12 +2492,20 @@ _icav2_projectdata_view_param_data_path_completion() {
     local param_data_path="$(
 ## CONFIG SETUP ##
 
+  __icav2_server_url_prefix="$( yq \
+    --unwrapScalar \
+    '
+      .server-url
+    ' < "${HOME}/.icav2/config.yaml" | \
+    cut -d'.' -f1
+  )"
+
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.ica.yaml"
+    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -2092,7 +2515,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.ica.yaml"
+      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -2120,11 +2543,11 @@ if [[ \
  yq --prettyPrint \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' < "${HOME}/.icav2/.session.ica.yaml" > "${HOME}/.icav2/.session.ica.yaml.tmp" && \
-   mv "${HOME}/.icav2/.session.ica.yaml.tmp" "${HOME}/.icav2/.session.ica.yaml"
+   ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml" > "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" && \
+   mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
 
 ## END CONFIG SETUP ##
 
@@ -2160,7 +2583,7 @@ params="$( \
         "parentFolderPath": $parent_folder_path,
         "filename": $file_name,
         "filenameMatchMode": "FUZZY",
-        "page_size": $page_size,
+        "pageSize": $page_size,
         "type": $type
       } |
       # Drop nulls
@@ -2184,10 +2607,11 @@ curl \
   --request GET \
   --header "Accept: application/vnd.illumina.v3+json" \
   --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
-  --url "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
+  --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
 jq --raw-output \
   '
     .items |
+    sort_by(.data.details.path | ascii_downcase) |
     map(
       .data.details.path
     ) |
@@ -2203,12 +2627,20 @@ _icav2_projectpipelines_create-cwl-wes-input-template_option_pipeline_id_complet
     local param_pipeline_id="$(
 ## CONFIG SETUP ##
 
+  __icav2_server_url_prefix="$( yq \
+    --unwrapScalar \
+    '
+      .server-url
+    ' < "${HOME}/.icav2/config.yaml" | \
+    cut -d'.' -f1
+  )"
+
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.ica.yaml"
+    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -2218,7 +2650,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.ica.yaml"
+      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -2246,34 +2678,42 @@ if [[ \
  yq --prettyPrint \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' < "${HOME}/.icav2/.session.ica.yaml" > "${HOME}/.icav2/.session.ica.yaml.tmp" && \
-   mv "${HOME}/.icav2/.session.ica.yaml.tmp" "${HOME}/.icav2/.session.ica.yaml"
+   ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml" > "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" && \
+   mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
 
 ## END CONFIG SETUP ##
-
-ATTRIBUTE_NAME="id"
-
-## INVOKE PROJECT PIPELINE ##
-
-curl \
-  --fail --silent --location \
-  --request "GET" \
-  --url "https://ica.illumina.com/ica/rest/api/projects/${ICAV2_PROJECT_ID}/pipelines" \
-  --header "Accept: application/vnd.illumina.v3+json" \
-  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" | \
-jq \
-  --raw-output \
-  --arg attribute_type "${ATTRIBUTE_NAME}" \
-  '
-    .items |
-    map(.pipeline | .[$attribute_type]) |
-    .[]
-  '
-
-## INVOKE PROJECT PIPELINE ##
+eval "$(\
+  curl   \
+    --fail   \
+    --silent   \
+    --location   \
+    --request 'GET'   \
+    --header 'Accept: application/vnd.illumina.v3+json'   \
+    --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}"   \
+    --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/pipelines" | \
+  jq \
+    --raw-output \
+    --arg cols "$(tput cols)"\
+     '
+      .items |
+      (map(.pipeline.id | length) | max) as $max_pipeline_id |
+      (($cols | tonumber) - $max_pipeline_id - 4) as $max_description_length |
+      map(
+        [
+          "printf",
+          "%-*s -- %.*s\n",
+          $max_pipeline_id, .pipeline.id,
+          $max_description_length, "Code: \(.pipeline.code) Date: \(.pipeline.timeCreated) Description: \(.pipeline.description)"
+        ] |
+        @sh
+      )
+      |
+      .[]
+    ' \
+)"
 )"
     _icav2_compreply "$param_pipeline_id"
 }
@@ -2282,12 +2722,20 @@ _icav2_projectpipelines_create-cwl-wes-input-template_option_pipeline_code_compl
     local param_pipeline_code="$(
 ## CONFIG SETUP ##
 
+  __icav2_server_url_prefix="$( yq \
+    --unwrapScalar \
+    '
+      .server-url
+    ' < "${HOME}/.icav2/config.yaml" | \
+    cut -d'.' -f1
+  )"
+
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.ica.yaml"
+    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -2297,7 +2745,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.ica.yaml"
+      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -2325,34 +2773,46 @@ if [[ \
  yq --prettyPrint \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' < "${HOME}/.icav2/.session.ica.yaml" > "${HOME}/.icav2/.session.ica.yaml.tmp" && \
-   mv "${HOME}/.icav2/.session.ica.yaml.tmp" "${HOME}/.icav2/.session.ica.yaml"
+   ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml" > "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" && \
+   mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
 
 ## END CONFIG SETUP ##
 
-ATTRIBUTE_NAME="code"
-
 ## INVOKE PROJECT PIPELINE ##
 
-curl \
-  --fail --silent --location \
-  --request "GET" \
-  --url "https://ica.illumina.com/ica/rest/api/projects/${ICAV2_PROJECT_ID}/pipelines" \
-  --header "Accept: application/vnd.illumina.v3+json" \
-  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" | \
-jq \
-  --raw-output \
-  --arg attribute_type "${ATTRIBUTE_NAME}" \
-  '
-    .items |
-    map(.pipeline | .[$attribute_type]) |
-    .[]
-  '
-
-## INVOKE PROJECT PIPELINE ##
+# No pagination while :; do
+eval "$(\
+  curl   \
+    --fail   \
+    --silent   \
+    --location   \
+    --request 'GET'   \
+    --header 'Accept: application/vnd.illumina.v3+json'   \
+    --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}"   \
+    --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/pipelines" | \
+  jq \
+    --raw-output \
+    --arg cols "$(tput cols)" \
+     '
+      .items |
+      (map(.pipeline.code | length) | max) as $max_pipeline_code |
+      (($cols | tonumber) - $max_pipeline_code - 4) as $max_description_length |
+      map(
+        [
+          "printf",
+          "%-*s -- %.*s\n",
+          $max_pipeline_code, .pipeline.code,
+          $max_description_length, "Date=\(.pipeline.timeCreated) Description=\(.pipeline.description)"
+        ] |
+        @sh
+      )
+      |
+      .[]
+    ' \
+)"
 )"
     _icav2_compreply "$param_pipeline_code"
 }
@@ -2361,12 +2821,20 @@ _icav2_projectpipelines_create-cwl-wes-input-template_option_output_parent_folde
     local param_output_parent_folder_path="$(
 ## CONFIG SETUP ##
 
+  __icav2_server_url_prefix="$( yq \
+    --unwrapScalar \
+    '
+      .server-url
+    ' < "${HOME}/.icav2/config.yaml" | \
+    cut -d'.' -f1
+  )"
+
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.ica.yaml"
+    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -2376,7 +2844,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.ica.yaml"
+      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -2404,11 +2872,11 @@ if [[ \
  yq --prettyPrint \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' < "${HOME}/.icav2/.session.ica.yaml" > "${HOME}/.icav2/.session.ica.yaml.tmp" && \
-   mv "${HOME}/.icav2/.session.ica.yaml.tmp" "${HOME}/.icav2/.session.ica.yaml"
+   ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml" > "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" && \
+   mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
 
 ## END CONFIG SETUP ##
 
@@ -2444,7 +2912,7 @@ params="$( \
         "parentFolderPath": $parent_folder_path,
         "filename": $file_name,
         "filenameMatchMode": "FUZZY",
-        "page_size": $page_size,
+        "pageSize": $page_size,
         "type": $type
       } |
       # Drop nulls
@@ -2468,10 +2936,11 @@ curl \
   --request GET \
   --header "Accept: application/vnd.illumina.v3+json" \
   --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
-  --url "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
+  --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
 jq --raw-output \
   '
     .items |
+    sort_by(.data.details.path | ascii_downcase) |
     map(
       .data.details.path
     ) |
@@ -2487,12 +2956,20 @@ _icav2_projectpipelines_start-cwl-wes_option_pipeline_id_completion() {
     local param_pipeline_id="$(
 ## CONFIG SETUP ##
 
+  __icav2_server_url_prefix="$( yq \
+    --unwrapScalar \
+    '
+      .server-url
+    ' < "${HOME}/.icav2/config.yaml" | \
+    cut -d'.' -f1
+  )"
+
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.ica.yaml"
+    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -2502,7 +2979,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.ica.yaml"
+      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -2530,34 +3007,42 @@ if [[ \
  yq --prettyPrint \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' < "${HOME}/.icav2/.session.ica.yaml" > "${HOME}/.icav2/.session.ica.yaml.tmp" && \
-   mv "${HOME}/.icav2/.session.ica.yaml.tmp" "${HOME}/.icav2/.session.ica.yaml"
+   ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml" > "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" && \
+   mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
 
 ## END CONFIG SETUP ##
-
-ATTRIBUTE_NAME="id"
-
-## INVOKE PROJECT PIPELINE ##
-
-curl \
-  --fail --silent --location \
-  --request "GET" \
-  --url "https://ica.illumina.com/ica/rest/api/projects/${ICAV2_PROJECT_ID}/pipelines" \
-  --header "Accept: application/vnd.illumina.v3+json" \
-  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" | \
-jq \
-  --raw-output \
-  --arg attribute_type "${ATTRIBUTE_NAME}" \
-  '
-    .items |
-    map(.pipeline | .[$attribute_type]) |
-    .[]
-  '
-
-## INVOKE PROJECT PIPELINE ##
+eval "$(\
+  curl   \
+    --fail   \
+    --silent   \
+    --location   \
+    --request 'GET'   \
+    --header 'Accept: application/vnd.illumina.v3+json'   \
+    --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}"   \
+    --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/pipelines" | \
+  jq \
+    --raw-output \
+    --arg cols "$(tput cols)"\
+     '
+      .items |
+      (map(.pipeline.id | length) | max) as $max_pipeline_id |
+      (($cols | tonumber) - $max_pipeline_id - 4) as $max_description_length |
+      map(
+        [
+          "printf",
+          "%-*s -- %.*s\n",
+          $max_pipeline_id, .pipeline.id,
+          $max_description_length, "Code: \(.pipeline.code) Date: \(.pipeline.timeCreated) Description: \(.pipeline.description)"
+        ] |
+        @sh
+      )
+      |
+      .[]
+    ' \
+)"
 )"
     _icav2_compreply "$param_pipeline_id"
 }
@@ -2566,12 +3051,20 @@ _icav2_projectpipelines_start-cwl-wes_option_pipeline_code_completion() {
     local param_pipeline_code="$(
 ## CONFIG SETUP ##
 
+  __icav2_server_url_prefix="$( yq \
+    --unwrapScalar \
+    '
+      .server-url
+    ' < "${HOME}/.icav2/config.yaml" | \
+    cut -d'.' -f1
+  )"
+
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.ica.yaml"
+    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -2581,7 +3074,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.ica.yaml"
+      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -2609,34 +3102,46 @@ if [[ \
  yq --prettyPrint \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' < "${HOME}/.icav2/.session.ica.yaml" > "${HOME}/.icav2/.session.ica.yaml.tmp" && \
-   mv "${HOME}/.icav2/.session.ica.yaml.tmp" "${HOME}/.icav2/.session.ica.yaml"
+   ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml" > "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" && \
+   mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
 
 ## END CONFIG SETUP ##
 
-ATTRIBUTE_NAME="code"
-
 ## INVOKE PROJECT PIPELINE ##
 
-curl \
-  --fail --silent --location \
-  --request "GET" \
-  --url "https://ica.illumina.com/ica/rest/api/projects/${ICAV2_PROJECT_ID}/pipelines" \
-  --header "Accept: application/vnd.illumina.v3+json" \
-  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" | \
-jq \
-  --raw-output \
-  --arg attribute_type "${ATTRIBUTE_NAME}" \
-  '
-    .items |
-    map(.pipeline | .[$attribute_type]) |
-    .[]
-  '
-
-## INVOKE PROJECT PIPELINE ##
+# No pagination while :; do
+eval "$(\
+  curl   \
+    --fail   \
+    --silent   \
+    --location   \
+    --request 'GET'   \
+    --header 'Accept: application/vnd.illumina.v3+json'   \
+    --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}"   \
+    --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/pipelines" | \
+  jq \
+    --raw-output \
+    --arg cols "$(tput cols)" \
+     '
+      .items |
+      (map(.pipeline.code | length) | max) as $max_pipeline_code |
+      (($cols | tonumber) - $max_pipeline_code - 4) as $max_description_length |
+      map(
+        [
+          "printf",
+          "%-*s -- %.*s\n",
+          $max_pipeline_code, .pipeline.code,
+          $max_description_length, "Date=\(.pipeline.timeCreated) Description=\(.pipeline.description)"
+        ] |
+        @sh
+      )
+      |
+      .[]
+    ' \
+)"
 )"
     _icav2_compreply "$param_pipeline_code"
 }
@@ -2645,12 +3150,20 @@ _icav2_projectpipelines_start-cwl-wes_option_output_parent_folder_path_completio
     local param_output_parent_folder_path="$(
 ## CONFIG SETUP ##
 
+  __icav2_server_url_prefix="$( yq \
+    --unwrapScalar \
+    '
+      .server-url
+    ' < "${HOME}/.icav2/config.yaml" | \
+    cut -d'.' -f1
+  )"
+
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.ica.yaml"
+    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -2660,7 +3173,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.ica.yaml"
+      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -2688,11 +3201,11 @@ if [[ \
  yq --prettyPrint \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' < "${HOME}/.icav2/.session.ica.yaml" > "${HOME}/.icav2/.session.ica.yaml.tmp" && \
-   mv "${HOME}/.icav2/.session.ica.yaml.tmp" "${HOME}/.icav2/.session.ica.yaml"
+   ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml" > "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" && \
+   mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
 
 ## END CONFIG SETUP ##
 
@@ -2728,7 +3241,7 @@ params="$( \
         "parentFolderPath": $parent_folder_path,
         "filename": $file_name,
         "filenameMatchMode": "FUZZY",
-        "page_size": $page_size,
+        "pageSize": $page_size,
         "type": $type
       } |
       # Drop nulls
@@ -2752,10 +3265,11 @@ curl \
   --request GET \
   --header "Accept: application/vnd.illumina.v3+json" \
   --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
-  --url "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
+  --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
 jq --raw-output \
   '
     .items |
+    sort_by(.data.details.path | ascii_downcase) |
     map(
       .data.details.path
     ) |
@@ -2771,12 +3285,20 @@ _icav2_projects_enter_param_project_name_completion() {
     local param_project_name="$(
 ## CONFIG SETUP ##
 
+  __icav2_server_url_prefix="$( yq \
+    --unwrapScalar \
+    '
+      .server-url
+    ' < "${HOME}/.icav2/config.yaml" | \
+    cut -d'.' -f1
+  )"
+
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.ica.yaml"
+    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -2786,7 +3308,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.ica.yaml"
+      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -2814,11 +3336,11 @@ if [[ \
  yq --prettyPrint \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' < "${HOME}/.icav2/.session.ica.yaml" > "${HOME}/.icav2/.session.ica.yaml.tmp" && \
-   mv "${HOME}/.icav2/.session.ica.yaml.tmp" "${HOME}/.icav2/.session.ica.yaml"
+   ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml" > "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" && \
+   mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
 
 ## END CONFIG SETUP ##
 
@@ -2829,7 +3351,7 @@ ATTRIBUTE_NAME="name"
 curl \
   --fail --silent --location \
   --request "GET" \
-  --url "https://ica.illumina.com/ica/rest/api/projects/" \
+  --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/" \
   --header "Accept: application/vnd.illumina.v3+json" \
   --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" | \
 jq \
@@ -2844,6 +3366,13 @@ jq \
 ## INVOKE PROJECT FUNCTION ##
 )"
     _icav2_compreply "$param_project_name"
+}
+_icav2_tenants_enter_param_tenant_name_completion() {
+    local CURRENT_WORD="${words[$cword]}"
+    local param_tenant_name="$(
+find "${ICAV2_CLI_PLUGINS_HOME}/tenants/" -mindepth 1 -maxdepth 1 -type d -exec basename {} \;
+)"
+    _icav2_compreply "$param_tenant_name"
 }
 _icav2_tenants_set-default-project_param_tenant_name_completion() {
     local CURRENT_WORD="${words[$cword]}"
@@ -2982,5 +3511,5 @@ __comp_current_options() {
 }
 
 
-complete -o default -F _icav2 icav2
+complete -o default -o nosort -F _icav2 icav2
 

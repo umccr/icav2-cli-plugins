@@ -32,7 +32,7 @@ jobs:
              --volume  "$PWD:$PWD" \
              --workdir "$PWD" \
              --entrypoint "bash" \
-             ghcr.io/alexiswl/app-appspec-p5:v0.007-rc \
+             ghcr.io/alexiswl/app-appspec-p5:v0.007 \
                ".github/scripts/update_autocompletion.sh"
       # Commit to github
       - id: commit_configuration_yaml_files

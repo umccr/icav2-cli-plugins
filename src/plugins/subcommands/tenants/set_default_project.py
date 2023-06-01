@@ -6,35 +6,21 @@ This means when tenants enter command is invoked the ICAV2_PROJECT_ID is added
 """
 
 
-import json
-import os
-import shutil
 from collections import OrderedDict
 from pathlib import Path
-from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Optional
-from getpass import getpass
-
-from invoke import Responder
-from fabric import Connection
 
 from ruamel.yaml import YAML
 
 from utils import is_uuid_format
 from utils.errors import InvalidArgumentError
-from utils.config_helpers import get_project_id, create_access_token_from_api_key, get_jwt_token_obj, \
-    get_project_name_from_project_id_curl, get_project_id_from_project_name_curl
-from utils.cwl_helpers import ZippedCWLWorkflow
-from utils.gh_helpers import download_zipped_workflow_from_github_release, get_release_repo_and_tag_from_release_url
-from utils.globals import ICAV2_DEFAULT_ANALYSIS_STORAGE_SIZE, ICAv2AnalysisStorageSize, ICAV2_ACCESS_TOKEN_AUDIENCE
+from utils.config_helpers import create_access_token_from_api_key, \
+    get_project_id_from_project_name_curl, get_icav2_base_url
 from utils.logger import get_logger
-from utils.plugin_helpers import get_plugins_directory, get_tenants_directory
-from utils.projectpipeline_helpers import get_analysis_storage_id_from_analysis_storage_size, create_params_xml
-import requests
-
-from urllib.parse import unquote
+from utils.plugin_helpers import get_tenants_directory
 
 from subcommands import Command
+from utils.tenant_helpers import get_tenant_api_key_from_config_file, get_session_file_path_from_config_file
 
 logger = get_logger()
 
@@ -72,9 +58,6 @@ Example:
 
         self.project_id: Optional[str] = None
 
-        # Server url
-        self.server_url: Optional[str] = "ica.illumina.com"
-
         # Store the tenant namespace and id in the configuration yaml
         self.x_api_key: Optional[str] = None
         self.current_config_yaml_object: Optional[OrderedDict] = None
@@ -104,12 +87,6 @@ Example:
 
         # Set the tenant session and config files
         self.tenant_config_file = self.tenant_path / "config.yaml"
-        self.tenant_session_file = self.tenant_path / ".session.ica.yaml"
-
-        if self.tenant_session_file.is_file():
-            self.read_tenant_session_file()
-        else:
-            self.tenant_session_yaml_object = {}
 
         # Get the project name parameter
         project_name_arg = self.args.get("--project-name", None)
@@ -118,7 +95,13 @@ Example:
             raise InvalidArgumentError
 
         # Collect tenant api key
-        self.tenant_api_key = self.get_tenant_api_key()
+        self.tenant_api_key = get_tenant_api_key_from_config_file(self.tenant_config_file)
+        self.tenant_session_file = get_session_file_path_from_config_file(self.tenant_config_file)
+
+        if self.tenant_session_file.is_file():
+            self.read_tenant_session_file()
+        else:
+            self.tenant_session_yaml_object = {}
 
         # Create access token from api key
         self.tenant_access_token = create_access_token_from_api_key(self.tenant_api_key)
@@ -129,18 +112,7 @@ Example:
             self.project_id = project_name_arg
         else:
             # Get project id from project name
-            self.project_id = get_project_id_from_project_name_curl(project_name_arg, self.tenant_access_token)
-
-    def get_tenant_api_key(self) -> str:
-        """
-        Get the tenant api key
-        Returns:
-
-        """
-        yaml = YAML()
-
-        with open(self.tenant_config_file, "r") as file_h:
-            return yaml.load(file_h).get("x-api-key")
+            self.project_id = get_project_id_from_project_name_curl(get_icav2_base_url(), project_name_arg, self.tenant_access_token)
 
     def read_tenant_session_file(self):
         """

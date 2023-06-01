@@ -109,6 +109,7 @@ class ICAv2EngineParameters:
         
         if self.analysis_storage_id is None:
             self.analysis_storage_id = get_set_analysis_storage_id_from_pipeline(
+                project_id,
                 pipeline_id
             )
         if self.activation_id is None:
@@ -264,7 +265,7 @@ class ICAv2LaunchJson:
             activation_code_detail_id=self.engine_parameters.activation_id,
             analysis_input=CwlAnalysisInput(
                 object_type="JSON",
-                input_json=json.dumps(self.input_json_deferenced),
+                input_json=json.dumps(self.input_json_deferenced, indent=2),
                 mounts=self.mount_paths,
                 data_ids=self.data_ids
             ),
@@ -338,6 +339,7 @@ def create_data_obj_from_project_id_and_path(project_id: str, data_path: str) ->
 def convert_icav2_uris_to_data_ids(input_obj: Union[str, int, bool, Dict, List]) -> Tuple[
     Union[str, Dict, List], List[Dict]]:
     # Set default mount_list
+    input_obj_new_list = []
     mount_list = []
 
     # Convert basic types
@@ -346,7 +348,6 @@ def convert_icav2_uris_to_data_ids(input_obj: Union[str, int, bool, Dict, List])
 
     # Convert dict or list types recursively
     if isinstance(input_obj, List):
-        input_obj_new_list = []
         for input_item in input_obj:
             input_obj_new_item, mount_list_new = convert_icav2_uris_to_data_ids(input_item)
             mount_list.extend(mount_list_new)
@@ -354,8 +355,13 @@ def convert_icav2_uris_to_data_ids(input_obj: Union[str, int, bool, Dict, List])
         return input_obj_new_list, mount_list
     if isinstance(input_obj, Dict):
         if "class" in input_obj.keys() and input_obj["class"] in ["File", "Directory"]:
+            # Resolve location
             if input_obj.get("location", "").startswith("icav2://"):
-
+                # Check directory has a trailing slash
+                if input_obj.get("Directory", None) is not None and not input_obj["location"].endswith("/"):
+                    logger.error("Please ensure directories end with a trailing slash!")
+                    logger.error(f"Got location '{input_obj.get('location')}' for directory object. Please add a trailing slash and try again")
+                    raise ValueError
                 # Get relative location path
                 input_obj_new: ProjectData = convert_icav2_uri_to_data_obj(input_obj.get("location"))
                 data_type: str = input_obj_new.get("data").get("details").get('data_type')  # One of FILE | FOLDER
@@ -416,7 +422,16 @@ def convert_icav2_uris_to_data_ids(input_obj: Union[str, int, bool, Dict, List])
 
                     input_obj["location"] = mount_path
 
-                return input_obj, mount_list
+            # Get secondary Files
+            if not len(input_obj.get("secondaryFiles", [])) == 0:
+                old_secondary_files = input_obj.get("secondaryFiles", [])
+                input_obj["secondaryFiles"] = []
+                for input_item in old_secondary_files:
+                    input_obj_new_item, mount_list_new = convert_icav2_uris_to_data_ids(input_item)
+                    mount_list.extend(mount_list_new)
+                    input_obj["secondaryFiles"].append(input_obj_new_item)
+
+            return input_obj, mount_list
         else:
             input_obj_dict = {}
             for key, value in input_obj.items():
@@ -438,13 +453,15 @@ def create_download_url(project_id: str, data_id: str) -> str:
         "curl",
         "--fail", "--silent", "--location",
         "--request", "POST",
-        "--url", f"https://ica.illumina.com/ica/rest/api/projects/{project_id}/data/{data_id}:createDownloadUrl",
+        "--url", f"{configuration.host}/api/projects/{project_id}/data/{data_id}:createDownloadUrl",
         "--header", "Accept: application/vnd.illumina.v3+json",
         "--header", f"Authorization: Bearer {configuration.access_token}",
         "--data", ""
     ]
 
-    command_returncode, command_stdout, command_stderr = run_subprocess_proc(curl_command_list, capture_output=True)
+    command_returncode, command_stdout, command_stderr = run_subprocess_proc(
+        curl_command_list, capture_output=True
+    )
 
     if not command_returncode == 0:
         logger.error(f"Could not create a download url for project id '{project_id}', data id '{data_id}'")
@@ -523,7 +540,7 @@ def get_activation_id(project_id: str, pipeline_id: str, input_json: Dict,
         "curl",
         "--fail", "--silent", "--location",
         "--request", "POST",
-        "--url", "https://ica.illumina.com/ica/rest/api/activationCodes:findBestMatchingForCwl",
+        "--url", f"{configuration.host}/api/activationCodes:findBestMatchingForCwl",
         "--header", "Accept: application/vnd.illumina.v3+json",
         "--header", f"Authorization: Bearer {icav2_access_token}",
         "--header", "Content-Type: application/vnd.illumina.v3+json",
@@ -534,7 +551,7 @@ def get_activation_id(project_id: str, pipeline_id: str, input_json: Dict,
                 "pipelineId": pipeline_id,
                 "analysisInput": {
                     "objectType": "JSON",
-                    "inputJson": json.dumps(input_json),
+                    "inputJson": json.dumps(input_json, indent=2),
                     "dataIds": list(map(lambda x: x.data_id, mount_list)),
                     "mounts": [
                         {
@@ -548,7 +565,9 @@ def get_activation_id(project_id: str, pipeline_id: str, input_json: Dict,
         )
     ]
 
-    command_returncode, command_stdout, command_stderr = run_subprocess_proc(curl_command_list, capture_output=True)
+    command_returncode, command_stdout, command_stderr = run_subprocess_proc(
+        curl_command_list, capture_output=True
+    )
 
     if not command_returncode == 0:
         logger.error("Could not collect activation id")
@@ -557,20 +576,20 @@ def get_activation_id(project_id: str, pipeline_id: str, input_json: Dict,
     return json.loads(command_stdout).get("id")
 
 
-def get_set_analysis_storage_id_from_pipeline(pipeline_id: str) -> str:
+def get_set_analysis_storage_id_from_pipeline(project_id: str, pipeline_id: str) -> str:
     # Enter a context with an instance of the API client
     with ApiClient(get_libicav2_configuration()) as api_client:
         # Create an instance of the API class
-        api_instance = PipelineApi(api_client)
+        api_instance = ProjectPipelineApi(api_client)
 
     # example passing only required values which don't have defaults set
     try:
         # Retrieve a pipeline.
-        api_response: Pipeline = api_instance.get_pipeline(pipeline_id)
+        api_response: ProjectPipeline = api_instance.get_project_pipeline(project_id, pipeline_id)
     except ApiException as e:
-        raise ValueError("Exception when calling PipelineApi->get_pipeline: %s\n" % e)
+        raise ValueError("Exception when calling ProjectPipelineApi->get_project_pipeline: %s\n" % e)
 
-    return api_response.analysis_storage.id
+    return api_response.pipeline.analysis_storage.id
 
 
 def get_pipeline_id_from_pipeline_code(project_id: str, pipeline_code: str) -> str:
@@ -717,12 +736,14 @@ def get_cwl_analysis_input_json(project_id: str, analysis_id: str):
         "curl",
         "--fail", "--silent", "--location",
         "--request", "GET",
-        "--url", f"https://ica.illumina.com/ica/rest/api/projects/{project_id}/analyses/{analysis_id}/cwl/inputJson",
+        "--url", f"{configuration.host}/api/projects/{project_id}/analyses/{analysis_id}/cwl/inputJson",
         "--header", "Accept: application/vnd.illumina.v3+json",
         "--header", f"Authorization: Bearer {configuration.access_token}"
     ]
 
-    command_returncode, command_stdout, command_stderr = run_subprocess_proc(curl_command_list, capture_output=True)
+    command_returncode, command_stdout, command_stderr = run_subprocess_proc(
+        curl_command_list, capture_output=True
+    )
 
     if not command_returncode == 0:
         logger.error(f"Could not collect input json for analysis id '{analysis_id}'")
@@ -744,12 +765,14 @@ def get_cwl_analysis_output_json(project_id: str, analysis_id: str):
         "curl",
         "--fail", "--silent", "--location",
         "--request", "GET",
-        "--url", f"https://ica.illumina.com/ica/rest/api/projects/{project_id}/analyses/{analysis_id}/cwl/outputJson",
+        "--url", f"{configuration.host}/api/projects/{project_id}/analyses/{analysis_id}/cwl/outputJson",
         "--header", "Accept: application/vnd.illumina.v3+json",
         "--header", f"Authorization: Bearer {configuration.access_token}"
     ]
 
-    command_returncode, command_stdout, command_stderr = run_subprocess_proc(curl_command_list, capture_output=True)
+    command_returncode, command_stdout, command_stderr = run_subprocess_proc(
+        curl_command_list, capture_output=True
+    )
 
     if not command_returncode == 0:
         logger.error(f"Could not collect input json for analysis id '{analysis_id}'")
@@ -783,3 +806,48 @@ def create_blank_params_xml(output_file_path: Path):
     with open(output_file_path, "w") as params_h:
         for line in BLANK_PARAMS_XML_V2_FILE_CONTENTS:
             params_h.write(line + "\n")
+
+
+def release_pipeline(project_id: str, pipeline_id: str):
+    """
+    Release pipeline
+    Args:
+        project_id:
+        pipeline_id:
+
+    Returns:
+
+    """
+    # FIXME
+    # with ApiClient(get_libicav2_configuration()) as api_client:
+    #     # Create an instance of the API class
+    #     api_instance = ProjectPipelineApi(api_client)
+    #
+    # # example passing only required values which don't have defaults set
+    # try:
+    #     # Release a pipeline.
+    #     api_instance.release_pipeline(project_id, pipeline_id)
+    # except ApiException as e:
+    #     logger.error("Exception when calling ProjectPipelineApi->release_pipeline: %s\n" % e)
+    #     raise ApiException
+
+    # Use the curl api for now
+    curl_returncode, curl_stdout, curl_stderr = run_subprocess_proc(
+        [
+            "curl",
+            "--fail", "--silent", "--request", "--location", "--show-error",
+            "--request", "POST",
+            "--url", f"{get_libicav2_configuration().host}/api/projects/{project_id}/pipelines/{pipeline_id}:release",
+            "--header", "Accept: application/vnd.illumina.v3+json",
+            "--header", f"Authorization: Bearer {get_libicav2_configuration().access_token}",
+            "--data", ""
+        ],
+        capture_output=True
+    )
+
+    if not curl_returncode == 0:
+        logger.error(f"Got the following error while trying to release pipeline")
+        logger.error(curl_stderr)
+        raise ChildProcessError
+
+    logger.info(f"Successfully released {pipeline_id}")

@@ -4,6 +4,7 @@
 CWL Handlers
 """
 import hashlib
+import os
 import re
 import subprocess
 from copy import deepcopy
@@ -245,7 +246,29 @@ class ZippedCWLWorkflow:
 
         self.cwl_obj: Optional[Workflow] = load_document_by_uri(self.cwl_file_path)
         self.cwl_inputs: Optional[List[WorkflowInputParameter]] = self.cwl_obj.inputs
-        self.cwl_pack: Optional[Dict] = pack(str(self.cwl_file_path))
+        
+        # Using cwltool --pack for now. See https://github.com/common-workflow-language/cwl-utils/issues/220
+        # og_sys_stderr = sys.stderr
+        # try:
+        #    # https://www.codeforests.com/2020/11/05/python-suppress-stdout-and-stderr/
+        #    devnull = open(os.devnull, "w")
+        #    sys.stderr = devnull
+        #    self.cwl_pack: Optional[Dict] = pack(str(self.cwl_file_path))
+        # finally:
+        #     sys.stderr = og_sys_stderr
+        # self.cwl_pack: Optional[Dict] = pack(str(self.cwl_file_path))
+        cwltool_pack_returncode, cwltool_pack_stdout, cwltool_pack_stderr = run_subprocess_proc(
+            [
+                "cwltool", "--pack", str(self.cwl_file_path)
+            ],
+            capture_output=True
+        )
+
+        if not cwltool_pack_returncode == 0:
+            logger.error(f"Could not pack file {str(self.cwl_file_path)}")
+            raise ChildProcessError
+
+        self.cwl_pack = json.loads(cwltool_pack_stdout)
 
     def get_cwl_obj(self) -> Workflow:
         return self.cwl_obj
@@ -285,7 +308,7 @@ class ZippedCWLWorkflow:
             "--header", "Accept: application/vnd.illumina.v3+json",
             "--header", f"Authorization: Bearer {configuration.access_token}",
             "--header", "Content-Type: multipart/form-data",
-            "--url", f"https://ica.illumina.com/ica/rest/api/projects/{project_id}/pipelines:createCwlPipeline",
+            "--url", f"{configuration.host}/api/projects/{project_id}/pipelines:createCwlPipeline",
             "--form", f"code={workflow_code}",
             "--form", f"description={workflow_description}",
             "--form", f"workflowCwlFile=@{self.cwl_file_path};filename=workflow.cwl",
@@ -551,7 +574,10 @@ def generate_standalone_html_through_pandoc(markdown_file_path: Path) -> Path:
         str(markdown_file_path)
     ]
 
-    pandoc_returncode, pandoc_stderr, pandoc_stdout = run_subprocess_proc(pandoc_command_list)
+    pandoc_returncode, pandoc_stderr, pandoc_stdout = run_subprocess_proc(
+        pandoc_command_list,
+        capture_output=True
+    )
 
     if not pandoc_returncode == 0:
         logger.error("Unsuccessful conversion of markdown file to html")

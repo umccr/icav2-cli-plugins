@@ -1,9 +1,17 @@
+  __icav2_server_url_prefix="$( yq \
+    --unwrapScalar \
+    '
+      .server-url
+    ' < "${HOME}/.icav2/config.yaml" | \
+    cut -d'.' -f1
+  )"
+
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.ica.yaml"
+    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -13,7 +21,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.ica.yaml"
+      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -41,8 +49,8 @@ if [[ \
  yq --prettyPrint \
    '
       .access-token = env(ICAV2_ACCESS_TOKEN)
-   ' < "${HOME}/.icav2/.session.ica.yaml" > "${HOME}/.icav2/.session.ica.yaml.tmp" && \
-   mv "${HOME}/.icav2/.session.ica.yaml.tmp" "${HOME}/.icav2/.session.ica.yaml"
+   ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml" > "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" && \
+   mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-ica.illumina.com}"
+ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"

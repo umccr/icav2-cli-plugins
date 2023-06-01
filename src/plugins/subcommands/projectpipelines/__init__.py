@@ -26,6 +26,7 @@ Plugin Commands:
   create-cwl-workflow-from-github-release  Upload a CWL Workflow to ICAv2 from a GitHub Release
   create-cwl-wes-input-template            Create a template for a CWL pipeline
   start-cwl-wes                            Launch a CWL workflow from a WES yaml
+  release                                  Release a projectpipeline
 
 Flags:
   -h, --help   help for projectpipelines
@@ -45,13 +46,15 @@ Use "icav2 projectpipelines [command] --help" for more information about a comma
     def get_subcommand_obj(self, cmd, command_argv):
 
         if cmd == "create-cwl-workflow-from-zip":
-            from subcommands.projectpipelines.create_cwl_workflow_from_zip import ProjectDataCreateCWLWorkflow as subcommand
+            from subcommands.projectpipelines.create_cwl_workflow_from_zip import ProjectPipelinesCreateCWLWorkflow as subcommand
         elif cmd == "create-cwl-workflow-from-github-release":
-            from subcommands.projectpipelines.create_cwl_workflow_from_github_release import ProjectDataCreateCWLWorkflowFromGitHubRelease as subcommand
+            from subcommands.projectpipelines.create_cwl_workflow_from_github_release import ProjectPipelinesCreateCWLWorkflowFromGitHubRelease as subcommand
         elif cmd == "create-cwl-wes-input-template":
-            from subcommands.projectpipelines.create_wes_input_template import ProjectDataCreateWESInputTemplate as subcommand
+            from subcommands.projectpipelines.create_wes_input_template import ProjectPipelinesCreateWESInputTemplate as subcommand
         elif cmd == "start-cwl-wes":
-            from subcommands.projectpipelines.launch_cwl_wes import ProjectDataStartCWLWES as subcommand
+            from subcommands.projectpipelines.launch_cwl_wes import ProjectPipelinesStartCWLWES as subcommand
+        elif cmd == "release":
+            from subcommands.projectpipelines.release_pipeline import ProjectPipelineReleasePipeline as subcommand
         else:
             print(self.__doc__)
             print(f"Could not find cmd \"{cmd}\". Please refer to usage above")

@@ -6,6 +6,7 @@ Configuration helpers
 From collecting configuration from ~/.session.ica.yaml through ruamel to creating configuration object for libicav2
 """
 import os
+from base64 import b64decode
 from collections import OrderedDict
 import json
 
@@ -18,17 +19,50 @@ from datetime import datetime
 
 from jwt import decode, InvalidTokenError
 
-from utils.globals import ICAV2_SESSION_FILE_PATH, ICAV2_ACCESS_TOKEN_AUDIENCE, \
-    DEFAULT_ICAV2_BASE_URL, ICAV2_SESSION_FILE_ACCESS_TOKEN_KEY, ICAV2_SESSION_FILE_PROJECT_ID_KEY
+from utils.globals import ICAV2_CONFIG_FILE_PATH, ICAV2_SESSION_FILE_PATH, ICAV2_ACCESS_TOKEN_AUDIENCE, \
+    DEFAULT_ICAV2_BASE_URL, ICAV2_SESSION_FILE_ACCESS_TOKEN_KEY, ICAV2_SESSION_FILE_PROJECT_ID_KEY, \
+    ICAV2_CONFIG_FILE_SERVER_URL_KEY
 from utils.logger import get_logger
 from libica.openapi.v2 import Configuration, ApiClient, ApiException
 from typing import Optional, List
 
 from utils.subprocess_handler import run_subprocess_proc
+from urllib.parse import urlparse
 
 logger = get_logger()
 
 LIBICAV2_CONFIGURATION: Optional[Configuration] = None
+
+
+def get_config_file_path() -> Path:
+    """
+    Get path for the config file and asser it exists
+    :return:
+    """
+    config_file_path: Path = Path(ICAV2_CONFIG_FILE_PATH.format(
+      HOME=os.environ["HOME"]
+    ))
+
+    if not config_file_path.is_file():
+        logger.error(f"Could not get file path {config_file_path}")
+        raise FileNotFoundError
+
+    return config_file_path
+
+
+def read_config_file() -> OrderedDict:
+    """
+    Get the contents of the session file (~/.icav2/config.ica.yaml)
+    :return:
+    """
+
+    logger.debug("Reading in the config file")
+    yaml = YAML()
+
+    with open(get_config_file_path(), "r") as file_h:
+        data = yaml.load(file_h)
+
+    return data
 
 
 def get_session_file_path() -> Path:
@@ -37,7 +71,8 @@ def get_session_file_path() -> Path:
     :return:
     """
     session_file_path: Path = Path(ICAV2_SESSION_FILE_PATH.format(
-        HOME=os.environ["HOME"]
+        HOME=os.environ["HOME"],
+        server_url_prefix=urlparse(get_icav2_base_url()).netloc.split(".")[0]
     ))
 
     if not session_file_path.is_file():
@@ -171,13 +206,34 @@ def refresh_access_token() -> str:
     return get_access_token_from_session_file(refresh=False)
 
 
+def get_icav2_base_url():
+    """
+    Collect the icav2 base url for the configuration
+    Likely 'https://ica.illumina.com/ica/rest'
+    :return:
+    """
+    # Check env
+    icav2_base_url_env = os.environ.get("ICAV2_BASE_URL", None)
+    if icav2_base_url_env is not None:
+        return icav2_base_url_env
+
+    # Read config file
+    config_yaml_dict = read_config_file()
+    if ICAV2_CONFIG_FILE_SERVER_URL_KEY in config_yaml_dict.keys():
+        return f"https://{config_yaml_dict[ICAV2_CONFIG_FILE_SERVER_URL_KEY]}/ica/rest"
+    else:
+        logger.warning("Could not get server-url from config yaml")
+
+    return DEFAULT_ICAV2_BASE_URL
+
+
 def set_libicav2_configuration():
     # Use the global attribute to set the object from within the function
     global LIBICAV2_CONFIGURATION
 
     logger.debug("Setting the libicav2 configuration object")
 
-    host = os.environ.get("ICAV2_BASE_URL", DEFAULT_ICAV2_BASE_URL)
+    host = get_icav2_base_url()
     access_token = os.environ.get("ICAV2_ACCESS_TOKEN", None)
 
     if access_token is None or not check_access_token_expiry(access_token):
@@ -231,7 +287,7 @@ def create_access_token_from_api_key(api_key: str) -> str:
     get_api_key_returncode, get_api_key_stdout, get_api_key_stderr = run_subprocess_proc(
         [
             "curl", "--fail", "--silent", "--location", "--show-error",
-            "--url", "https://ica.illumina.com/ica/rest/api/tokens",
+            "--url", f"{get_libicav2_configuration().host}/api/tokens",
             "--header", "Accept: application/vnd.illumina.v3+json",
             "--header", f"X-API-Key: {api_key}",
             "--data", ""
@@ -247,7 +303,7 @@ def create_access_token_from_api_key(api_key: str) -> str:
     return json.loads(get_api_key_stdout).get("token")
 
 
-def get_project_id_from_project_name_curl(project_name: str, access_token: str) -> str:
+def get_project_id_from_project_name_curl(base_url: str, project_name: str, access_token: str) -> str:
     """
     Quick use of curl when the access token is not yet set in the configuration file (tenants init)
     Args:
@@ -263,7 +319,7 @@ def get_project_id_from_project_name_curl(project_name: str, access_token: str) 
             "--request", "GET",
             "--header", "Accept: application/vnd.illumina.v3+json",
             "--header", f"Authorization: Bearer {access_token}",
-            "--url", "https://ica.illumina.com/ica/rest/api/projects/"
+            "--url", f"{base_url}/api/projects/"
         ],
         capture_output=True
     )
@@ -283,7 +339,7 @@ def get_project_id_from_project_name_curl(project_name: str, access_token: str) 
     raise ValueError
 
 
-def get_project_name_from_project_id_curl(project_id: str, access_token: str) -> str:
+def get_project_name_from_project_id_curl(base_url, project_id: str, access_token: str) -> str:
     """
     Quick use of curl when the access token is not yet set in the configuration file (tenants init)
     Args:
@@ -299,7 +355,7 @@ def get_project_name_from_project_id_curl(project_id: str, access_token: str) ->
             "--request", "GET",
             "--header", "Accept: application/vnd.illumina.v3+json",
             "--header", f"Authorization: Bearer {access_token}",
-            "--url", f"https://ica.illumina.com/ica/rest/api/projects/{project_id}"
+            "--url", f"{base_url}/api/projects/{project_id}"
         ],
         capture_output=True
     )
@@ -311,3 +367,9 @@ def get_project_name_from_project_id_curl(project_id: str, access_token: str) ->
 
     return json.loads(get_project_stdout).get("name")
 
+
+def get_tenant_id_from_b64_tid(tenant_id):
+    # Very confusing way but we need the negative modulo
+    num_equals = (4 - len(tenant_id) % 4) % 4
+
+    return b64decode(tenant_id + ("=" * num_equals)).decode().split(":")[-1]

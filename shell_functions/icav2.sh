@@ -18,7 +18,13 @@ icav2() {
     "_tenants__enter_"
   )
 
+  # subcommands that are entirely plugins
+  plugin_only_subcommands_top_only_array=( \
+    "_bundles"
+  )
+
   plugin_subcommands_top_only_array=( \
+    "_bundles" \
     "_projectdata" \
     "_projectanalyses" \
     "_projectpipelines" \
@@ -26,6 +32,16 @@ icav2() {
   )
 
   plugin_subcommands_array=( \
+    "_bundles__init_" \
+    "_bundles__get_"
+    "_bundles__release_" \
+    "_bundles__list_" \
+    "_bundles__add-data_" \
+    "_bundles__add-pipeline_" \
+    "_bundles__add-bundle-to-project_" \
+    "_bundles__help_" \
+    "_bundles__-h_" \
+    "_bundles__--help_" \
     "_projectdata__ls_" \
     "_projectdata__view_" \
     "_projectdata__find_" \
@@ -47,6 +63,7 @@ icav2() {
     "_projectpipelines__create-cwl-workflow-from-github-release_" \
     "_projectpipelines__create-cwl-wes-input-template_" \
     "_projectpipelines__start-cwl-wes_" \
+    "_projectpipelines__release_" \
     "_projectpipelines__help_"
     "_projectpipelines__-h_" \
     "_projectpipelines__--help_" \
@@ -95,6 +112,10 @@ icav2() {
   # Run the wrapped python command
   elif [[ " ${plugin_subcommands_array[*]} " =~ ${top}__${bottom} ]]; then
     eval PATH="'${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/:$PATH'" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" "${ICAV2_CLI_PLUGINS_HOME}/plugins/bin/icav2-cli-plugins.py" "${top#_}" "${bottom%_}" '"${@:3}"'
+  # Dont eval if in a plugin_only subcommand
+  elif [[ "${plugin_only_subcommands_top_only_array[*]} " =~ ${top} ]]; then
+    echo "Unknown subcommand for icav2 ${top#_}"
+    eval PATH="'${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/:$PATH'" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" "${ICAV2_CLI_PLUGINS_HOME}/plugins/bin/icav2-cli-plugins.py" "${top#_}" "help"
   else
     eval command icav2 '"${@}"'
   fi

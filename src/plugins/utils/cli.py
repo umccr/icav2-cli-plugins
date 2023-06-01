@@ -12,6 +12,10 @@ Command:
 
     help                                Print help and exit
     version                             Print version and exit
+    ######################
+    Bundles                             Collection of subfunctions relating to bundles
+    ######################
+    bundles
 
     ######################
     Project Analyses                    Collection of subfunctions relating to analyses on project pipeline
@@ -68,6 +72,8 @@ def _dispatch():
         sys.exit(0)
 
     # Configuration commands
+    elif cmd == "bundles":
+        from subcommands.bundles import Bundles as subcommand
     elif cmd == "projectanalyses":
         from subcommands.projectanalyses import ProjectAnalyses as subcommand
     elif cmd == "projectdata":

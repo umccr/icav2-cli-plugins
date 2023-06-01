@@ -26,7 +26,7 @@ params="$( \
         "parentFolderPath": $parent_folder_path,
         "filename": $file_name,
         "filenameMatchMode": "FUZZY",
-        "page_size": $page_size,
+        "pageSize": $page_size,
         "type": $type
       } |
       # Drop nulls
@@ -50,10 +50,11 @@ curl \
   --request GET \
   --header "Accept: application/vnd.illumina.v3+json" \
   --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
-  --url "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
+  --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
 jq --raw-output \
   '
     .items |
+    sort_by(.data.details.path | ascii_downcase) |
     map(
       .data.details.path
     ) |

@@ -53,9 +53,10 @@ Parameters:
   }
 
   __icav2__create_token_from_api_key() {
+    set -o pipefail
     curl --fail --silent --location --show-error \
       --request 'POST' \
-      --url "https://ica.illumina.com/ica/rest/api/tokens" \
+      --url "${ICAV2_BASE_URL}/api/tokens" \
       --header "Accept: application/vnd.illumina.v3+json" \
       --header "X-API-Key: $1" \
       -d '' |
@@ -105,11 +106,13 @@ Parameters:
   local x_api_key
   local access_token
   local project_id
+  local server_url_prefix
 
   global="false"
   tenant_name=""
   x_api_key=""
   access_token=""
+  server_url=""
   project_id=""
 
   # Get args from command line
@@ -145,21 +148,48 @@ Parameters:
   if [[ -z "${ICAV2_CLI_PLUGINS_HOME-}" ]]; then
     echo "Could not get the env var ICAV2_CLI_PLUGINS_HOME" 1>&2
     echo "Please ensure you have added the icav2 cli plugins source chunk to your rc file"
-    exit 1
+    return 1
   fi
 
   # Check the tenant directory for this tenant id
   if [[ ! -d "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}" ]]; then
     echo "Could not find the tenant '${tenant_name}'" 1>&2
     echo "Please run 'icav2 tenants list' to view the list of available tenants or alternatively run 'icav2 tenants init \"${tenant_name}\"' to initialise this tenant" 1>&2
-    exit 1
+    return 1
   fi
 
   # Check the config yaml exists
   if [[ ! -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/config.yaml" ]]; then
     echo "Could not read '${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/config.yaml' please re-initialise this tenant with 'icav2 tenants init \"${tenant_name}\"'" 1>&2
-    exit 1
+    return 1
   fi
+
+  server_url="$( \
+    yq \
+      --unwrapScalar \
+      '
+        .server-url
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/config.yaml" \
+  )"
+
+  if [[ -z "${server_url}" || "${server_url}" == "null" ]]; then
+    echo "Could not collect server-url attribute from config.yaml" 1>&2
+    echo "Setting server-url as default ica.illumina.com"
+    server_url="ica.illumina.com"
+  fi
+
+  ICAV2_BASE_URL="https://${server_url}/ica/rest"
+  echo "Exporting env var ICAV2_BASE_URL as '${ICAV2_BASE_URL}'" 1>&2
+  export ICAV2_BASE_URL
+
+  server_url_prefix="$( yq \
+    --unwrapScalar \
+    '
+      .server-url
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/config.yaml" | \
+    cut -d'.' -f1
+  )"
+
 
   # Read config
   x_api_key="$( \
@@ -170,9 +200,9 @@ Parameters:
   )"
 
   # Get the access token from .session.ica.yaml
-  if [[ -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.ica.yaml" ]]; then
+  if [[ -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml" ]]; then
     if ! access_token="$( \
-      yq '.access-token' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.ica.yaml"
+      yq '.access-token' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml"
     )"; then
       access_token=""
     else
@@ -185,7 +215,7 @@ Parameters:
     # Check the api key
     if [[ -z "${x_api_key}" || "${x_api_key}" == "null" ]]; then
       echo "Could not get the api key from '${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/config.yaml'" 1>&2
-      exit 1
+      return 1
     fi
 
     # Create the token from the api key
@@ -194,23 +224,23 @@ Parameters:
       __icav2__create_token_from_api_key "${x_api_key}"
     )"; then
       echo "Failed to create access token from api-key in '${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/config.yaml'" 1>&2
-      exit 1
+      return 1
     fi
 
     echo "Successfully created new access token" 1>&2
-    if [[ -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.ica.yaml" ]]; then
+    if [[ -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml" ]]; then
       access_token="${access_token}" \
       yq --unwrapScalar \
-        '.access-token=env(access_token)' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.ica.yaml" \
-        > "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.ica.yaml.tmp"
-        mv "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.ica.yaml.tmp" \
-          "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.ica.yaml"
+        '.access-token=env(access_token)' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml" \
+        > "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml.tmp"
+        mv "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml.tmp" \
+          "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml"
     else
       access_token="${access_token}" \
       yq --null-input --unwrapScalar \
-        '.access-token=env(access_token)' > "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.ica.yaml.tmp"
-      mv "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.ica.yaml.tmp" \
-         "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.ica.yaml"
+        '.access-token=env(access_token)' > "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml.tmp"
+      mv "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml.tmp" \
+         "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml"
     fi
   fi
 
@@ -227,18 +257,18 @@ Parameters:
 
   # Get project id from tenant session yaml
   project_id="$( \
-    yq --unwrapScalar '.project-id' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.ica.yaml"
+    yq --unwrapScalar '.project-id' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml"
   )"
 
   # Check project id
   if [[ -n "${ICAV2_PROJECT_ID-}" ]]; then
-    echo "ICAV2_PROJECT_ID is set checking if project id is in tenant '${tenant_name}'" 1>&2
+    echo "ICAV2_PROJECT_ID is set, checking if project id is in tenant '${tenant_name}'" 1>&2
     if ! \
       curl --fail --location --silent \
         --request "GET" \
         --header 'Accept: application/vnd.illumina.v3+json' \
         --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
-        --url "https://ica.illumina.com/ica/rest/api/projects/${ICAV2_PROJECT_ID}"; then
+        --url "${ICAV2_BASE_URL}/api/projects/${ICAV2_PROJECT_ID}" 1>/dev/null 2>&1; then
       echo "Project ID '${ICAV2_PROJECT_ID}' is not in tenant '${tenant_name}'" 1>&2
       if [[ -z "${project_id}" || "${project_id}" == "null" ]]; then
         echo "No project id set in session yaml" 1>&2
@@ -249,6 +279,8 @@ Parameters:
         echo "Setting ICAV2_PROJECT_ID env var to '${project_id}'" 1>&2
         export ICAV2_PROJECT_ID="${project_id}"
       fi
+    else
+      echo "Confirmed current project is in tenant '${tenant_name}'" 1>&2
     fi
   else
     if [[ -z "${project_id}" || "${project_id}" == "null" ]]; then
@@ -260,6 +292,5 @@ Parameters:
         export ICAV2_PROJECT_ID="${project_id}"
     fi
   fi
-
   # Done
 }

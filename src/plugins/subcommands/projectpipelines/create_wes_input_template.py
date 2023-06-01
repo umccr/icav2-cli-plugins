@@ -31,7 +31,7 @@ from subcommands import Command
 logger = get_logger()
 
 
-class ProjectDataCreateWESInputTemplate(Command):
+class ProjectPipelinesCreateWESInputTemplate(Command):
     """Usage:
     icav2 projectpipelines create-cwl-wes-input-template help
     icav2 projectpipelines create-cwl-wes-input-template (--pipeline-code=<pipeline_code> | --pipeline-id=<pipeline_id>)

@@ -27,7 +27,7 @@ from ruamel.yaml import YAML
 from utils import is_uuid_format
 from utils.errors import InvalidArgumentError
 from utils.config_helpers import get_project_id, create_access_token_from_api_key, get_jwt_token_obj, \
-    get_project_name_from_project_id_curl, get_project_id_from_project_name_curl
+    get_project_name_from_project_id_curl, get_project_id_from_project_name_curl, get_icav2_base_url
 from utils.cwl_helpers import ZippedCWLWorkflow
 from utils.gh_helpers import download_zipped_workflow_from_github_release, get_release_repo_and_tag_from_release_url
 from utils.globals import ICAV2_DEFAULT_ANALYSIS_STORAGE_SIZE, ICAv2AnalysisStorageSize, ICAV2_ACCESS_TOKEN_AUDIENCE
@@ -36,9 +36,10 @@ from utils.plugin_helpers import get_tenants_directory
 from utils.projectpipeline_helpers import get_analysis_storage_id_from_analysis_storage_size, create_params_xml
 import requests
 
-from urllib.parse import unquote
+from urllib.parse import unquote, urlparse
 
 from subcommands import Command
+from utils.tenant_helpers import get_session_file_path_from_config_file
 
 logger = get_logger()
 
@@ -70,12 +71,10 @@ Example:
         self.tenant_config_file: Optional[Path] = None
         self.tenant_config_yaml_object: Optional[OrderedDict] = None
         self.tenant_session_file: Optional[Path] = None
+        self.server_url = None
 
         self.current_config_path: Optional[Path] = Path.home() / ".icav2" / "config.yaml"
-        self.current_session_path: Optional[Path] = Path.home() / ".icav2" / ".session.ica.yaml"
-
-        # Server url
-        self.server_url: Optional[str] = "ica.illumina.com"
+        self.current_session_path: Optional[Path] = get_session_file_path_from_config_file(self.current_config_path)
 
         # Store the tenant namespace and id in the configuration yaml
         self.x_api_key: Optional[str] = None
@@ -91,7 +90,7 @@ Example:
             self.read_current_config()
         else:
             self.current_config_yaml_object = {
-                "server-url": "ica.illumina.com",
+                "server-url": urlparse(get_icav2_base_url()).netloc,
                 "x-api-key": None,
                 "output-format": None,
                 "colormode": None
@@ -99,6 +98,12 @@ Example:
 
         # Fill out prompts
         self.fill_prompts()
+
+        # Remove existing session files
+        for session_file in Path.glob(Path("~/.icav2/").expanduser(), ".session.*.yaml"):
+            if not session_file == Path("~/.icav2/").expanduser() / self.tenant_session_file.name:
+                logger.info(f"Deleting session file {session_file}. Midfix does not match server url prefix of this tenant")
+                os.remove(session_file)
 
         # Copy tenant session file
         if self.tenant_session_file.is_file():
@@ -121,7 +126,7 @@ Example:
 
         # Set the tenant session and config files
         self.tenant_config_file = self.tenant_path / "config.yaml"
-        self.tenant_session_file = self.tenant_path / ".session.ica.yaml"
+        self.tenant_session_file = get_session_file_path_from_config_file(self.tenant_config_file)
 
     def read_tenant_config(self):
         """
