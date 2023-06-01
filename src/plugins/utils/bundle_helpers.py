@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 import json
-from typing import OrderedDict, Optional, List
+from io import StringIO, BytesIO
+from typing import OrderedDict, Optional, List, Dict, Union, TextIO
 from pathlib import Path
 
 from libica.openapi.v2 import ApiClient, ApiException
 from libica.openapi.v2.api.bundle_api import BundleApi
-from libica.openapi.v2.api.bundle_data_api import BundleDataApi
 from libica.openapi.v2.api.bundle_pipeline_api import BundlePipelineApi
 from libica.openapi.v2.api.data_api import DataApi
 from libica.openapi.v2.api.pipeline_api import PipelineApi
+from libica.openapi.v2.api.project_api import ProjectApi
 from libica.openapi.v2.model.bundle_paged_list import BundlePagedList
 from libica.openapi.v2.model.data import Data
 from libica.openapi.v2.model.pipeline import Pipeline
@@ -16,11 +17,12 @@ from libica.openapi.v2.model.pipeline_list import PipelineList
 from libica.openapi.v2.api import bundle_api
 from libica.openapi.v2.model.create_bundle import CreateBundle
 from libica.openapi.v2.model.bundle import Bundle
+from libica.openapi.v2.model.project_bundle import ProjectBundle
 
 from ruamel.yaml import YAML
 
-
-from utils.config_helpers import get_libicav2_configuration
+from utils import is_uuid_format
+from utils.config_helpers import get_libicav2_configuration, get_project_id_from_project_name
 from utils.logger import get_logger
 from utils.projectdata_helpers import convert_icav2_uri_to_data_obj
 from utils.region_helpers import get_region_id_from_bundle
@@ -580,9 +582,12 @@ def print_bundles(bundles_list: List[Bundle], json_output: bool = False):
         if creator_id is None:
             continue
         # Get user from user ids
-        user = get_user_from_user_id(creator_id)
-        # Set value as firstname ' ' lastname
-        creator_dict[user.id] = f"{user.firstname} {user.lastname}"
+        try:
+            user = get_user_from_user_id(creator_id)
+            # Set value as firstname ' ' lastname
+            creator_dict[user.id] = f"{user.firstname} {user.lastname}"
+        except ValueError:
+            creator_dict[creator_id] = "Unknown"
 
     bundle_items_df["creator_user"] = bundle_items_df["creator_id"].apply(
         lambda x: creator_dict.get(x, None)
@@ -608,9 +613,247 @@ def print_bundles(bundles_list: List[Bundle], json_output: bool = False):
         )
 
 
-def bundle_to_yaml_obj():
+def list_data_in_bundles(bundle_id: str) -> List[Dict]:
+    """
+
+    Returns:
+
+    """
+    page_token = ""
+    data_items = []
+
+    while True:
+        # Use the curl api for now
+        curl_returncode, curl_stdout, curl_stderr = run_subprocess_proc(
+            [
+                "curl",
+                "--fail-with-body", "--silent", "--location", "--show-error",
+                "--request", "GET",
+                "--url",
+                f"{get_libicav2_configuration().host}/api/bundles/{bundle_id}/data?pageToken={page_token}",
+                "--header", "Accept: application/vnd.illumina.v3+json",
+                "--header", f"Authorization: Bearer {get_libicav2_configuration().access_token}",
+            ],
+            capture_output=True
+        )
+
+        if not curl_returncode == 0:
+            logger.error(curl_stderr)
+            raise ChildProcessError
+
+        curl_stdout_dict = json.loads(curl_stdout)
+
+        data_items.extend(
+            map(
+                lambda x: {
+                    "data_id": x.get("data").get("id"),
+                    "data_uri": f"icav2://"
+                                f"{x.get('data').get('details').get('owningProjectName')}"
+                                f"{x.get('data').get('details').get('path')}"
+                },
+                curl_stdout_dict.get("items")
+            )
+        )
+
+        if curl_stdout_dict.get("nextPageToken") == "":
+            break
+        page_token = curl_stdout_dict.get("nextPageToken")
+
+    return data_items
+
+
+def list_pipelines_in_bundles(bundle_id: str) -> List[Dict]:
+    """
+
+    Returns:
+
+    """
+    data_items = []
+
+    # Use the curl api for now
+    # No looping for pipelines
+    # page_token=""
+    curl_returncode, curl_stdout, curl_stderr = run_subprocess_proc(
+        [
+            "curl",
+            "--fail-with-body", "--silent", "--location", "--show-error",
+            "--request", "GET",
+            "--url",
+            f"{get_libicav2_configuration().host}/api/bundles/{bundle_id}/pipelines",
+            "--header", "Accept: application/vnd.illumina.v3+json",
+            "--header", f"Authorization: Bearer {get_libicav2_configuration().access_token}",
+        ],
+        capture_output=True
+    )
+
+    if not curl_returncode == 0:
+        logger.error(curl_stdout)
+        logger.error(curl_stderr)
+        raise ChildProcessError
+
+    curl_stdout_dict = json.loads(curl_stdout)
+
+    data_items.extend(
+        map(
+            lambda x: {
+                "pipeline_id": x.get("pipeline").get("id"),
+                # FIXME get tenantName as query attribute
+                "pipeline_code": x.get("pipeline").get("code")
+            },
+            curl_stdout_dict.get("items")
+        )
+    )
+
+    return data_items
+
+
+def get_bundle_dict_object(bundle_id: str) -> Dict:
+    curl_returncode, curl_stdout, curl_stderr = run_subprocess_proc(
+        [
+            "curl",
+            "--fail-with-body", "--silent", "--location", "--show-error",
+            "--request", "GET",
+            "--url", f"{get_libicav2_configuration().host}/api/bundles/{bundle_id}",
+            "--header", "Accept: application/vnd.illumina.v3+json",
+            "--header", f"Authorization: Bearer {get_libicav2_configuration().access_token}",
+        ],
+        capture_output=True
+    )
+
+    if not curl_returncode == 0:
+        logger.error(curl_stdout)
+        logger.error(curl_stderr)
+        raise ChildProcessError
+
+    return json.loads(curl_stdout)
+
+
+def get_bundle_region_id(bundle_id):
+    return get_bundle_dict_object(bundle_id).get("region").get("id")
+
+
+def get_bundle_region_city_name(bundle_id):
+    return get_bundle_dict_object(bundle_id).get("region").get("cityName")
+
+
+def get_bundle_name_from_bundle_id(bundle_id):
+    return get_bundle_dict_object(bundle_id).get("name")
+
+
+def get_bundle_description_from_bundle_id(bundle_id):
+    return get_bundle_dict_object(bundle_id).get("shortDescription")
+
+
+def get_bundle_release_version(bundle_id):
+    return get_bundle_dict_object(bundle_id).get("releaseVersion")
+
+
+def get_bundle_tenant_id(bundle_id):
+    return get_bundle_dict_object(bundle_id).get("tenantId")
+
+
+def get_bundle_tenant_name(bundle_id):
+    return get_bundle_dict_object(bundle_id).get("tenantName")
+
+
+def bundle_to_yaml_obj(bundle_id: str, file_h: TextIO):
     """
     Collect bundle as a yaml object - useful if a user wants to initialise a new bundle with a similar template
     Returns:
 
     """
+    yaml = YAML()
+
+    yaml.indent(mapping=2, sequence=4, offset=2)
+
+    return yaml.dump(
+        {
+            "region": {
+                "region_id": get_bundle_region_id(bundle_id),
+                "region_city_name": get_bundle_region_city_name(bundle_id)
+            },
+            "tenant": {
+                "tenant_id": get_bundle_tenant_id(bundle_id),
+                "tenant_name": get_bundle_tenant_name(bundle_id)
+            },
+            "bundle_metadata": {
+                "bundle_id": bundle_id,
+                "bundle_name": get_bundle_name_from_bundle_id(bundle_id),
+                "bundle_short_description": get_bundle_description_from_bundle_id(bundle_id),
+                "bundle_release_version": get_bundle_release_version(bundle_id)
+            },
+            "data": list_data_in_bundles(bundle_id),
+            "pipeline": list_pipelines_in_bundles(bundle_id)
+        },
+        file_h
+    )
+
+
+def list_bundles_in_project(project_id: str) -> List[Bundle]:
+    # Enter a context with an instance of the API client
+
+    # while True: no iterator for bundles list
+    with ApiClient(get_libicav2_configuration()) as api_client:
+        # Create an instance of the API class
+        api_instance = ProjectApi(api_client)
+
+    # example passing only required values which don't have defaults set
+    try:
+        # Retrieve project bundles.
+        api_response = api_instance.get_project_bundles(project_id)
+    except ApiException as e:
+        logger.warning("Exception when calling ProjectApi->get_project_bundles: %s\n" % e)
+        raise ApiException
+
+    return list(map(lambda x: x.bundle, api_response.items))
+
+
+def add_bundle_to_project(project_id: str, bundle_id: str):
+    # Check bundle list
+    existing_bundles: List[Bundle] = list_bundles_in_project(project_id)
+
+    if any(map(lambda x: x.id == bundle_id, existing_bundles)):
+        logger.info(f"Bundle {bundle_id} already in project {project_id}")
+        return
+
+    # while True: no iterator for bundles list
+    with ApiClient(get_libicav2_configuration()) as api_client:
+        # Create an instance of the API class
+        api_instance = ProjectApi(api_client)
+
+    # example passing only required values which don't have defaults set
+    try:
+        # Link bundle to project
+        api_response = api_instance.link_project_bundle(project_id, bundle_id)
+    except ApiException as e:
+        logger.error("Exception when calling ProjectApi->get_project_bundles: %s\n" % e)
+        raise ApiException
+
+    logger.info(f"Successfully linked bundle {bundle_id} to project {project_id}")
+
+
+def get_project_ids_from_yaml_obj(project_list: List[Union[str|Dict]]) -> List[str]:
+    """
+    Get project id from the yaml obj
+    Args:
+        project_list:
+
+    Returns:
+
+    """
+    project_ids = []
+
+    for project in project_list:
+        if isinstance(project, str):
+            project_str = project
+        else:
+            project_str = project.get("project")
+
+        if is_uuid_format(project_str):
+            project_ids.append(project_str)
+        else:
+            project_ids.append(get_project_id_from_project_name(project_str))
+
+    return project_ids
+
+

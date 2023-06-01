@@ -77,8 +77,10 @@ Example:
 
             self.tenant_list.append(
                 {
-                    "id": tenant_config_dict["tid"],
-                    "namespace": tenant_config_dict["tns"],
+                    "token_tid": tenant_config_dict.get("token-tid"),
+                    "token_tns": tenant_config_dict.get("token-tns"),
+                    "api_tid": tenant_config_dict.get("api-tid"),
+                    "api_tns": tenant_config_dict.get("api-tns"),
                     "name": tenant_dir.name
                 }
             )
