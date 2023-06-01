@@ -38,6 +38,7 @@ icav2() {
     "_bundles__list_" \
     "_bundles__add-data_" \
     "_bundles__add-pipeline_" \
+    "_bundles__add-bundle-to-project_" \
     "_bundles__help_" \
     "_bundles__-h_" \
     "_bundles__--help_" \
