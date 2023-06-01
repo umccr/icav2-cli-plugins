@@ -6,7 +6,9 @@ Region helpers (for those in multiple regions)
 from typing import OrderedDict, Optional, Union, Dict
 
 from libica.openapi.v2 import ApiClient, ApiException
+from libica.openapi.v2.api.project_api import ProjectApi
 from libica.openapi.v2.api.region_api import RegionApi
+from libica.openapi.v2.model.project import Project
 from libica.openapi.v2.model.region import Region
 from libica.openapi.v2.model.region_list import RegionList
 
@@ -90,3 +92,19 @@ def get_region_id_from_bundle(bundle_id: str) -> str:
     from utils.bundle_helpers import get_bundle_from_id
     bundle_obj = get_bundle_from_id(bundle_id)
     return bundle_obj.region.id
+
+
+def get_project_region_id_from_project_id(project_id: str) -> str:
+    # Enter a context with an instance of the API client
+    with ApiClient(get_libicav2_configuration()) as api_client:
+        # Create an instance of the API class
+        api_instance = ProjectApi(api_client)
+
+    # example passing only required values which don't have defaults set
+    try:
+        # Retrieve a project.
+        api_response: Project = api_instance.get_project(project_id)
+    except ApiException as e:
+        logger.warning("Exception when calling ProjectApi->get_project: %s\n" % e)
+
+    return api_response.region.id
