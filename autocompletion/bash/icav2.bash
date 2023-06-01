@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 
-# Generated with perl module App::Spec v0.000
+# Generated with perl module App::Spec v0.014
 
 _icav2() {
 
     COMPREPLY=()
+    local IFS=$'\n'
     local program=icav2
     local cur prev words cword
     _init_completion -n : || return
@@ -127,12 +128,34 @@ _icav2() {
 
         1)
             __comp_current_options || return
-            __icav2_dynamic_comp 'commands' 'add-data'$'\t''Add data to a bundle'$'\n''add-pipeline'$'\t''Add pipeline to a bundle'$'\n''init'$'\t''Initialise a bundle'$'\n''list'$'\t''List bundles'$'\n''release'$'\t''Release a bundle'
+            __icav2_dynamic_comp 'commands' 'add-bundle-to-project'$'\t''Add a bundle to a project'$'\n''add-data'$'\t''Add data to a bundle'$'\n''add-pipeline'$'\t''Add pipeline to a bundle'$'\n''init'$'\t''Initialise a bundle'$'\n''list'$'\t''List bundles'$'\n''release'$'\t''Release a bundle'
 
         ;;
         *)
         # subcmds
         case ${MYWORDS[1]} in
+          add-bundle-to-project)
+            OPTIONS+=('--input-yaml' 'Path to input yaml' '--project' 'Project ID or name')
+            __icav2_handle_options_flags
+            case ${MYWORDS[$INDEX-1]} in
+              --input-yaml)
+              ;;
+              --project)
+                _icav2_bundles_add-bundle-to-project_option_project_completion
+              ;;
+
+            esac
+            case $INDEX in
+              2)
+                  __comp_current_options || return
+              ;;
+
+
+            *)
+                __comp_current_options || return
+            ;;
+            esac
+          ;;
           add-data)
             OPTIONS+=('--input-yaml' 'Path to bundle yaml' '--data-id' 'ID of data to add to bundle' '--data-uri' 'Data URI to add to bundle')
             __icav2_handle_options_flags
@@ -1179,9 +1202,8 @@ _icav2() {
 
 _icav2_compreply() {
     local prefix=""
-    local IFS=$'\n'
     cur="$(printf '%q' "$cur")"
-    IFS=$IFS COMPREPLY=($(compgen -P "$prefix" -W "$*" -- "$cur"))
+    COMPREPLY=($(compgen -P "$prefix" -W "$*" -- "$cur"))
     __ltrim_colon_completions "$prefix$cur"
 
     # http://stackoverflow.com/questions/7267185/bash-autocompletion-add-description-for-possible-completions
@@ -1275,19 +1297,54 @@ ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
 ## END CONFIG SETUP ##
 
 ## LIST ANALYSIS IDS
+page_offset=0
+page_size=1000
+total_item_count="$( \
+  curl \
+      --fail \
+      --silent \
+      --location \
+      --request 'GET' \
+      --header 'Accept: application/vnd.illumina.v3+json' \
+      --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
+      --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/analyses?pageOffset=0&pageSize=1" | \
+  jq --raw-output '.totalItemCount' \
+)"
 
-curl \
-  --fail --silent --location \
-  --request 'GET' \
-  --header 'Accept: application/vnd.illumina.v3+json' \
-  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
-  "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/analyses" | \
-jq --raw-output \
-  '
-   .items |
-   map(.id) |
-   .[]
-  '
+while :; do
+  eval "$( \
+    curl \
+      --fail \
+      --silent \
+      --location \
+      --request 'GET' \
+      --header 'Accept: application/vnd.illumina.v3+json' \
+      --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
+      --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/analyses?pageOffset=${page_offset}&pageSize=${page_size}&sort=startDate%20desc" | \
+    jq --raw-output \
+      --arg cols "$(tput cols)" \
+      '
+        .items |
+        (map(.id | length) | max) as $max_id_length |
+        (($cols | tonumber) - $max_id_length - 4) as $max_description_length |
+        map(
+          [
+            "printf",
+            "%-*s -- %.*s\n",
+            $max_id_length, .id,
+            $max_description_length, "UserRef: \(.userReference)  Date: \(.startDate)"
+          ] |
+          @sh
+        ) |
+        .[]
+      '
+  )"
+    (( page_offset += page_size ))
+
+    if ! (( page_offset < total_item_count )); then
+      break
+    fi
+done
 )"
     _icav2_compreply "$param_analysis_id"
 }
@@ -1356,19 +1413,54 @@ ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
 ## END CONFIG SETUP ##
 
 ## LIST ANALYSIS IDS
+page_offset=0
+page_size=1000
+total_item_count="$( \
+  curl \
+      --fail \
+      --silent \
+      --location \
+      --request 'GET' \
+      --header 'Accept: application/vnd.illumina.v3+json' \
+      --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
+      --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/analyses?pageOffset=0&pageSize=1" | \
+  jq --raw-output '.totalItemCount' \
+)"
 
-curl \
-  --fail --silent --location \
-  --request 'GET' \
-  --header 'Accept: application/vnd.illumina.v3+json' \
-  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
-  "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/analyses" | \
-jq --raw-output \
-  '
-   .items |
-   map(.id) |
-   .[]
-  '
+while :; do
+  eval "$( \
+    curl \
+      --fail \
+      --silent \
+      --location \
+      --request 'GET' \
+      --header 'Accept: application/vnd.illumina.v3+json' \
+      --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
+      --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/analyses?pageOffset=${page_offset}&pageSize=${page_size}&sort=startDate%20desc" | \
+    jq --raw-output \
+      --arg cols "$(tput cols)" \
+      '
+        .items |
+        (map(.id | length) | max) as $max_id_length |
+        (($cols | tonumber) - $max_id_length - 4) as $max_description_length |
+        map(
+          [
+            "printf",
+            "%-*s -- %.*s\n",
+            $max_id_length, .id,
+            $max_description_length, "UserRef: \(.userReference)  Date: \(.startDate)"
+          ] |
+          @sh
+        ) |
+        .[]
+      '
+  )"
+    (( page_offset += page_size ))
+
+    if ! (( page_offset < total_item_count )); then
+      break
+    fi
+done
 )"
     _icav2_compreply "$param_analysis_id"
 }
@@ -1437,19 +1529,54 @@ ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
 ## END CONFIG SETUP ##
 
 ## LIST ANALYSIS IDS
+page_offset=0
+page_size=1000
+total_item_count="$( \
+  curl \
+      --fail \
+      --silent \
+      --location \
+      --request 'GET' \
+      --header 'Accept: application/vnd.illumina.v3+json' \
+      --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
+      --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/analyses?pageOffset=0&pageSize=1" | \
+  jq --raw-output '.totalItemCount' \
+)"
 
-curl \
-  --fail --silent --location \
-  --request 'GET' \
-  --header 'Accept: application/vnd.illumina.v3+json' \
-  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
-  "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/analyses" | \
-jq --raw-output \
-  '
-   .items |
-   map(.id) |
-   .[]
-  '
+while :; do
+  eval "$( \
+    curl \
+      --fail \
+      --silent \
+      --location \
+      --request 'GET' \
+      --header 'Accept: application/vnd.illumina.v3+json' \
+      --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
+      --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/analyses?pageOffset=${page_offset}&pageSize=${page_size}&sort=startDate%20desc" | \
+    jq --raw-output \
+      --arg cols "$(tput cols)" \
+      '
+        .items |
+        (map(.id | length) | max) as $max_id_length |
+        (($cols | tonumber) - $max_id_length - 4) as $max_description_length |
+        map(
+          [
+            "printf",
+            "%-*s -- %.*s\n",
+            $max_id_length, .id,
+            $max_description_length, "UserRef: \(.userReference)  Date: \(.startDate)"
+          ] |
+          @sh
+        ) |
+        .[]
+      '
+  )"
+    (( page_offset += page_size ))
+
+    if ! (( page_offset < total_item_count )); then
+      break
+    fi
+done
 )"
     _icav2_compreply "$param_analysis_id"
 }
@@ -1518,19 +1645,54 @@ ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
 ## END CONFIG SETUP ##
 
 ## LIST ANALYSIS IDS
+page_offset=0
+page_size=1000
+total_item_count="$( \
+  curl \
+      --fail \
+      --silent \
+      --location \
+      --request 'GET' \
+      --header 'Accept: application/vnd.illumina.v3+json' \
+      --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
+      --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/analyses?pageOffset=0&pageSize=1" | \
+  jq --raw-output '.totalItemCount' \
+)"
 
-curl \
-  --fail --silent --location \
-  --request 'GET' \
-  --header 'Accept: application/vnd.illumina.v3+json' \
-  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
-  "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/analyses" | \
-jq --raw-output \
-  '
-   .items |
-   map(.id) |
-   .[]
-  '
+while :; do
+  eval "$( \
+    curl \
+      --fail \
+      --silent \
+      --location \
+      --request 'GET' \
+      --header 'Accept: application/vnd.illumina.v3+json' \
+      --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
+      --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/analyses?pageOffset=${page_offset}&pageSize=${page_size}&sort=startDate%20desc" | \
+    jq --raw-output \
+      --arg cols "$(tput cols)" \
+      '
+        .items |
+        (map(.id | length) | max) as $max_id_length |
+        (($cols | tonumber) - $max_id_length - 4) as $max_description_length |
+        map(
+          [
+            "printf",
+            "%-*s -- %.*s\n",
+            $max_id_length, .id,
+            $max_description_length, "UserRef: \(.userReference)  Date: \(.startDate)"
+          ] |
+          @sh
+        ) |
+        .[]
+      '
+  )"
+    (( page_offset += page_size ))
+
+    if ! (( page_offset < total_item_count )); then
+      break
+    fi
+done
 )"
     _icav2_compreply "$param_analysis_id"
 }
@@ -1599,19 +1761,54 @@ ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
 ## END CONFIG SETUP ##
 
 ## LIST ANALYSIS IDS
+page_offset=0
+page_size=1000
+total_item_count="$( \
+  curl \
+      --fail \
+      --silent \
+      --location \
+      --request 'GET' \
+      --header 'Accept: application/vnd.illumina.v3+json' \
+      --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
+      --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/analyses?pageOffset=0&pageSize=1" | \
+  jq --raw-output '.totalItemCount' \
+)"
 
-curl \
-  --fail --silent --location \
-  --request 'GET' \
-  --header 'Accept: application/vnd.illumina.v3+json' \
-  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
-  "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/analyses" | \
-jq --raw-output \
-  '
-   .items |
-   map(.id) |
-   .[]
-  '
+while :; do
+  eval "$( \
+    curl \
+      --fail \
+      --silent \
+      --location \
+      --request 'GET' \
+      --header 'Accept: application/vnd.illumina.v3+json' \
+      --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
+      --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/analyses?pageOffset=${page_offset}&pageSize=${page_size}&sort=startDate%20desc" | \
+    jq --raw-output \
+      --arg cols "$(tput cols)" \
+      '
+        .items |
+        (map(.id | length) | max) as $max_id_length |
+        (($cols | tonumber) - $max_id_length - 4) as $max_description_length |
+        map(
+          [
+            "printf",
+            "%-*s -- %.*s\n",
+            $max_id_length, .id,
+            $max_description_length, "UserRef: \(.userReference)  Date: \(.startDate)"
+          ] |
+          @sh
+        ) |
+        .[]
+      '
+  )"
+    (( page_offset += page_size ))
+
+    if ! (( page_offset < total_item_count )); then
+      break
+    fi
+done
 )"
     _icav2_compreply "$param_analysis_id"
 }
@@ -1711,7 +1908,7 @@ params="$( \
         "parentFolderPath": $parent_folder_path,
         "filename": $file_name,
         "filenameMatchMode": "FUZZY",
-        "page_size": $page_size,
+        "pageSize": $page_size,
         "type": $type
       } |
       # Drop nulls
@@ -1735,10 +1932,11 @@ curl \
   --request GET \
   --header "Accept: application/vnd.illumina.v3+json" \
   --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
-  --url "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
+  --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
 jq --raw-output \
   '
     .items |
+    sort_by(.data.details.path | ascii_downcase) |
     map(
       .data.details.path
     ) |
@@ -1845,7 +2043,7 @@ params="$( \
         "parentFolderPath": $parent_folder_path,
         "filename": $file_name,
         "filenameMatchMode": "FUZZY",
-        "page_size": $page_size,
+        "pageSize": $page_size,
         "type": $type
       } |
       # Drop nulls
@@ -1869,10 +2067,11 @@ curl \
   --request GET \
   --header "Accept: application/vnd.illumina.v3+json" \
   --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
-  --url "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
+  --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
 jq --raw-output \
   '
     .items |
+    sort_by(.data.details.path | ascii_downcase) |
     map(
       .data.details.path
     ) |
@@ -1979,7 +2178,7 @@ params="$( \
         "parentFolderPath": $parent_folder_path,
         "filename": $file_name,
         "filenameMatchMode": "FUZZY",
-        "page_size": $page_size,
+        "pageSize": $page_size,
         "type": $type
       } |
       # Drop nulls
@@ -2003,10 +2202,11 @@ curl \
   --request GET \
   --header "Accept: application/vnd.illumina.v3+json" \
   --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
-  --url "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
+  --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
 jq --raw-output \
   '
     .items |
+    sort_by(.data.details.path | ascii_downcase) |
     map(
       .data.details.path
     ) |
@@ -2113,7 +2313,7 @@ params="$( \
         "parentFolderPath": $parent_folder_path,
         "filename": $file_name,
         "filenameMatchMode": "FUZZY",
-        "page_size": $page_size,
+        "pageSize": $page_size,
         "type": $type
       } |
       # Drop nulls
@@ -2137,10 +2337,11 @@ curl \
   --request GET \
   --header "Accept: application/vnd.illumina.v3+json" \
   --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
-  --url "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
+  --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
 jq --raw-output \
   '
     .items |
+    sort_by(.data.details.path | ascii_downcase) |
     map(
       .data.details.path
     ) |
@@ -2247,7 +2448,7 @@ params="$( \
         "parentFolderPath": $parent_folder_path,
         "filename": $file_name,
         "filenameMatchMode": "FUZZY",
-        "page_size": $page_size,
+        "pageSize": $page_size,
         "type": $type
       } |
       # Drop nulls
@@ -2271,10 +2472,11 @@ curl \
   --request GET \
   --header "Accept: application/vnd.illumina.v3+json" \
   --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
-  --url "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
+  --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
 jq --raw-output \
   '
     .items |
+    sort_by(.data.details.path | ascii_downcase) |
     map(
       .data.details.path
     ) |
@@ -2381,7 +2583,7 @@ params="$( \
         "parentFolderPath": $parent_folder_path,
         "filename": $file_name,
         "filenameMatchMode": "FUZZY",
-        "page_size": $page_size,
+        "pageSize": $page_size,
         "type": $type
       } |
       # Drop nulls
@@ -2405,10 +2607,11 @@ curl \
   --request GET \
   --header "Accept: application/vnd.illumina.v3+json" \
   --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
-  --url "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
+  --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
 jq --raw-output \
   '
     .items |
+    sort_by(.data.details.path | ascii_downcase) |
     map(
       .data.details.path
     ) |
@@ -2482,27 +2685,35 @@ fi
 ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
 
 ## END CONFIG SETUP ##
-
-ATTRIBUTE_NAME="id"
-
-## INVOKE PROJECT PIPELINE ##
-
-curl \
-  --fail --silent --location \
-  --request "GET" \
-  --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/pipelines" \
-  --header "Accept: application/vnd.illumina.v3+json" \
-  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" | \
-jq \
-  --raw-output \
-  --arg attribute_type "${ATTRIBUTE_NAME}" \
-  '
-    .items |
-    map(.pipeline | .[$attribute_type]) |
-    .[]
-  '
-
-## INVOKE PROJECT PIPELINE ##
+eval "$(\
+  curl   \
+    --fail   \
+    --silent   \
+    --location   \
+    --request 'GET'   \
+    --header 'Accept: application/vnd.illumina.v3+json'   \
+    --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}"   \
+    --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/pipelines" | \
+  jq \
+    --raw-output \
+    --arg cols "$(tput cols)"\
+     '
+      .items |
+      (map(.pipeline.id | length) | max) as $max_pipeline_id |
+      (($cols | tonumber) - $max_pipeline_id - 4) as $max_description_length |
+      map(
+        [
+          "printf",
+          "%-*s -- %.*s\n",
+          $max_pipeline_id, .pipeline.id,
+          $max_description_length, "Code: \(.pipeline.code) Date: \(.pipeline.timeCreated) Description: \(.pipeline.description)"
+        ] |
+        @sh
+      )
+      |
+      .[]
+    ' \
+)"
 )"
     _icav2_compreply "$param_pipeline_id"
 }
@@ -2570,26 +2781,38 @@ ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
 
 ## END CONFIG SETUP ##
 
-ATTRIBUTE_NAME="code"
-
 ## INVOKE PROJECT PIPELINE ##
 
-curl \
-  --fail --silent --location \
-  --request "GET" \
-  --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/pipelines" \
-  --header "Accept: application/vnd.illumina.v3+json" \
-  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" | \
-jq \
-  --raw-output \
-  --arg attribute_type "${ATTRIBUTE_NAME}" \
-  '
-    .items |
-    map(.pipeline | .[$attribute_type]) |
-    .[]
-  '
-
-## INVOKE PROJECT PIPELINE ##
+# No pagination while :; do
+eval "$(\
+  curl   \
+    --fail   \
+    --silent   \
+    --location   \
+    --request 'GET'   \
+    --header 'Accept: application/vnd.illumina.v3+json'   \
+    --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}"   \
+    --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/pipelines" | \
+  jq \
+    --raw-output \
+    --arg cols "$(tput cols)" \
+     '
+      .items |
+      (map(.pipeline.code | length) | max) as $max_pipeline_code |
+      (($cols | tonumber) - $max_pipeline_code - 4) as $max_description_length |
+      map(
+        [
+          "printf",
+          "%-*s -- %.*s\n",
+          $max_pipeline_code, .pipeline.code,
+          $max_description_length, "Date=\(.pipeline.timeCreated) Description=\(.pipeline.description)"
+        ] |
+        @sh
+      )
+      |
+      .[]
+    ' \
+)"
 )"
     _icav2_compreply "$param_pipeline_code"
 }
@@ -2689,7 +2912,7 @@ params="$( \
         "parentFolderPath": $parent_folder_path,
         "filename": $file_name,
         "filenameMatchMode": "FUZZY",
-        "page_size": $page_size,
+        "pageSize": $page_size,
         "type": $type
       } |
       # Drop nulls
@@ -2713,10 +2936,11 @@ curl \
   --request GET \
   --header "Accept: application/vnd.illumina.v3+json" \
   --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
-  --url "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
+  --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
 jq --raw-output \
   '
     .items |
+    sort_by(.data.details.path | ascii_downcase) |
     map(
       .data.details.path
     ) |
@@ -2790,27 +3014,35 @@ fi
 ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
 
 ## END CONFIG SETUP ##
-
-ATTRIBUTE_NAME="id"
-
-## INVOKE PROJECT PIPELINE ##
-
-curl \
-  --fail --silent --location \
-  --request "GET" \
-  --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/pipelines" \
-  --header "Accept: application/vnd.illumina.v3+json" \
-  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" | \
-jq \
-  --raw-output \
-  --arg attribute_type "${ATTRIBUTE_NAME}" \
-  '
-    .items |
-    map(.pipeline | .[$attribute_type]) |
-    .[]
-  '
-
-## INVOKE PROJECT PIPELINE ##
+eval "$(\
+  curl   \
+    --fail   \
+    --silent   \
+    --location   \
+    --request 'GET'   \
+    --header 'Accept: application/vnd.illumina.v3+json'   \
+    --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}"   \
+    --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/pipelines" | \
+  jq \
+    --raw-output \
+    --arg cols "$(tput cols)"\
+     '
+      .items |
+      (map(.pipeline.id | length) | max) as $max_pipeline_id |
+      (($cols | tonumber) - $max_pipeline_id - 4) as $max_description_length |
+      map(
+        [
+          "printf",
+          "%-*s -- %.*s\n",
+          $max_pipeline_id, .pipeline.id,
+          $max_description_length, "Code: \(.pipeline.code) Date: \(.pipeline.timeCreated) Description: \(.pipeline.description)"
+        ] |
+        @sh
+      )
+      |
+      .[]
+    ' \
+)"
 )"
     _icav2_compreply "$param_pipeline_id"
 }
@@ -2878,26 +3110,38 @@ ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
 
 ## END CONFIG SETUP ##
 
-ATTRIBUTE_NAME="code"
-
 ## INVOKE PROJECT PIPELINE ##
 
-curl \
-  --fail --silent --location \
-  --request "GET" \
-  --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/pipelines" \
-  --header "Accept: application/vnd.illumina.v3+json" \
-  --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" | \
-jq \
-  --raw-output \
-  --arg attribute_type "${ATTRIBUTE_NAME}" \
-  '
-    .items |
-    map(.pipeline | .[$attribute_type]) |
-    .[]
-  '
-
-## INVOKE PROJECT PIPELINE ##
+# No pagination while :; do
+eval "$(\
+  curl   \
+    --fail   \
+    --silent   \
+    --location   \
+    --request 'GET'   \
+    --header 'Accept: application/vnd.illumina.v3+json'   \
+    --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}"   \
+    --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/pipelines" | \
+  jq \
+    --raw-output \
+    --arg cols "$(tput cols)" \
+     '
+      .items |
+      (map(.pipeline.code | length) | max) as $max_pipeline_code |
+      (($cols | tonumber) - $max_pipeline_code - 4) as $max_description_length |
+      map(
+        [
+          "printf",
+          "%-*s -- %.*s\n",
+          $max_pipeline_code, .pipeline.code,
+          $max_description_length, "Date=\(.pipeline.timeCreated) Description=\(.pipeline.description)"
+        ] |
+        @sh
+      )
+      |
+      .[]
+    ' \
+)"
 )"
     _icav2_compreply "$param_pipeline_code"
 }
@@ -2997,7 +3241,7 @@ params="$( \
         "parentFolderPath": $parent_folder_path,
         "filename": $file_name,
         "filenameMatchMode": "FUZZY",
-        "page_size": $page_size,
+        "pageSize": $page_size,
         "type": $type
       } |
       # Drop nulls
@@ -3021,10 +3265,11 @@ curl \
   --request GET \
   --header "Accept: application/vnd.illumina.v3+json" \
   --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" \
-  --url "https://${ICAV2_BASE_URL}/ica/rest/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
+  --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/${ICAV2_PROJECT_ID}/data?${params}" | \
 jq --raw-output \
   '
     .items |
+    sort_by(.data.details.path | ascii_downcase) |
     map(
       .data.details.path
     ) |
@@ -3266,5 +3511,5 @@ __comp_current_options() {
 }
 
 
-complete -o default -F _icav2 icav2
+complete -o default -o nosort -F _icav2 icav2
 
