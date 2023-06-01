@@ -59,6 +59,19 @@ subcommands:
         summary: Release a bundle
         parameters:
           - name: bundle_id
+      add-bundle-to-project:
+        summary: Add a bundle to a project
+        parameters:
+          - name: bundle_id
+        options:
+          - name: input-yaml
+            summary: Path to input yaml
+            type: string
+          - name: project
+            summary: Project ID or name
+            completion:
+              command_string: |-
+                
 
   # FIXME override completion subcommand
   config:
