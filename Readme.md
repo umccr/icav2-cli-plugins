@@ -12,21 +12,67 @@ Please refer to [wiki page][wiki_page] for [installation][installation_wiki_page
 
 ## Features
 
-## icav2 tenants extensions
+### icav2 bundles extensions
 
-### icav2 tenants init
+Support for generating and deploying bundles 
+
+#### icav2 bundles init                   
+
+> Initialise a bundle
+
+See more in [icav2 bundles init][bundles_init]
+
+#### icav2 bundles get                    
+
+> Get a bundle
+
+See more in [icav2_bundles_get][bundles_get]
+
+#### icav2 bundles list                   
+
+> List bundles
+
+See more in [icav2_bundles_list][bundles_list]
+
+#### icav2 bundles add-data               
+
+> Add data to a bundle
+
+See more in [icav2_bundles_add_data][bundles_add_data]
+
+#### icav2 bundles add-pipeline           
+
+> Add pipeline to a bundle
+
+See more in [icav2_bundles_add_pipeline][bundles_add_pipeline]
+
+#### icav2 bundles release                
+
+> Release a bundle
+
+See more in [icav2_bundles_release][bundles_release]
+
+#### icav2 bundles add-bundle-to-project  
+
+> Add a released bundle to a project
+
+See more in [icav2_bundles_add_to_project][bundles_add_to_project]
+
+### icav2 context handling extensions
+
+#### icav2 tenants init
 
 > Register a tenant with the plugins repository
 
 See more in [icav2_context_handling][tenants_init]
 
-### icav2 tenants list
+#### icav2 tenants list
 
 > List available tenants that have been initialised with 'icav2 tenants init'
 
 See more in [icav2_context_handling][tenants_list]
 
-### icav2 tenants enter
+#### icav2 tenants enter
 
 > Enter a tenant that has been initialised with 'icav2 tenants init'
 
@@ -34,20 +80,20 @@ See more in [icav2_context_handling][tenants_enter]
 
 * Autocompletion :white_check_mark:
 
-### icav2 tenants set-default-project
+#### icav2 tenants set-default-project
 
 > Set a default project to enter for a given tenant
 
 See more in [icav2_context_handling][tenants_set_default_project]
 
-### icav2 tenants set-default-tenant
+#### icav2 tenants set-default-tenant
 
 > Set a registered tenant to be the default tenant
 > Replaces api key in $HOME/.icav2/config.yaml
 
 See more in [icav2_context_handling][tenants_set_default_tenant]
 
-### icav2 projects enter
+#### icav2 projects enter
 
 > Inspired by [ica-context-switcher][ica_context_switcher]
 > Enter a project in a terminal without affecting default project or other open terminals
@@ -148,6 +194,14 @@ See more in [project pipelines wiki][project_pipelines_create_wes_input_template
 
 See more in [project pipelines wiki][project_pipelines_start_cwl_wes]
 
+#### icav2 projectpipelines release
+
+> Release a projectpipeline from the CLI
+
+* Autocompletion :white_check_mark:
+
+See more in [project pipelines wiki][project_pipelines_release]
+
 
 ### icav2 projectanalyses extensions
 
@@ -197,10 +251,6 @@ See more in [project analyses wiki][project_analyses_wiki_gantt_plot]
 
 ## Coming soon
 
-### icav2 bundles
-
-Support for generating and deploying bundles 
-
 ### icav2 projectanalyses list-cwltool-step-components <analysis-id> --step-name <step-id>
 
 List all available components to view for a cwltool step.  
@@ -230,6 +280,14 @@ View a component for a cwltool step
 
 [installation_wiki_page]: https://github.com/umccr/icav2-cli-plugins/wiki#installation
 
+[bundles_init]: https://github.com/umccr/icav2-cli-plugins/wiki/Bundles#init
+[bundles_get]: https://github.com/umccr/icav2-cli-plugins/wiki/Bundles#get
+[bundles_release]: https://github.com/umccr/icav2-cli-plugins/wiki/Bundles#release
+[bundles_list]: https://github.com/umccr/icav2-cli-plugins/wiki/Bundles#list
+[bundles_add_data]: https://github.com/umccr/icav2-cli-plugins/wiki/Bundles#add-data
+[bundles_add_pipeline]: https://github.com/umccr/icav2-cli-plugins/wiki/Bundles#add-pipeline
+[bundles_add_to_project]: https://github.com/umccr/icav2-cli-plugins/wiki/Bundles#add-to-project
+
 [tenants_init]: https://github.com/umccr/icav2-cli-plugins/wiki/ContextHandling#tenants-init
 [tenants_list]: https://github.com/umccr/icav2-cli-plugins/wiki/ContextHandling#tenants-list
 [tenants_enter]: https://github.com/umccr/icav2-cli-plugins/wiki/ContextHandling#tenants-enter 
@@ -249,6 +307,7 @@ View a component for a cwltool step
 [project_pipelines_create_workflow_from_github_release]: https://github.com/umccr/icav2-cli-plugins/wiki/ProjectPipelines#create-cwl-workflow-from-github-release
 [project_pipelines_create_wes_input_template]: https://github.com/umccr/icav2-cli-plugins/wiki/ProjectPipelines#create-cwl-wes-input-template
 [project_pipelines_start_cwl_wes]: https://github.com/umccr/icav2-cli-plugins/wiki/ProjectPipelines#start-cwl-wes
+[project_pipelines_release]: https://github.com/umccr/icav2-cli-plugins/wiki/ProjectPipelines#release
 
 [project_analyses_wiki_get_cwl_anlysis_input_json]: https://github.com/umccr/icav2-cli-plugins/wiki/ProjectAnalyses#get-cwl-analysis-input-json
 [project_analyses_wiki_get_cwl_anlysis_output_json]: https://github.com/umccr/icav2-cli-plugins/wiki/ProjectAnalyses#get-cwl-analysis-output-json
