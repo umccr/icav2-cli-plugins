@@ -26,6 +26,7 @@ MacOS users, please install greadlink through 'brew install coreutils'
 
 Options:
 --install-pandoc:      Required for running the command icav2 projectpipelines create-cwl-from-zip
+--no-autocompletion:   Only for installation into GitHub actions (where _init_completion is not present)
 "
 
 ICAV2_CLI_PLUGINS_HOME="$HOME/.icav2-cli-plugins"
@@ -146,10 +147,14 @@ get_this_path() {
 ################
 # Get args from command line
 install_pandoc="false"
+no_autocompletion="true"
 while [ $# -gt 0 ]; do
   case "$1" in
     --install-pandoc)
       install_pandoc="true"
+      ;;
+    --no-autocompletion)
+      no_autocompletion="true"
       ;;
     -h | --help)
       print_help
@@ -223,7 +228,7 @@ fi
 
 
 # Checking bash-completion is installed (for bash users only)
-if [[ "${user_shell}" == "bash" ]]; then
+if [[ "${user_shell}" == "bash" && "${no_autocompletion}" == "false" ]]; then
   if ! ("${SHELL}" -lic "type _init_completion 1>/dev/null"); then
     echo_stderr "Could not find the command '_init_completion' which is necessary for auto-completion scripts"
     echo_stderr "If you are running on MacOS, please run the following command:"
@@ -249,7 +254,6 @@ if [[ "${OSTYPE}" == "darwin"* ]]; then
       exit 1
   fi
 fi
-
 
 #############
 # CREATE DIRS
