@@ -21,7 +21,9 @@ from utils.cwl_helpers import ZippedCWLWorkflow
 from utils.gh_helpers import download_zipped_workflow_from_github_release, get_release_repo_and_tag_from_release_url
 from utils.globals import ICAV2_DEFAULT_ANALYSIS_STORAGE_SIZE, ICAv2AnalysisStorageSize
 from utils.logger import get_logger
-from utils.projectpipeline_helpers import get_analysis_storage_id_from_analysis_storage_size, create_params_xml
+from utils.projectpipeline_helpers import \
+    get_analysis_storage_id_from_analysis_storage_size, create_params_xml, \
+    redirect_stdout
 import requests
 
 from urllib.parse import unquote
@@ -150,7 +152,9 @@ Example:
     def check_args(self):
         # Check the url exists
         github_release_url_arg = unquote(self.args.get("<github_release_url>"))
-        url_obj = requests.get(github_release_url_arg)
+
+        with redirect_stdout():
+            url_obj = requests.get(github_release_url_arg)
         if not url_obj.status_code == 200:
             logger.error(f"Got status code {url_obj.status_code}, reason {url_obj.reason}")
             raise InvalidArgumentError
@@ -180,9 +184,10 @@ Example:
         if analysis_storage_id_arg is not None:
             self.analysis_storage_id = analysis_storage_id_arg
         else:
-            self.analysis_storage_id = get_analysis_storage_id_from_analysis_storage_size(
-                ICAv2AnalysisStorageSize(analysis_storage_size_arg)
-            )
+            with redirect_stdout():
+                self.analysis_storage_id = get_analysis_storage_id_from_analysis_storage_size(
+                    ICAv2AnalysisStorageSize(analysis_storage_size_arg)
+                )
 
         # Set the description as the GitHub release url
         self.description = f"GitHub Release URL: {self.github_release_url}"
