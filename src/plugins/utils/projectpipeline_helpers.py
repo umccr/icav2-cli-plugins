@@ -3,6 +3,8 @@ from json import JSONDecodeError
 from pathlib import Path
 from typing import Dict, Optional, List, Any, Union, Tuple
 from urllib.parse import urlparse
+import sys
+import contextlib
 
 from libica.openapi.v2.model.analysis import Analysis
 
@@ -851,3 +853,11 @@ def release_pipeline(project_id: str, pipeline_id: str):
         raise ChildProcessError
 
     logger.info(f"Successfully released {pipeline_id}")
+
+
+@contextlib.contextmanager
+def redirect_stdout():
+    sout = sys.stdout
+    sys.stdout = sys.stderr
+    yield
+    sys.stdout = sout
