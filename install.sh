@@ -33,6 +33,7 @@ ICAV2_CLI_PLUGINS_HOME="$HOME/.icav2-cli-plugins"
 PLUGIN_VERSION="__PLUGIN_VERSION__"
 LIBICA_VERSION="__LIBICA_VERSION__"
 YQ_VERSION="4.18.1"
+CURL_VERSION="7.76.0"
 
 ###########
 # Functions
@@ -105,6 +106,28 @@ check_yq_version() {
   '
   if ! verlte "${YQ_VERSION}" "$(get_yq_version)"; then
     echo_stderr "Your yq version is too old"
+    return 1
+  fi
+}
+
+get_curl_version(){
+  # Input:
+  #   curl 7.81.0 (x86_64-pc-linux-gnu) libcurl/7.81.0 OpenSSL/3.0.2 zlib/1.2.11 brotli/1.0.9 zstd/1.4.8 libidn2/2.3.2 libpsl/0.21.0 (+libidn2/2.3.2) libssh/0.9.6/openssl/zlib nghttp2/1.43.0 librtmp/2.3 OpenLDAP/2.5.16
+  #   Release-Date: 2022-01-05
+  #   Protocols: dict file ftp ftps gopher gophers http https imap imaps ldap ldaps mqtt pop3 pop3s rtmp rtsp scp sftp smb smbs smtp smtps telnet tftp
+  #   Features: alt-svc AsynchDNS brotli GSS-API HSTS HTTP2 HTTPS-proxy IDN IPv6 Kerberos Largefile libz NTLM NTLM_WB PSL SPNEGO SSL TLS-SRP UnixSockets zstd
+  # Output: 7.81.0
+  curl --version 2>/dev/null | \
+  head -n1 | \
+  cut -d' ' -f2
+}
+
+check_curl_version() {
+  : '
+  Make sure at the latest conda version
+  '
+  if ! verlte "${CURL_VERSION}" "$(get_curl_version)"; then
+    echo_stderr "Your curl version is too old"
     return 1
   fi
 }
@@ -203,6 +226,13 @@ if ! check_yq_version; then
   print_help
   exit 1
 fi
+
+if ! check_curl_version; then
+  echo_stderr "Please update your version of curl to ${CURL_VERSION} or later and then rerun the installation"
+  print_help
+  exit 1
+fi
+
 
 # Steps get configuration / icav2 plugins home directory
 # TODO - hardcode as $HOME/.icav2-cli-plugins/ for now
