@@ -297,8 +297,8 @@ def add_pipeline_to_bundle(bundle_id: str, pipeline_id: str) -> Optional[bool]:
             logger.info(f"Pipeline {pipeline_id} already linked to bundle {bundle_id}")
             return False
         logger.error(f"Got the following error while trying to link pipeline {pipeline_id} to bundle {bundle_id}")
-        if json.loads(curl_stdout).get("status", None) == 400:
-            logger.info(f"Error detail is '{json.loads(curl_stdout).get('detail', None)}'")
+        logger.info(f"Error detail is '{json.loads(curl_stdout).get('detail', None)}'")
+        logger.error(json.loads(curl_stdout))
         logger.error(curl_stderr)
         raise ChildProcessError
 
@@ -353,8 +353,11 @@ def add_data_to_bundle(bundle_id: str, data_id: str, data_region_id: Optional[st
             logger.info(f"Data {data_id} already linked to bundle {bundle_id}")
             return False
         logger.error(f"Got the following error while trying to link data {data_id} to bundle {bundle_id}")
-        if json.loads(curl_stdout).get("status", None) == 400:
-            logger.info(f"Error detail is '{json.loads(curl_stdout).get('detail', None)}'")
+        logger.info(f"Error detail is '{json.loads(curl_stdout).get('detail', None)}'")
+        if json.loads(curl_stdout).get("status", None) == 403:
+            logger.error(f"User does not have permission to 'link-out' this data {data_id}.")
+            logger.error(f"Please ensure user has 'download' permissions to a project where this data either exists or has been linked to")
+        logger.error(json.loads(curl_stdout))
         logger.error(curl_stderr)
         raise ChildProcessError
 
