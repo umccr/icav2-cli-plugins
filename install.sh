@@ -33,6 +33,7 @@ ICAV2_CLI_PLUGINS_HOME="$HOME/.icav2-cli-plugins"
 PLUGIN_VERSION="__PLUGIN_VERSION__"
 LIBICA_VERSION="__LIBICA_VERSION__"
 YQ_VERSION="4.18.1"
+PYTHON_VERSION="3.10"
 
 ###########
 # Functions
@@ -108,6 +109,29 @@ check_yq_version() {
     return 1
   fi
 }
+
+get_python_version(){
+  # Input: python3 --version
+  # Python 3.10.12
+  # Output: 3.10.12
+  python3 --version 2>/dev/null | cut -d' ' -f2
+}
+
+check_python_version() {
+  : '
+  Make sure at the latest conda version
+  '
+  if ! verlte "${PYTHON_VERSION}" "$(get_python_version)"; then
+    echo_stderr "Your python version is too old"
+    echo_stderr "icav2 cli plugins requires python 3.10 or later"
+    echo_stderr "You may wish to try"
+    echo_stderr "conda create --name python3.10 python=3.10"
+    echo_stderr "conda activate python3.10"
+    echo_stderr "bash install.sh"
+    return 1
+  fi
+}
+
 
 get_user_shell(){
   : '
@@ -200,6 +224,12 @@ fi
 
 if ! check_yq_version; then
   echo_stderr "Please update your version of yq and then rerun the installation"
+  print_help
+  exit 1
+fi
+
+if ! check_python_version; then
+  echo_stderr "Please update your version of python3 and then rerun the installation"
   print_help
   exit 1
 fi
