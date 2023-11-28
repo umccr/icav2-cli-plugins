@@ -296,11 +296,8 @@ class ZippedCWLWorkflow:
 
         configuration = get_libicav2_configuration()
 
-        workflow_code = "--".join([
-            self.zipped_cwl_file_path.stem.replace(".", "_"),
-            datetime.today().strftime("%Y%m%d%H%M%S"),
-            self.get_md5sum_from_packed_dict()
-        ])
+        workflow_code = self.zipped_cwl_file_path.stem.replace(".", "_")
+        
         curl_command_list = [
             "curl",
             # "--fail", "--silent", "--location",
