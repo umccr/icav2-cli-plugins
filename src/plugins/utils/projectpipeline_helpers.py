@@ -9,6 +9,7 @@ import contextlib
 from libica.openapi.v2.model.analysis import Analysis
 
 from libica.openapi.v2.api.project_analysis_api import ProjectAnalysisApi
+from libica.openapi.v2.model.analysis_output_mapping import AnalysisOutputMapping
 
 from libica.openapi.v2.model.create_data import CreateData
 
@@ -19,8 +20,6 @@ from libica.openapi.v2.model.cwl_analysis_input import CwlAnalysisInput
 from libica.openapi.v2.model.create_cwl_analysis import CreateCwlAnalysis
 
 from libica.openapi.v2.model.pipeline import Pipeline
-
-from libica.openapi.v2.api.pipeline_api import PipelineApi
 
 from libica.openapi.v2.model.analysis_input_data_mount import AnalysisInputDataMount
 from libica.openapi.v2.model.project_data import ProjectData
@@ -86,19 +85,22 @@ class ICAv2EngineParameters:
     The ICAv2 EngineParameters has the following properties
     *
     """
-    def __init__(self, output_parent_folder_id: Optional[str], output_parent_folder_path: Optional[str],
-                 tags: Dict,
-                 analysis_storage_id: Optional[str], analysis_storage_size: Optional[str],
-                 activation_id: Optional[str], cwltool_overrides: Dict,
-                 # stream_all_files, stream_all_directories
-                 ):
-
-        self.output_parent_folder_id: Optional[str] = output_parent_folder_id
-        self.output_parent_folder_path: Optional[Path] = output_parent_folder_path
+    def __init__(
+            self,
+            tags: Dict,
+            cwltool_overrides: Dict,
+            # stream_all_files, stream_all_directories
+    ):
+        # Initiliase parameters
+        # pipeline, outputs etc can be inherited from the cli and updated in the check args instead
+        # Only the engine parameters that are cannot be set in the CLI are set here
+        self.pipeline_id: Optional[str] = None
+        self.output_parent_folder_id: Optional[str] = None
+        self.analysis_output: Optional[List[AnalysisOutputMapping]] = None
         self.tags: ICAv2PipelineAnalysisTags = ICAv2PipelineAnalysisTags.from_dict(tags)
-        self.analysis_storage_id: Optional[str] = analysis_storage_id
-        self.analysis_storage_size: Optional[str] = analysis_storage_size
-        self.activation_id: Optional[str] = activation_id
+        self.analysis_storage_id: Optional[str] = None
+        self.analysis_storage_size: Optional[str] = None
+        self.activation_id: Optional[str] = None
         self.cwltool_overrides: Dict = cwltool_overrides
         # self.stream_all_files: Optional[bool] = stream_all_files
         # self.stream_all_directories: Optional[bool] = stream_all_directories
@@ -108,32 +110,17 @@ class ICAv2EngineParameters:
 
     def populate_empty_engine_parameters(self, project_id: str, pipeline_id: str, input_json: Dict,
                                          mount_list: List[AnalysisInputDataMount]):
-        
         if self.analysis_storage_id is None:
             self.analysis_storage_id = get_set_analysis_storage_id_from_pipeline(
                 project_id,
                 pipeline_id
             )
+
         if self.activation_id is None:
             self.activation_id = get_activation_id(
                 project_id, pipeline_id, input_json,
                 mount_list
             )
-
-        if self.output_parent_folder_path is not None and self.output_parent_folder_id is None:
-            self.output_parent_folder_path = Path(self.output_parent_folder_path)
-            if not self.output_parent_folder_path.is_absolute():
-                logger.error("Please ensure engine parameter output_folder_path is an absolute path")
-            try:
-                self.output_parent_folder_id = get_data_obj_from_project_id_and_path(
-                    project_id,
-                    str(self.output_parent_folder_path) + "/",
-                ).data.id
-            except FileNotFoundError:
-                self.output_parent_folder_id = create_data_obj_from_project_id_and_path(
-                    project_id,
-                    str(self.output_parent_folder_path) + "/",
-                )
 
     # from_dict - read in input
     @classmethod
@@ -147,14 +134,9 @@ class ICAv2EngineParameters:
         engine_parameter_dict = sanitise_dict_keys(engine_parameter_dict)
 
         return cls(
-                    output_parent_folder_id=engine_parameter_dict.get("output_parent_folder_id", None),
-                    output_parent_folder_path=engine_parameter_dict.get("output_parent_folder_path", None),
                     tags=engine_parameter_dict.get("tags", {}),
-                    analysis_storage_id=engine_parameter_dict.get("analysis_storage_id", None),
-                    analysis_storage_size=engine_parameter_dict.get("analysis_storage_size", None),
-                    activation_id=engine_parameter_dict.get("activation_id", None),
                     cwltool_overrides=engine_parameter_dict.get("cwltool_overrides", {})
-                   )
+        )
 
 
 class ICAv2LaunchJson:
@@ -272,13 +254,13 @@ class ICAv2LaunchJson:
                 data_ids=self.data_ids
             ),
             analysis_storage_id=self.engine_parameters.analysis_storage_id,
-            output_parent_folder_id=self.engine_parameters.output_parent_folder_id
+            output_parent_folder_id=self.engine_parameters.output_parent_folder_id,
+            analysis_output=self.engine_parameters.analysis_output
         )
 
     def __call__(self, pipeline_id: str) -> CreateCwlAnalysis:
         # Parse object command to send workflow
         return self.create_cwl_analysis_obj(pipeline_id)
-
 
 
 def presign_cwl_directory(project_id: str, data_id: str) -> List[
