@@ -1,10 +1,13 @@
+from datetime import datetime
 import json
 from json import JSONDecodeError
 from pathlib import Path
+import re
 from typing import Dict, Optional, List, Any, Union, Tuple
 from urllib.parse import urlparse
 import sys
 import contextlib
+from uuid import uuid4
 
 from libica.openapi.v2.model.analysis import Analysis
 
@@ -91,7 +94,7 @@ class ICAv2EngineParameters:
             cwltool_overrides: Dict,
             # stream_all_files, stream_all_directories
     ):
-        # Initiliase parameters
+        # Initialise parameters
         # pipeline, outputs etc can be inherited from the cli and updated in the check args instead
         # Only the engine parameters that are cannot be set in the CLI are set here
         self.pipeline_id: Optional[str] = None
@@ -104,6 +107,15 @@ class ICAv2EngineParameters:
         self.cwltool_overrides: Dict = cwltool_overrides
         # self.stream_all_files: Optional[bool] = stream_all_files
         # self.stream_all_directories: Optional[bool] = stream_all_directories
+
+        # Set placeholders
+        current_utc_time = datetime.utcnow()
+        self.placeholder_dict: Dict = {
+            "__DATE_STR__": current_utc_time.strftime("%Y%m%d"),
+            "__TIME_STR__": current_utc_time.strftime("%H%M%S"),
+            "__UUID8_STR__": uuid4().hex[:8],
+            "__UUID16_STR__": uuid4().hex[:16],
+        }
 
     def update_engine_parameter(self, attribute_name: str, value: Any):
         self.__setattr__(attribute_name, value)
@@ -121,6 +133,17 @@ class ICAv2EngineParameters:
                 project_id, pipeline_id, input_json,
                 mount_list
             )
+
+    def populate_placeholders_in_output_path(self, analysis_path: str):
+        """
+        Populate placeholders in the output path
+        :param placeholder_dict:
+        :return:
+        """
+        return fill_placeholder_path(
+            analysis_path,
+            self.placeholder_dict
+        )
 
     # from_dict - read in input
     @classmethod
@@ -835,6 +858,23 @@ def release_pipeline(project_id: str, pipeline_id: str):
         raise ChildProcessError
 
     logger.info(f"Successfully released {pipeline_id}")
+
+
+def fill_placeholder_path(output_path_str: str, placeholder_dict):
+    """
+    Fill the analysisOutput or folder path with a placeholder.
+
+    Supported
+    :param output_path_str:
+    :param placeholder_dict:
+    :return:
+    """
+    for key_regex, replacement_value in placeholder_dict.items():
+        if not re.match(key_regex, output_path_str):
+            continue
+        output_path_str = re.sub(key_regex, replacement_value, output_path_str)
+
+    return output_path_str
 
 
 @contextlib.contextmanager

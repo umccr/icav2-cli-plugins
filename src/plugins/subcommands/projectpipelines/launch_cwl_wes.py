@@ -284,6 +284,14 @@ Example:
             else:  # Assume it's a path
                 if not self.output_parent_folder_arg.endswith("/"):
                     self.output_parent_folder_arg += "/"
+
+                # Update placeholders before checking if the path exists
+                self.output_parent_folder_arg = (
+                    self.input_launch_json.engine_parameters.populate_placeholders_in_output_path(
+                        self.output_parent_folder_arg
+                    )
+                )
+
                 # Create directory if it doesn't exist
                 if not check_is_directory(
                         project_id=self.project_id,
@@ -309,6 +317,12 @@ Example:
         if self.analysis_output_uri_path_arg is not None:
             if is_uri_format(self.analysis_output_uri_path_arg):
                 analysis_output_project_id, analysis_output_project_path = unpack_icav2_uri(self.analysis_output_uri_path_arg)
+                # Update placeholders before checking if the path exists
+                analysis_output_project_path = (
+                    self.input_launch_json.engine_parameters.populate_placeholders_in_output_path(
+                        analysis_output_project_path
+                    )
+                )
                 self.analysis_output = [
                     AnalysisOutputMapping(
                         source_path="out/",
