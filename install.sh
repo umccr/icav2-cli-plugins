@@ -129,6 +129,8 @@ check_curl_version() {
   '
   if ! verlte "${CURL_VERSION}" "$(get_curl_version)"; then
     echo_stderr "Your curl version is too old"
+  fi
+}
 
 get_python_version(){
   # Input: python3 --version
@@ -252,7 +254,8 @@ if ! check_curl_version; then
   echo_stderr "Please update your version of curl to ${CURL_VERSION} or later and then rerun the installation"
   print_help
   exit 1
-  
+fi
+
 if ! check_python_version; then
   echo_stderr "Please update your version of python3 and then rerun the installation"
   print_help
