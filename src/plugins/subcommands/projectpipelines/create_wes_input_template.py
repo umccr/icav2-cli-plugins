@@ -17,12 +17,14 @@ from ruamel.yaml import YAML, \
 
 from pathlib import Path
 
+from utils import is_uuid_format, is_uri_format
 from utils.errors import InvalidArgumentError
 from utils.config_helpers import get_project_id
 from utils.gh_helpers import get_release_markdown_file_doc_as_html, get_inputs_template_from_html_doc, \
     get_overrides_template_from_html_doc, get_release_repo_and_tag_from_release_url
 from utils.globals import GITHUB_RELEASE_DESCRIPTION_REGEX_MATCH
 from utils.logger import get_logger
+from utils.projectdata_helpers import is_folder_id_format
 from utils.projectpipeline_helpers import get_project_pipeline, get_pipeline_id_from_pipeline_code, \
     get_pipeline_description_from_pipeline_id
 
@@ -38,6 +40,7 @@ class ProjectPipelinesCreateWESInputTemplate(Command):
                                                          (--user-reference=<user_reference> | --name=<name>)
                                                          (--output-template-yaml-path=<output_template_yaml_path>)
                                                          [--output-parent-folder-path=<output_parent_folder_path> | --output-parent-folder-id=<output_parent_folder_id>]
+                                                         [--analysis-output-uri=<analysis_output_uri> | --analysis-output-path=<analysis_output_path>]
                                                          [--analysis-storage-size=<analysis_storage_size> | --analysis-storage-id=<analysis_storage_id>]
                                                          [--activation_id=<activation_id>]
                                                          [--user-tag=<user_tag>]...
@@ -67,6 +70,15 @@ Options:
                                                              If neither parameter is set, output_parent_folder_path will be blank in
                                                              the engineParameters section
 
+    --analysis-output-uri=<analysis_output_uri>              Optional, the uri to where the final directory out/ is placed.
+                                                             Can be used as an alternative to --output-parent-folder-* parameters.
+                                                             Since one will not have control over the final directory name inside --output-parent-folder-*
+                                                             Use icav2://project-name-or-id/path/to/out as a value
+                                                             Cannot specify both --analysis-output-uri and --analysis-output-path
+                                                             Cannot specify both --output-parent-folder-id/--output-parent-folder-path and --analysis0output-uri/--analysis0output-path
+    --analysis-output-path=<analysis_output_path>            Optional, identical to --output-uri but assumes the current project id for your outputs.
+
+
     --analysis-storage-id=<analysis_storage_id>              Optional, analysis storage id, overrides default analysis storage size
     --analysis-storage-size=<analysis_storage_size>          Optional, analysis storage size, one of Small, Medium, Large
                                                              If both --analysis-storage-id AND --analysis-storage-size are set
@@ -92,7 +104,9 @@ Example:
 
     def __init__(self, command_argv):
         # Initialise args
+        self.pipeline_arg: Optional[str] = None
         self.pipeline_id: Optional[str] = None
+
         self.project_id: Optional[str] = None
 
         self.pipeline_description: Optional[str] = None
@@ -103,8 +117,16 @@ Example:
 
         self.user_reference: Optional[str] = None
         self.output_template_yaml_path: Optional[Path] = None
+
+        self.output_parent_folder_arg: Optional[str] = None
         self.output_parent_folder_path: Optional[Path] = None
         self.output_parent_folder_id: Optional[Path] = None
+
+        self.analysis_output_uri_path_arg: Optional[str] = None
+        self.analysis_output_uri: Optional[str] = None
+        self.analysis_output_path: Optional[str] = None
+
+        self.analysis_storage_arg: Optional[str] = None
         self.analysis_storage_size: Optional[str] = None
         self.analysis_storage_id: Optional[str] = None
 
@@ -170,35 +192,60 @@ Example:
         """
         return get_release_repo_and_tag_from_release_url(self.release_url)
 
-
     def check_args(self):
         # Get project id
         self.project_id = get_project_id()
 
+        # Set inputs from cli
         # Get user reference
-        user_reference_arg = self.args.get("--user-reference", None)
-        name_arg = self.args.get("--name", None)
+        self.set_arg_from_in_input_yaml_and_cli(
+            arg_name=["--user-reference", "--name"],
+            input_yaml_data={},
+            required=True,
+            arg_type=str,
+            attr_name="user_reference"
+        )
 
-        # Get user reference or name
-        if user_reference_arg is not None:
-            self.user_reference = user_reference_arg
-        elif name_arg is not None:
-            self.user_reference = name_arg
-        else:
-            logger.error("Must specify one of --user-reference or --name")
-            raise InvalidArgumentError
+        self.set_arg_from_in_input_yaml_and_cli(
+            arg_name=["--pipeline-id", "--pipeline-code"],
+            input_yaml_data={},
+            required=True,
+            arg_type=str,
+            attr_name="pipeline_arg"
+        )
+
+        # Get the output folder path
+        # Set output parent folder path
+        self.set_arg_from_in_input_yaml_and_cli(
+            arg_name=["--output-parent-folder-id", "--output-parent-folder-path"],
+            input_yaml_data={},
+            required=False,
+            arg_type=str,
+            attr_name="output_parent_folder_arg",
+        )
+
+        # Check output arg
+        # Set output uri / path
+        self.set_arg_from_in_input_yaml_and_cli(
+            arg_name=["--analysis-output-uri", "--analysis-output-path"],
+            input_yaml_data={},
+            required=False,
+            arg_type=str,
+            attr_name="analysis_output_uri_path_arg",
+        )
+
+        # Checkout analysis storage size
+        self.set_arg_from_in_input_yaml_and_cli(
+            arg_name=["--analysis-storage-id", "--analysis-storage-size"],
+            input_yaml_data={},
+            required=False,
+            arg_type=str,
+            attr_name="analysis_storage_arg",
+        )
 
         # Get pipeline id / code
-        pipeline_id_arg = self.args.get("--pipeline-id", None)
-        pipeline_code_arg = self.args.get("--pipeline-code", None)
-
-        if pipeline_id_arg is not None:
-            self.pipeline_id = pipeline_id_arg
-        elif pipeline_code_arg is not None:
-            self.pipeline_id = get_pipeline_id_from_pipeline_code(self.project_id, pipeline_code_arg)
-        else:
-            logger.error("Must specify one of --pipeline-id or --pipeline-code")
-            raise InvalidArgumentError
+        if not is_uuid_format(self.pipeline_arg):
+            self.pipeline_id = get_pipeline_id_from_pipeline_code(self.project_id, self.pipeline_arg)
 
         # Get pipeline description
         self.pipeline_description = get_pipeline_description_from_pipeline_id(self.project_id, self.pipeline_id)
@@ -222,24 +269,36 @@ Example:
             logger.error(f"Cannot create file at {self.output_template_yaml_path}, is a directory")
             raise InvalidArgumentError
 
-        # Get output parent folder path / id (don't need to evaluate)
-        output_parent_folder_id_arg = self.args.get("--output-parent-folder-id", None)
-        output_parent_folder_path_arg = self.args.get("--output-parent-folder-path", None)
-        if output_parent_folder_id_arg is not None:
-            self.output_parent_folder_id = output_parent_folder_id_arg
-        elif output_parent_folder_path_arg is not None:
-            self.output_parent_folder_path = output_parent_folder_path_arg
-            if not output_parent_folder_path_arg.endswith("/"):
-                self.output_parent_folder_path += "/"
+        # Check output uri / output path
+        if self.output_parent_folder_arg is not None and self.analysis_output_uri_path_arg is not None:
+            logger.error(
+                "Please only specify one and only one of the "
+                "output_parent_folder and output_uri/output_path parameter combinations"
+            )
+            raise InvalidArgumentError
+
+        # Check output parent folder arg
+        if self.output_parent_folder_arg is not None:
+            if is_folder_id_format(self.output_parent_folder_arg):
+                self.output_parent_folder_id = self.output_parent_folder_arg
+            else:
+                self.output_parent_folder_path = Path(self.output_parent_folder_arg)
+                if not self.output_parent_folder_path.absolute():
+                    logger.error("--output-parent-folder-path parameter should be an absolute path")
+                    raise InvalidArgumentError
+
+        if self.analysis_output_uri_path_arg is not None:
+            if is_uri_format(self.analysis_output_uri_path_arg):
+                self.analysis_output_uri = self.analysis_output_uri_path_arg
+            else:
+                self.analysis_output_path = Path(self.analysis_output_uri_path_arg)
 
         # Get analysis storage size
-        analysis_storage_id_arg = self.args.get("--analysis-storage-id", None)
-        analysis_storage_size_arg = self.args.get("--analysis-storage-size", None)
-
-        if analysis_storage_id_arg is not None:
-            self.analysis_storage_id = analysis_storage_id_arg
-        elif analysis_storage_size_arg is not None:
-            self.analysis_storage_size = analysis_storage_size_arg
+        if self.analysis_storage_arg is not None:
+            if is_uuid_format(self.analysis_storage_arg):
+                self.analysis_storage_id = self.analysis_storage_arg
+            else:
+                self.analysis_storage_size = self.analysis_storage_arg
 
         # Get activation ID
         activation_id_arg = self.args.get("--activation-id", None)
@@ -277,12 +336,24 @@ Example:
         # Add output parent folder path
         if self.output_parent_folder_path is not None:
             engine_parameters_map.update({
-                "output_parent_folder_path": self.output_parent_folder_path
+                "output_parent_folder_path": str(self.output_parent_folder_path) + "/"
             })
             add_output_folder_path_comment = False
         elif self.output_parent_folder_id is not None:
             engine_parameters_map.update({
                 "output_parent_folder_id": self.output_parent_folder_id
+            })
+            add_output_folder_path_comment = False
+
+        # Add analysis output path
+        if self.analysis_output_uri is not None:
+            engine_parameters_map.update({
+                "analysis_output_uri": self.analysis_output_uri
+            })
+            add_output_folder_path_comment = False
+        elif self.output_parent_folder_id is not None:
+            engine_parameters_map.update({
+                "analysis_output_path": str(self.analysis_output_path) + "/"
             })
             add_output_folder_path_comment = False
 

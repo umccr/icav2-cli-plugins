@@ -10,7 +10,7 @@ List of useful functions for cli helpers in ICAv2
 import os
 import re
 from subprocess import SubprocessError
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Tuple
 import json
 from pathlib import Path
 import math
@@ -44,7 +44,7 @@ def get_data_obj_from_project_id_and_path(project_id: str, data_path: str) -> Pr
         data_path,
     ]  # [str] | The paths of the files to filter on. (optional)
     file_path_match_mode = "FULL_CASE_INSENSITIVE"  # str | How the file paths are filtered:   - STARTS_WITH_CASE_INSENSITIVE: Filters the file path to start with the value of the 'filePath' parameter, regardless of upper/lower casing. This allows e.g. listing all data in a folder and all it's sub-folders (recursively).  - FULL_CASE_INSENSITIVE: Filters the file path to fully match the value of the 'filePath' parameter, regardless of upper/lower casing. Note that this can result in multiple results if e.g. two files exist with the same filename but different casing (abc.txt and ABC.txt). (optional) if omitted the server will use the default value of "STARTS_WITH_CASE_INSENSITIVE"
-    data_type = "FOLDER" if data_path.endswith("/") else "FILE"
+    data_type = "FOLDER" if str(data_path).endswith("/") else "FILE"
     parent_folder_path = str(Path(data_path).parent) + "/"
     page_size = 1000  # str | The amount of rows to return. Use in combination with the offset or cursor parameter to get subsequent results. (optional)
 
@@ -647,9 +647,19 @@ AWS_REGION={aws_env_vars.get("region")} \\
     return initial_template + aws_cli_line
 
 
-def convert_icav2_uri_to_data_obj(uri: str) -> ProjectData:
+def unpack_icav2_uri(uri: str) -> Tuple[str, str]:
+    """
+    Unpack an icav2 uri
+    :param uri:
+    :return:
+    """
     # Parse obj
     uri_obj = urlparse(uri)
+
+    # Confirm that this uri starts with icav2
+    if not uri_obj.scheme == "icav2":
+        logger.error(f"Cannot unpack {uri} as it does not start with icav2://")
+        raise ValueError
 
     # Get project name or id
     project_name_or_id = uri_obj.netloc
@@ -663,5 +673,47 @@ def convert_icav2_uri_to_data_obj(uri: str) -> ProjectData:
     else:
         project_id = get_project_id_from_project_name(project_name_or_id)
 
+    return project_id, data_path
+
+
+def convert_icav2_uri_to_data_obj(uri: str, allow_not_exist=False) -> ProjectData:
+    project_id, data_path = unpack_icav2_uri(uri)
+
     # Get data path
-    return get_data_obj_from_project_id_and_path(project_id, data_path)
+    try:
+        return get_data_obj_from_project_id_and_path(project_id, data_path)
+    except FileNotFoundError:
+        if allow_not_exist:
+            return create_data_in_project(
+                project_id=project_id,
+                data_path=data_path
+            )
+        else:
+            raise FileNotFoundError
+
+
+def is_folder_id_format(folder_id_str: str) -> bool:
+    """
+    Does this string look like a folder id?
+    :param folder_id_str:
+    :return:
+    """
+    return re.match("fol.[0-9a-f]{32}", folder_id_str) is not None
+
+
+def is_file_id_format(file_id_str: str) -> bool:
+    """
+    Does this string look like a folder id?
+    :param file_id_str:
+    :return:
+    """
+    return re.match("fil.[0-9a-f]{32}", file_id_str) is not None
+
+
+def is_data_id(data_id):
+    """
+    Check if data id is a data id
+    :param data_id:
+    :return:
+    """
+    return is_file_id_format(data_id) or is_folder_id_format(data_id)
