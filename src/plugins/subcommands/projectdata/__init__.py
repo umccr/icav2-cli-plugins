@@ -15,6 +15,7 @@ Usage:
 
 CLI Commands:
   archive              archive data
+  copy                 Copy data to a project
   create               Create data id for a project
   delete               delete data
   download             Download a file/folder
