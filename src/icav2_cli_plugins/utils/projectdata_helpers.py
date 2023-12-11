@@ -696,6 +696,20 @@ def convert_icav2_uri_to_data_obj(uri: str, allow_not_exist=False) -> ProjectDat
             raise FileNotFoundError
 
 
+def convert_icav2_uri_to_download_url(uri: str) -> str:
+    """
+    Convert an icav2 uri to a presigned url
+    :param uri:
+    :return:
+    """
+    icav2_projectdata_obj = convert_icav2_uri_to_data_obj(uri=uri)
+
+    return create_data_download_url(
+        project_id=icav2_projectdata_obj.data.details.owning_project_id,
+        data_id=icav2_projectdata_obj.data.id
+    )
+
+
 def is_folder_id_format(folder_id_str: str) -> bool:
     """
     Does this string look like a folder id?
