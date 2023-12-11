@@ -11,3 +11,9 @@ class InvalidArgumentError(Exception):
     """
     pass
 
+
+class PipelineNotFoundError(Exception):
+    """
+    The pipeline does not exist
+    """
+    pass

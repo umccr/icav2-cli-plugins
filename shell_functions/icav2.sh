@@ -26,6 +26,7 @@ icav2() {
   # Contain both plugins and non plugin subcommands
   plugin_subcommands_top_only_array=( \
     "_bundles" \
+    "_pipelines" \
     "_projectdata" \
     "_projectanalyses" \
     "_projectpipelines" \
@@ -61,6 +62,10 @@ icav2() {
     "_projectanalyses__help_" \
     "_projectanalyses__-h_" \
     "_projectanalyses__--help_" \
+    "_pipelines__update_" \
+    "_pipelines__help_" \
+    "_pipelines__-h_" \
+    "_pipelines__--help_" \
     "_projectpipelines__create-cwl-workflow-from-zip_" \
     "_projectpipelines__create-cwl-workflow-from-github-release_" \
     "_projectpipelines__create-cwl-wes-input-template_" \
