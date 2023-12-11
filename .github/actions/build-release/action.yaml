@@ -14,6 +14,8 @@ description: |
 runs:
   using: "composite"
   steps:
+    - id: git-checkout
+      uses: actions/checkout@v4
     - id: get-nonlatest-git-tag
       shell: bash
       env:
@@ -42,23 +44,24 @@ runs:
         git_tag_non_latest="$(basename "${git_tag_non_latest}")"
         # Set git tag as output for this step
         echo "git_tag_non_latest=${git_tag_non_latest}" >> "${GITHUB_OUTPUT}"
-    - id: get-libica-version-from-requirements-txt
+    - id: install-python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+    - id: install-plugins-cli
       shell: bash
       run: |
-        # Go from 
-        # libica==2.1.0
-        # To
-        # 2.1.0
-        libica_version="$( \
-          grep "libica" src/plugins/requirements.txt | \
-          cut -f3 -d'=' \
-        )"
+        pip install .
+    - id: get-libica-version-from-pip-show
+      shell: bash
+      run: |
+        libica_version="$(pip show libica | grep Version | cut -d' ' -f2)"
         echo "libica_version=${libica_version}" >> "${GITHUB_OUTPUT}"
     - id: build-release
       shell: bash
       env:
         ICAV2_PLUGINS_CLI_VERSION: ${{ steps.get-nonlatest-git-tag.outputs.git_tag_non_latest }}
-        ICAV2_LIBICA_VERSION: ${{ steps.get-libica-version-from-requirements-txt.outputs.libica_version }}
+        ICAV2_LIBICA_VERSION: ${{ steps.get-libica-version-from-pip-show.outputs.libica_version }}
       run: |
 
         # Show running of script
@@ -88,6 +91,8 @@ runs:
         # Add internal functions
         rsync --archive \
           "install.sh" "icav2-plugins-cli--${{ inputs.git_tag }}/install.sh"
+        rsync --archive \
+          "pyproject.toml" "icav2-plugins-cli--${{ inputs.git_tag }}/pyproject.toml"
 
         # Update the plugin version in the installation script
         sed --in-place \

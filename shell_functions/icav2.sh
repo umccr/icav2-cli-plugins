@@ -23,6 +23,7 @@ icav2() {
     "_bundles"
   )
 
+  # Contain both plugins and non plugin subcommands
   plugin_subcommands_top_only_array=( \
     "_bundles" \
     "_projectdata" \
@@ -31,6 +32,7 @@ icav2() {
     "_tenants" \
   )
 
+  # List of plugin commands
   plugin_subcommands_array=( \
     "_bundles__init_" \
     "_bundles__get_"

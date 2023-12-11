@@ -53,6 +53,4 @@ pandoc = [
     "pypandoc==1.10",
     "pypandoc_binary==1.10"
 ]
-toml = [
-  "tomllib"
-]
+

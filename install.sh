@@ -145,10 +145,10 @@ check_python_version() {
   '
   if ! verlte "${PYTHON_VERSION}" "$(get_python_version)"; then
     echo_stderr "Your python version is too old"
-    echo_stderr "icav2 cli plugins requires python 3.10 or later"
+    echo_stderr "icav2 cli plugins requires python ${PYTHON_VERSION} or later"
     echo_stderr "You may wish to try"
-    echo_stderr "conda create --name python3.10 python=3.10"
-    echo_stderr "conda activate python3.10"
+    echo_stderr "conda create --name python${PYTHON_VERSION} python=${PYTHON_VERSION}"
+    echo_stderr "conda activate python${PYTHON_VERSION}"
     echo_stderr "bash install.sh"
     return 1
   fi
@@ -209,24 +209,6 @@ while [ $# -gt 0 ]; do
   shift 1
 done
 
-################
-# GET VERSIONS
-################
-if [[ "${PLUGIN_VERSION}" == "__PLUGIN_VERSION__" ]]; then
-  echo "Installing from source" 1>&2
-  latest_tag="$(git describe --abbrev=0 --tags)"
-  latest_commit="$(git log --format="%H" -n 1 | cut -c1-7)"
-  PLUGIN_VERSION="${latest_tag}--patch-${latest_commit}"
-  echo "Setting plugin version as '${PLUGIN_VERSION}'"
-fi
-if [[ "${LIBICA_VERSION}" == "__LIBICA_VERSION__" ]]; then
-  echo "Getting libica version from pyproject.toml" 1>&2
-  LIBICA_VERSION="$( \
-    grep libica "$(get_this_path)/pyproject.toml" |
-    cut -f3 -d'=' \
-  )"
-  echo "Setting libica version as '${LIBICA_VERSION}'"
-fi
 
 #########
 # CHECKS
@@ -352,9 +334,6 @@ rsync --delete --archive \
   "$(get_this_path)/templates/" "${ICAV2_CLI_PLUGINS_HOME}/plugins/templates/"
 rsync --delete --archive \
   "$(get_this_path)/shell_functions/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/"
-# Update shell function
-sed -i "s/__PLUGIN_VERSION__/${PLUGIN_VERSION}/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/icav2.sh"
-sed -i "s/__LIBICA_VERSION__/${LIBICA_VERSION}/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/icav2.sh"
 
 
 ######################
@@ -371,6 +350,34 @@ if [[ "${install_pandoc}" == "true" ]]; then
     )
   fi
 fi
+
+################
+# GET VERSIONS
+################
+if [[ "${PLUGIN_VERSION}" == "__PLUGIN_VERSION__" ]]; then
+  echo "Installing from source" 1>&2
+  latest_tag="$(git describe --abbrev=0 --tags)"
+  latest_commit="$(git log --format="%H" -n 1 | cut -c1-7)"
+  PLUGIN_VERSION="${latest_tag}--patch-${latest_commit}"
+  echo "Setting plugin version as '${PLUGIN_VERSION}'"
+fi
+if [[ "${LIBICA_VERSION}" == "__LIBICA_VERSION__" ]]; then
+  echo "Getting libica version from pyproject.toml" 1>&2
+  LIBICA_VERSION="$( \
+    "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python" -m pip show libica | \
+    grep Version | \
+    cut -d' ' -f2 \
+  )"
+  echo "Setting libica version as '${LIBICA_VERSION}'"
+fi
+
+
+#####################
+# UPDATE VERSIONS
+######################
+# Update shell function
+sed -i "s/__PLUGIN_VERSION__/${PLUGIN_VERSION}/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/icav2.sh"
+sed -i "s/__LIBICA_VERSION__/${LIBICA_VERSION}/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/icav2.sh"
 
 ######################
 # COPY AUTOCOMPLETIONS
