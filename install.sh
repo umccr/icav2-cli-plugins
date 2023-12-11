@@ -34,7 +34,7 @@ PLUGIN_VERSION="__PLUGIN_VERSION__"
 LIBICA_VERSION="__LIBICA_VERSION__"
 YQ_VERSION="4.18.1"
 CURL_VERSION="7.76.0"
-PYTHON_VERSION="3.10"
+PYTHON_VERSION="3.11"
 
 ###########
 # Functions
@@ -220,9 +220,9 @@ if [[ "${PLUGIN_VERSION}" == "__PLUGIN_VERSION__" ]]; then
   echo "Setting plugin version as '${PLUGIN_VERSION}'"
 fi
 if [[ "${LIBICA_VERSION}" == "__LIBICA_VERSION__" ]]; then
-  echo "Getting libica version from requirements.txt" 1>&2
+  echo "Getting libica version from pyproject.toml" 1>&2
   LIBICA_VERSION="$( \
-    grep libica "$(get_this_path)/src/plugins/requirements.txt" |
+    grep libica "$(get_this_path)/pyproject.toml" |
     cut -f3 -d'=' \
   )"
   echo "Setting libica version as '${LIBICA_VERSION}'"
@@ -335,10 +335,8 @@ else
   python3 -m venv "${ICAV2_CLI_PLUGINS_HOME}/pyenv"
 fi
 
-cp "$(get_this_path)/src/plugins/requirements.txt" "${ICAV2_CLI_PLUGINS_HOME}/requirements.txt"
-cp "$(get_this_path)/src/plugins/requirements-pandoc.txt" "${ICAV2_CLI_PLUGINS_HOME}/requirements-pandoc.txt"
 "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" -m pip install --upgrade pip --quiet
-"${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" -m pip install --requirement "${ICAV2_CLI_PLUGINS_HOME}/requirements.txt" --quiet
+"${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" -m pip install "$(get_this_path)/."
 
 SITE_PACKAGES_DIR="$(
   find "${ICAV2_CLI_PLUGINS_HOME}/pyenv/lib/" \
@@ -350,12 +348,6 @@ SITE_PACKAGES_DIR="$(
 # COPY SCRIPTS
 ##############
 mkdir -p "${ICAV2_CLI_PLUGINS_HOME}/plugins/"
-rsync --delete --archive \
-  "$(get_this_path)/src/plugins/bin/" "${ICAV2_CLI_PLUGINS_HOME}/plugins/bin/"
-rsync --delete --archive \
-  "$(get_this_path)/src/plugins/utils/" "${SITE_PACKAGES_DIR}/utils/"
-rsync --delete --archive \
-  "$(get_this_path)/src/plugins/subcommands/" "${SITE_PACKAGES_DIR}/subcommands/"
 rsync --delete --archive \
   "$(get_this_path)/templates/" "${ICAV2_CLI_PLUGINS_HOME}/plugins/templates/"
 rsync --delete --archive \
@@ -371,7 +363,7 @@ sed -i "s/__LIBICA_VERSION__/${LIBICA_VERSION}/" "${ICAV2_CLI_PLUGINS_HOME}/shel
 # Link pandoc binary from site-packages/pypandoc/files/pandoc to ${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin
 if [[ "${install_pandoc}" == "true" ]]; then
   echo_stderr "Installing pandoc requirements"
-  "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" -m pip install --requirement "${ICAV2_CLI_PLUGINS_HOME}/requirements-pandoc.txt" --quiet
+  "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" -m pip install "$(get_this_path)/.[pandoc]"
   if [[ -f "${SITE_PACKAGES_DIR}/pypandoc/files/pandoc" ]]; then
     ( \
       cd "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/";
