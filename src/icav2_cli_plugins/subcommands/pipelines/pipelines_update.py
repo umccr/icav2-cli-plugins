@@ -9,23 +9,30 @@ Update a project pipeline by
 4. Compare each with filecmp report, and confirm with user that they would like to update the pipeline
 5. Each file in the pipeline is updated
 """
+# External imports
 from filecmp import cmpfiles
 from pathlib import Path
 from pprint import pprint
 from tempfile import TemporaryDirectory
 from typing import Optional, List
 from zipfile import ZipFile
-
 from deepdiff import DeepDiff
 
-from utils import is_uuid_format
-from utils.errors import InvalidArgumentError
-from utils.logger import get_logger
-from utils.pipeline_helpers import compare_yaml_files, download_pipeline_to_directory, update_pipeline_file, \
-    add_pipeline_file, delete_pipeline_file, get_pipeline_id_from_pipeline_code, get_pipeline_from_pipeline_id
-from subcommands import Command
-from utils.subprocess_handler import run_subprocess_proc
+# Utils
+from ...utils import is_uuid_format
+from ...utils.errors import InvalidArgumentError
+from ...utils.logger import get_logger
+from ...utils.pipeline_helpers import (
+    compare_yaml_files, download_pipeline_to_directory, update_pipeline_file,
+    add_pipeline_file, delete_pipeline_file, get_pipeline_id_from_pipeline_code,
+    get_pipeline_from_pipeline_id
+)
+from ...utils.subprocess_handler import run_subprocess_proc
 
+# Locals
+from .. import Command
+
+# Get logger
 logger = get_logger()
 
 
