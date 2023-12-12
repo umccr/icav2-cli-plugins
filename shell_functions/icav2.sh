@@ -113,11 +113,11 @@ icav2() {
     eval "_icav2__plugins__cli__${top#_}__${bottom%_}" '"${@:3}"'
   # Run the wrapped python command
   elif [[ " ${plugin_subcommands_array[*]} " =~ ${top}__${bottom} ]]; then
-    eval PATH="'${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/:$PATH'" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" "${ICAV2_CLI_PLUGINS_HOME}/plugins/bin/icav2-cli-plugins.py" "${top#_}" "${bottom%_}" '"${@:3}"'
+    eval PATH="'${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/:$PATH'" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/icav2-cli-plugins.py" "${top#_}" "${bottom%_}" '"${@:3}"'
   # Dont eval if in a plugin_only subcommand
   elif [[ "${plugin_only_subcommands_top_only_array[*]} " =~ ${top} ]]; then
     echo "Unknown subcommand for icav2 ${top#_}"
-    eval PATH="'${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/:$PATH'" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" "${ICAV2_CLI_PLUGINS_HOME}/plugins/bin/icav2-cli-plugins.py" "${top#_}" "help"
+    eval PATH="'${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/:$PATH'" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/icav2-cli-plugins.py" "${top#_}" "help"
   else
     eval command icav2 '"${@}"'
   fi

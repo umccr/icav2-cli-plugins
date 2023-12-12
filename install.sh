@@ -399,7 +399,7 @@ fi
 echo_stderr "INSTALLATION COMPLETE!"
 echo_stderr "To start using the plugins, add the following lines to ${rc_profile}"
 echo_stderr "######ICAV2-CLI-PLUGINS######"
-echo_stderr "export ICAV2_CLI_PLUGINS_HOME=\"\${HOME}/.icav2-cli-plugins/\""
+echo_stderr "export ICAV2_CLI_PLUGINS_HOME=\"\${HOME}/.icav2-cli-plugins\""
 echo_stderr "# Source functions"
 echo_stderr "for file_name in \"\${ICAV2_CLI_PLUGINS_HOME}/shell_functions/\"*; do"
 echo_stderr "    . \${file_name}; "

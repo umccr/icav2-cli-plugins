@@ -48,15 +48,15 @@ Use "icav2 projectanalyses [command] --help" for more information about a comman
     def get_subcommand_obj(self, cmd, command_argv):
 
         if cmd == "get-cwl-analysis-input-json":
-            from subcommands.projectanalyses.get_input_json import ProjectAnalysesGetCWLAnalysisInputJson as subcommand
+            from .get_input_json import ProjectAnalysesGetCWLAnalysisInputJson as subcommand
         elif cmd == "get-cwl-analysis-output-json":
-            from subcommands.projectanalyses.get_output_json import ProjectAnalysesGetCWLAnalysisOutputJson as subcommand
+            from .get_output_json import ProjectAnalysesGetCWLAnalysisOutputJson as subcommand
         elif cmd == "list-analysis-steps":
-            from subcommands.projectanalyses.list_steps import ProjectAnalysesListAnalysisSteps as subcommand
+            from .list_steps import ProjectAnalysesListAnalysisSteps as subcommand
         elif cmd == "get-analysis-step-logs":
-            from subcommands.projectanalyses.get_step_logs import ProjectAnalysesGetStepLogs as subcommand
+            from .get_step_logs import ProjectAnalysesGetStepLogs as subcommand
         elif cmd == "gantt-plot":
-            from subcommands.projectanalyses.gantt_plot import ProjectAnalysesGanttPlot as subcommand
+            from .gantt_plot import ProjectAnalysesGanttPlot as subcommand
         else:
             print(self.__doc__)
             print(f"Could not find cmd \"{cmd}\". Please refer to usage above")

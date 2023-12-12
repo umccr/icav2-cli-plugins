@@ -57,17 +57,17 @@ Use "icav2 projectdata [command] --help" for more information about a command.
 
     def get_subcommand_obj(self, cmd, command_argv):
         if cmd == "ls":
-            from subcommands.projectdata.ls import ProjectDataLs as subcommand
+            from .ls import ProjectDataLs as subcommand
         elif cmd == "view":
-            from subcommands.projectdata.view import ProjectDataView as subcommand
+            from .view import ProjectDataView as subcommand
         elif cmd == "find":
-            from subcommands.projectdata.find import ProjectDataFind as subcommand
+            from .find import ProjectDataFind as subcommand
         elif cmd == "s3-sync-download":
-            from subcommands.projectdata.s3_sync_download import S3SyncDownload as subcommand
+            from .s3_sync_download import S3SyncDownload as subcommand
         elif cmd == "s3-sync-upload":
-            from subcommands.projectdata.s3_sync_upload import S3SyncUpload as subcommand
+            from .s3_sync_upload import S3SyncUpload as subcommand
         elif cmd == "create-download-script":
-            from subcommands.projectdata.create_download_script import CreateDownloadScript as subcommand
+            from .create_download_script import CreateDownloadScript as subcommand
         else:
             print(self.__doc__)
             print(f"Could not find cmd \"{cmd}\". Please refer to usage above")

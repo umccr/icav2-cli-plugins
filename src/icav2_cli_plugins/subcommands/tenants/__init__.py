@@ -38,13 +38,13 @@ Use "icav2 tenants [command] --help" for more information about a command.
     def get_subcommand_obj(self, cmd, command_argv):
 
         if cmd == "init":
-            from subcommands.tenants.tenants_init import TenantsInit as subcommand
+            from .tenants_init import TenantsInit as subcommand
         elif cmd == "list":
-            from subcommands.tenants.tenants_list import TenantsList as subcommand
+            from .tenants_list import TenantsList as subcommand
         elif cmd == "set-default-tenant":
-            from subcommands.tenants.set_default_tenant import TenantsSetDefaultTenant as subcommand
+            from .set_default_tenant import TenantsSetDefaultTenant as subcommand
         elif cmd == "set-default-project":
-            from subcommands.tenants.set_default_project import TenantsSetDefaultProject as subcommand
+            from .set_default_project import TenantsSetDefaultProject as subcommand
         else:
             print(self.__doc__)
             print(f"Could not find cmd \"{cmd}\". Please refer to usage above")
