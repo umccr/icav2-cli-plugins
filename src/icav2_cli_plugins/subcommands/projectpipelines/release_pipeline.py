@@ -12,7 +12,7 @@ from ...utils.errors import InvalidArgumentError
 from ...utils.config_helpers import get_project_id
 from ...utils.logger import get_logger
 from ...utils.projectpipeline_helpers import release_pipeline, get_project_pipeline
-from ...utils.user_helpers import get_username_from_configuration
+from ...utils.user_helpers import get_user_id_from_configuration
 
 # Locals
 from .. import Command
@@ -66,7 +66,7 @@ Example:
         self.pipeline_id = pipeline_id_arg
 
         # Check pipeline id belongs to owner
-        username = get_username_from_configuration()
+        username = get_user_id_from_configuration()
 
         if not username == get_project_pipeline(self.project_id, self.pipeline_id).pipeline.owner_id:
             logger.error("This pipeline does not belong to you, you cannot release it")

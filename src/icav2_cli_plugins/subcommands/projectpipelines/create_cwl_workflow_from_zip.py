@@ -110,7 +110,7 @@ Example:
         html_doc = generate_standalone_html_through_pandoc(markdown_path)
 
         # Create output file from zipped workflow apth
-        pipeline_id, pipeline_code = self.zipped_workflow_obj.create_icav2_workflow_from_zip(
+        self.pipeline_id, self.pipeline_code = self.zipped_workflow_obj.create_icav2_workflow_from_zip(
             project_id=self.project_id,
             analysis_storage_id=self.analysis_storage_id,
             workflow_description=self.zipped_workflow_obj.cwl_obj.doc,
