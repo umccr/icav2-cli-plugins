@@ -3,19 +3,23 @@
 """
 Helpers for pipeline functions
 """
+# External imports
 from pathlib import Path
 from typing import List
-
-from libica.openapi.v2 import ApiClient, ApiException
-from libica.openapi.v2.api.pipeline_api import PipelineApi
-from libica.openapi.v2.model.pipeline import Pipeline
 from deepdiff import DeepDiff
 from ruamel.yaml import YAML
 
-from utils.config_helpers import get_libicav2_configuration
-from utils.errors import PipelineNotFoundError
-from utils.logger import get_logger
+# Libica
+from libica.openapi.v2 import ApiClient, ApiException
+from libica.openapi.v2.api.pipeline_api import PipelineApi
+from libica.openapi.v2.model.pipeline import Pipeline
 
+# Utils
+from .config_helpers import get_libicav2_configuration
+from .errors import PipelineNotFoundError
+from .logger import get_logger
+
+# Set logger
 logger = get_logger()
 
 
@@ -91,80 +95,3 @@ def compare_yaml_files(path_a: Path, path_b: Path) -> DeepDiff:
         yaml_b_dict = yaml_b.load(path_b_h)
 
     return DeepDiff(yaml_a_dict, yaml_b_dict)
-
-
-def download_pipeline_to_directory(pipeline_id: str, directory: Path):
-    """
-    Download a pipeline to a directory
-    Args:
-        pipeline_id:
-        directory:
-
-    Returns:
-
-    """
-    # TODO
-
-
-def download_pipeline_file(pipeline_id: str, file_id: str, file_path: Path):
-    """
-    Download pipeline file
-    :param pipeline_id:
-    :param file_id:
-    :param file_path:
-    :return:
-    """
-    # Enter a context with an instance of the API client
-    with ApiClient(get_libicav2_configuration()) as api_client:
-        # Create an instance of the API class
-        api_instance = PipelineApi(api_client)
-
-    # example passing only required values which don't have defaults set
-    try:
-        # Download the contents of a pipeline file.
-        api_response = api_instance.download_pipeline_file_content(pipeline_id, file_id)
-        pprint(api_response)
-    except libica.openapi.v2.ApiException as e:
-        print("Exception when calling PipelineApi->download_pipeline_file_content: %s\n" % e)
-
-
-
-def update_pipeline_file(pipeline_id: str, file_name: Path, local_file_path: Path):
-    """
-    Update the pipeline file on icav2
-    Args:
-        pipeline_id:
-        file_name:
-        local_file_path:
-
-    Returns:
-
-    """
-    # TODO
-
-
-def delete_pipeline_file(pipeline_id: str, file_name: Path):
-    """
-    Delete the pipeline file on icav2
-    Args:
-        pipeline_id:
-        file_name:
-
-    Returns:
-
-    """
-    # TODO
-
-
-def add_pipeline_file(pipeline_id: str, file_name: Path, local_file_path: Path):
-    """
-    Update the pipeline file on icav2
-    Args:
-        pipeline_id:
-        file_name:
-        local_file_path:
-
-    Returns:
-
-    """
-    # TODO

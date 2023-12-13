@@ -62,7 +62,8 @@ icav2() {
     "_projectanalyses__help_" \
     "_projectanalyses__-h_" \
     "_projectanalyses__--help_" \
-    "_pipelines__update_" \
+    "_pipelines__check-ownership_" \
+    "_pipelines__list-projects_" \
     "_pipelines__help_" \
     "_pipelines__-h_" \
     "_pipelines__--help_" \
@@ -70,6 +71,7 @@ icav2() {
     "_projectpipelines__create-cwl-workflow-from-github-release_" \
     "_projectpipelines__create-cwl-wes-input-template_" \
     "_projectpipelines__start-cwl-wes_" \
+    "_projectpipelines__update_" \
     "_projectpipelines__release_" \
     "_projectpipelines__help_"
     "_projectpipelines__-h_" \

@@ -18,6 +18,11 @@ Command:
     bundles
 
     ######################
+    Pipelines
+    ######################
+    pipelines                           Collection of subfunctions relating to pipelines
+
+    ######################
     Project Analyses                    Collection of subfunctions relating to analyses on project pipeline
     ######################
     projectanalyses
@@ -78,6 +83,8 @@ def _dispatch():
     # Configuration commands
     elif cmd == "bundles":
         from ..subcommands.bundles import Bundles as subcommand
+    elif cmd == "pipelines":
+        from ..subcommands.pipelines import Pipelines as subcommand
     elif cmd == "projectanalyses":
         from ..subcommands.projectanalyses import ProjectAnalyses as subcommand
     elif cmd == "projectdata":

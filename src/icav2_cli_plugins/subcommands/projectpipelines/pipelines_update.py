@@ -19,18 +19,18 @@ from zipfile import ZipFile
 from deepdiff import DeepDiff
 
 # Utils
-from ...utils import is_uuid_format
-from ...utils.errors import InvalidArgumentError
-from ...utils.logger import get_logger
-from ...utils.pipeline_helpers import (
+from icav2_cli_plugins.utils import is_uuid_format
+from icav2_cli_plugins.utils.errors import InvalidArgumentError
+from icav2_cli_plugins.utils.logger import get_logger
+from icav2_cli_plugins.utils.pipeline_helpers import (
     compare_yaml_files, download_pipeline_to_directory, update_pipeline_file,
     add_pipeline_file, delete_pipeline_file, get_pipeline_id_from_pipeline_code,
     get_pipeline_from_pipeline_id
 )
-from ...utils.subprocess_handler import run_subprocess_proc
+from icav2_cli_plugins.utils.subprocess_handler import run_subprocess_proc
 
 # Locals
-from .. import Command
+from icav2_cli_plugins.subcommands import Command
 
 # Get logger
 logger = get_logger()
