@@ -55,7 +55,7 @@ class CWLSchema:
         self.cwl_file_path: Path = file_path
 
         # Confirm type is record
-        if not self.cwl_obj.type.get("type") == "record":
+        if not self.cwl_obj.type_.get("type") == "record":
             logger.error("Expected record type")
 
     def get_input_from_str_type(self, workflow_input: Dict) -> Union[Dict, str, List]:
@@ -170,7 +170,7 @@ class CWLSchema:
         :return:
         """
         workflow_inputs = {}
-        for field_key, field_dict in self.cwl_obj.type.get("fields").items():
+        for field_key, field_dict in self.cwl_obj.type_.get("fields").items():
             if isinstance(field_dict.get("type"), Dict):
                 workflow_inputs.update(
                     {
@@ -300,7 +300,7 @@ class ZippedCWLWorkflow:
         
         curl_command_list = [
             "curl",
-            # "--fail", "--silent", "--location",
+            "--fail", "--silent", "--location",
             "--request", "POST",
             "--header", "Accept: application/vnd.illumina.v3+json",
             "--header", f"Authorization: Bearer {configuration.access_token}",
@@ -339,18 +339,18 @@ class ZippedCWLWorkflow:
 
 
 def get_workflow_input_type(workflow_input: WorkflowInputParameter):
-    if isinstance(workflow_input.type, str):
+    if isinstance(workflow_input.type_, str):
         return get_workflow_input_type_from_str_type(workflow_input)
-    elif isinstance(workflow_input.type, InputEnumSchemaType):
+    elif isinstance(workflow_input.type_, InputEnumSchemaType):
         return get_workflow_input_type_from_enum_schema(workflow_input)
-    elif isinstance(workflow_input.type, InputArraySchemaType):
+    elif isinstance(workflow_input.type_, InputArraySchemaType):
         return get_workflow_input_type_from_array_schema(workflow_input)
-    elif isinstance(workflow_input.type, InputRecordSchemaType):
+    elif isinstance(workflow_input.type_, InputRecordSchemaType):
         return get_workflow_input_type_from_record_schema(workflow_input)
-    elif isinstance(workflow_input.type, List):
+    elif isinstance(workflow_input.type_, List):
         return get_workflow_input_type_from_array_type(workflow_input)
     else:
-        logger.warning(f"Don't know what to do here with {type(workflow_input.type)}")
+        logger.warning(f"Don't know what to do here with {type(workflow_input.type_)}")
 
 
 def get_workflow_input_type_from_enum_schema(workflow_input: WorkflowInputParameter):
@@ -359,7 +359,7 @@ def get_workflow_input_type_from_enum_schema(workflow_input: WorkflowInputParame
     :param workflow_input:
     :return:
     """
-    workflow_type: InputEnumSchemaType = workflow_input.type
+    workflow_type: InputEnumSchemaType = workflow_input.type_
     return shortname(workflow_type.symbols[0])
 
 
@@ -371,7 +371,7 @@ def get_workflow_input_type_from_array_schema(workflow_input: WorkflowInputParam
     :return:
     """
     return [
-        CWLSchema.load_schema_from_uri(workflow_input.type.items).get_inputs_template()
+        CWLSchema.load_schema_from_uri(workflow_input.type_.items).get_inputs_template()
     ]
 
 
@@ -388,27 +388,27 @@ def get_workflow_input_type_from_str_type(workflow_input: WorkflowInputParameter
 
       }
     """
-    if workflow_input.type.startswith("file://"):
+    if workflow_input.type_.startswith("file://"):
         # This is a schema!
-        return CWLSchema.load_schema_from_uri(workflow_input.type).get_inputs_template()
-    if workflow_input.type == "Directory":
+        return CWLSchema.load_schema_from_uri(workflow_input.type_).get_inputs_template()
+    if workflow_input.type_ == "Directory":
         return {
             "class": "Directory",
             "location": "icav2://project_id/path/to/dir/"
         }
-    elif workflow_input.type == "File":
+    elif workflow_input.type_ == "File":
         return {
             "class": "File",
             "location": "icav2://project_id/path/to/file"
         }
-    elif workflow_input.type == "boolean":
+    elif workflow_input.type_ == "boolean":
         return workflow_input.default if workflow_input.default is not None else False
-    elif workflow_input.type == "int":
+    elif workflow_input.type_ == "int":
         return workflow_input.default if workflow_input.default is not None else "string"
-    elif workflow_input.type == "string":
+    elif workflow_input.type_ == "string":
         return workflow_input.default if workflow_input.default is not None else "string"
     else:
-        logger.warning(f"Don't know what to do here with {workflow_input.type}")
+        logger.warning(f"Don't know what to do here with {workflow_input.type_}")
 
 
 def get_workflow_input_type_from_array_type(workflow_input: WorkflowInputParameter):
@@ -418,11 +418,11 @@ def get_workflow_input_type_from_array_type(workflow_input: WorkflowInputParamet
     :param workflow_input:
     :return:
     """
-    if not workflow_input.type[0] == "null":
+    if not workflow_input.type_[0] == "null":
         logger.error("Unsure what to do with input of type list where first element is not null")
         raise ValueError
     workflow_input_new = deepcopy(workflow_input)
-    workflow_input_new.type = workflow_input.type[1]
+    workflow_input_new.type_ = workflow_input.type_[1]
     return get_workflow_input_type(workflow_input_new)
 
 
@@ -578,6 +578,8 @@ def generate_standalone_html_through_pandoc(markdown_file_path: Path) -> Path:
 
     if not pandoc_returncode == 0:
         logger.error("Unsuccessful conversion of markdown file to html")
+        logger.error(f"Stdout was {pandoc_stdout}")
+        logger.error(f"Stderr was {pandoc_stderr}")
         raise ValueError
 
     return output_html_file.absolute().resolve()
