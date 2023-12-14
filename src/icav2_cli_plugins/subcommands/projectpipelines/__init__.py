@@ -46,15 +46,15 @@ Use "icav2 projectpipelines [command] --help" for more information about a comma
     def get_subcommand_obj(self, cmd, command_argv):
 
         if cmd == "create-cwl-workflow-from-zip":
-            from subcommands.projectpipelines.create_cwl_workflow_from_zip import ProjectPipelinesCreateCWLWorkflow as subcommand
+            from .create_cwl_workflow_from_zip import ProjectPipelinesCreateCWLWorkflow as subcommand
         elif cmd == "create-cwl-workflow-from-github-release":
-            from subcommands.projectpipelines.create_cwl_workflow_from_github_release import ProjectPipelinesCreateCWLWorkflowFromGitHubRelease as subcommand
+            from .create_cwl_workflow_from_github_release import ProjectPipelinesCreateCWLWorkflowFromGitHubRelease as subcommand
         elif cmd == "create-cwl-wes-input-template":
-            from subcommands.projectpipelines.create_wes_input_template import ProjectPipelinesCreateWESInputTemplate as subcommand
+            from .create_wes_input_template import ProjectPipelinesCreateWESInputTemplate as subcommand
         elif cmd == "start-cwl-wes":
-            from subcommands.projectpipelines.launch_cwl_wes import ProjectPipelinesStartCWLWES as subcommand
+            from .launch_cwl_wes import ProjectPipelinesStartCWLWES as subcommand
         elif cmd == "release":
-            from subcommands.projectpipelines.release_pipeline import ProjectPipelineReleasePipeline as subcommand
+            from .release_pipeline import ProjectPipelineReleasePipeline as subcommand
         else:
             print(self.__doc__)
             print(f"Could not find cmd \"{cmd}\". Please refer to usage above")

@@ -132,11 +132,24 @@ check_curl_version() {
   fi
 }
 
+set_python_binary_path(){
+  pyenv_path="${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python"
+
+  if verlte "${PYTHON_VERSION}" "$(get_python_version "${pyenv_path}")"; then
+    hash -p "${pyenv_path}" python3
+  fi
+}
+
 get_python_version(){
   # Input: python3 --version
   # Python 3.10.12
   # Output: 3.10.12
-  python3 --version 2>/dev/null | cut -d' ' -f2
+  if [[ -n "${1-}" ]]; then
+    python_path="$1"
+  else
+    python_path="python3"
+  fi
+  "${python_path}" --version 2>/dev/null | cut -d' ' -f2
 }
 
 check_python_version() {
@@ -231,12 +244,13 @@ if ! check_yq_version; then
   exit 1
 fi
 
-
 if ! check_curl_version; then
   echo_stderr "Please update your version of curl to ${CURL_VERSION} or later and then rerun the installation"
   print_help
   exit 1
 fi
+
+set_python_binary_path
 
 if ! check_python_version; then
   echo_stderr "Please update your version of python3 and then rerun the installation"
@@ -318,7 +332,7 @@ else
 fi
 
 "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" -m pip install --upgrade pip --quiet
-"${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" -m pip install "$(get_this_path)/."
+"${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" -m pip install "$(get_this_path)/." --quiet
 
 SITE_PACKAGES_DIR="$(
   find "${ICAV2_CLI_PLUGINS_HOME}/pyenv/lib/" \
@@ -399,7 +413,7 @@ fi
 echo_stderr "INSTALLATION COMPLETE!"
 echo_stderr "To start using the plugins, add the following lines to ${rc_profile}"
 echo_stderr "######ICAV2-CLI-PLUGINS######"
-echo_stderr "export ICAV2_CLI_PLUGINS_HOME=\"\${HOME}/.icav2-cli-plugins/\""
+echo_stderr "export ICAV2_CLI_PLUGINS_HOME=\"\${HOME}/.icav2-cli-plugins\""
 echo_stderr "# Source functions"
 echo_stderr "for file_name in \"\${ICAV2_CLI_PLUGINS_HOME}/shell_functions/\"*; do"
 echo_stderr "    . \${file_name}; "

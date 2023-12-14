@@ -44,19 +44,19 @@ Use "icav2 bundles [command] --help" for more information about a command.
     def get_subcommand_obj(self, cmd, command_argv):
 
         if cmd == "init":
-            from subcommands.bundles.bundles_init import BundlesInit as subcommand
+            from .bundles_init import BundlesInit as subcommand
         elif cmd == 'get':
-            from subcommands.bundles.bundles_get import BundlesGet as subcommand
+            from .bundles_get import BundlesGet as subcommand
         elif cmd == "release":
-            from subcommands.bundles.bundles_release import BundlesRelease as subcommand
+            from .bundles_release import BundlesRelease as subcommand
         elif cmd == "list":
-            from subcommands.bundles.bundles_list import BundlesList as subcommand
+            from .bundles_list import BundlesList as subcommand
         elif cmd == "add-data":
-            from subcommands.bundles.bundles_add_data import BundlesAddData as subcommand
+            from .bundles_add_data import BundlesAddData as subcommand
         elif cmd == "add-pipeline":
-            from subcommands.bundles.bundles_add_pipeline import BundlesAddPipeline as subcommand
+            from .bundles_add_pipeline import BundlesAddPipeline as subcommand
         elif cmd == "add-bundle-to-project":
-            from subcommands.bundles.bundles_add_to_project import BundlesAddToProject as subcommand
+            from .bundles_add_to_project import BundlesAddToProject as subcommand
         else:
             print(self.__doc__)
             print(f"Could not find cmd \"{cmd}\". Please refer to usage above")
