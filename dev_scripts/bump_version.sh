@@ -3,7 +3,7 @@
 set -euo pipefail
 
 : '
-Bump version of v2 samplesheet maker
+Bump version of icav2-cli-plugins
 
 Use parameters --dev or --prod
 
@@ -19,6 +19,7 @@ REGEX="v[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+"
 DATE_STR="$(date "+%Y%m%d%H%M%S")"
 PROD_BRANCH="main"
 PYPROJECT_TOML_NAME="pyproject.toml"
+PYTHON_VERSION="3.11.0"
 
 # Functions
 print_help(){
@@ -55,6 +56,50 @@ echo_stderr(){
   echo "${@}" 1>&2
 }
 
+verlte() {
+    [ "$1" = "$(echo -e "$1\n$2" | sort -V | head -n1)" ]
+  }
+
+verlt() {
+    [ "$1" = "$2" ] && return 1 || verlte "$1" "$2"
+}
+
+set_python_binary_path(){
+  pyenv_path="${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python"
+
+  if verlte "${PYTHON_VERSION}" "$(get_python_version "${pyenv_path}")"; then
+    hash -p "${pyenv_path}" python3
+  fi
+}
+
+get_python_version(){
+  # Input: python3 --version
+  # Python 3.10.12
+  # Output: 3.10.12
+  if [[ -n "${1-}" ]]; then
+    python_path="$1"
+  else
+    python_path="python3"
+  fi
+  "${python_path}" --version 2>/dev/null | cut -d' ' -f2
+}
+
+check_python_version() {
+  : '
+  Make sure at the latest conda version
+  '
+  if ! verlte "${PYTHON_VERSION}" "$(get_python_version)"; then
+    echo_stderr "Your python version is too old"
+    echo_stderr "icav2 cli plugins requires python ${PYTHON_VERSION} or later"
+    echo_stderr "You may wish to try"
+    echo_stderr "conda create --name python${PYTHON_VERSION} python=${PYTHON_VERSION}"
+    echo_stderr "conda activate python${PYTHON_VERSION}"
+    echo_stderr "bash install.sh"
+    return 1
+  fi
+}
+
+
 get_this_path() {
   : '
   Mac users use greadlink over readlink
@@ -89,13 +134,14 @@ if ! git config --get user.email 1>/dev/null 2>&1; then
   print_help
 fi
 
+set_python_binary_path
+
 ## Check toml
-if ! python3 -c 'import toml' 1>/dev/null 2>&1; then
-  echo_stderr "Python toml not installed"
-  echo_stderr "You can install toml by running 'pip install .[toml]'"
+if ! check_python_version; then
+  echo_stderr "Please update your version of python3 to at least ${PYTHON_VERSION} and then rerun the installation"
+  print_help
   exit 1
 fi
-
 
 ## Get args
 version_number=""
@@ -200,6 +246,7 @@ python3 - <<EOF
 
 # Imports
 import toml
+import tomli_w
 from pathlib import Path
 
 # Load external variables
@@ -207,15 +254,15 @@ pyproject_toml_path = Path("${PYPROJECT_TOML_PATH}").absolute().resolve()
 version_number = "${tag}".lstrip("v")
 
 # Open toml file
-with open(pyproject_toml_path, mode="r") as toml_h:
-    config = toml.load(toml_h)
+with open(pyproject_toml_path, mode="rb") as toml_h:
+    config = tomllib.load(toml_h)
 
 # Edit toml file
 config["project"]["version"] = version_number
 
 # Write out toml file
-with open(pyproject_toml_path, mode="w") as toml_h:
-    toml.dump(config, toml_h)
+with open(pyproject_toml_path, mode="wb") as toml_h:
+    tomli_w.dump(config, toml_h)
 EOF
 
 ## Commit edit toml - use GitHub Actions bot for commit author
