@@ -360,7 +360,7 @@ if [[ "${install_pandoc}" == "true" ]]; then
   if [[ -f "${SITE_PACKAGES_DIR}/pypandoc/files/pandoc" ]]; then
     ( \
       cd "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/";
-      ln -sf "${SITE_PACKAGES_DIR}/pypandoc/files/pandoc" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/pandoc}"
+      ln -sf "${SITE_PACKAGES_DIR}/pypandoc/files/pandoc" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/pandoc"
     )
   fi
 fi
