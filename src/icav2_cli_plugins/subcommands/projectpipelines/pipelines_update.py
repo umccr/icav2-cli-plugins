@@ -98,6 +98,7 @@ Example:
         super().__init__(command_argv)
 
     def __call__(self):
+        logger.warning("Pipeline files API does NOT collect main file, 'workflow.cwl', hence any changes to workflow.cwl are ignored.")
         # Compare files
         self.compare_pipeline_files()
 
@@ -224,7 +225,12 @@ Example:
             map(
                 lambda sub_path: sub_path.relative_to(self.tmp_local_unzipped_pipeline_directory),
                 filter(
-                    lambda file_: file_.is_file(),
+                    lambda file_: (
+                        file_.is_file() and
+                        # FIXME - waiting on https://github.com/umccr-illumina/ica_v2/issues/162 and then can remove the
+                        # and not == workflow.cwl clause
+                        not file_.absolute() == Path(self.tmp_local_unzipped_pipeline_directory) / 'workflow.cwl'
+                    ),
                     Path(self.tmp_local_unzipped_pipeline_directory).rglob("*")
                 )
             )
