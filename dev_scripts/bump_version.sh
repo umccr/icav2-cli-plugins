@@ -245,7 +245,7 @@ echo_stderr "Updating pyproject.toml"
 python3 - <<EOF
 
 # Imports
-import toml
+import tomllib
 import tomli_w
 from pathlib import Path
 
