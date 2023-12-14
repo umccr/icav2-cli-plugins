@@ -33,6 +33,8 @@ ICAV2_CLI_PLUGINS_HOME="$HOME/.icav2-cli-plugins"
 PLUGIN_VERSION="__PLUGIN_VERSION__"
 LIBICA_VERSION="__LIBICA_VERSION__"
 YQ_VERSION="4.18.1"
+CURL_VERSION="7.76.0"
+PYTHON_VERSION="3.11"
 
 ###########
 # Functions
@@ -109,6 +111,62 @@ check_yq_version() {
   fi
 }
 
+get_curl_version(){
+  # Input:
+  #   curl 7.81.0 (x86_64-pc-linux-gnu) libcurl/7.81.0 OpenSSL/3.0.2 zlib/1.2.11 brotli/1.0.9 zstd/1.4.8 libidn2/2.3.2 libpsl/0.21.0 (+libidn2/2.3.2) libssh/0.9.6/openssl/zlib nghttp2/1.43.0 librtmp/2.3 OpenLDAP/2.5.16
+  #   Release-Date: 2022-01-05
+  #   Protocols: dict file ftp ftps gopher gophers http https imap imaps ldap ldaps mqtt pop3 pop3s rtmp rtsp scp sftp smb smbs smtp smtps telnet tftp
+  #   Features: alt-svc AsynchDNS brotli GSS-API HSTS HTTP2 HTTPS-proxy IDN IPv6 Kerberos Largefile libz NTLM NTLM_WB PSL SPNEGO SSL TLS-SRP UnixSockets zstd
+  # Output: 7.81.0
+  curl --version 2>/dev/null | \
+  head -n1 | \
+  cut -d' ' -f2
+}
+
+check_curl_version() {
+  : '
+  Make sure at the latest conda version
+  '
+  if ! verlte "${CURL_VERSION}" "$(get_curl_version)"; then
+    echo_stderr "Your curl version is too old"
+  fi
+}
+
+set_python_binary_path(){
+  pyenv_path="${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python"
+
+  if verlte "${PYTHON_VERSION}" "$(get_python_version "${pyenv_path}")"; then
+    hash -p "${pyenv_path}" python3
+  fi
+}
+
+get_python_version(){
+  # Input: python3 --version
+  # Python 3.10.12
+  # Output: 3.10.12
+  if [[ -n "${1-}" ]]; then
+    python_path="$1"
+  else
+    python_path="python3"
+  fi
+  "${python_path}" --version 2>/dev/null | cut -d' ' -f2
+}
+
+check_python_version() {
+  : '
+  Make sure at the latest conda version
+  '
+  if ! verlte "${PYTHON_VERSION}" "$(get_python_version)"; then
+    echo_stderr "Your python version is too old"
+    echo_stderr "icav2 cli plugins requires python ${PYTHON_VERSION} or later"
+    echo_stderr "You may wish to try"
+    echo_stderr "conda create --name python${PYTHON_VERSION} python=${PYTHON_VERSION}"
+    echo_stderr "conda activate python${PYTHON_VERSION}"
+    echo_stderr "bash install.sh"
+    return 1
+  fi
+}
+
 get_user_shell(){
   : '
   Quick one-liner to get user shell
@@ -164,24 +222,6 @@ while [ $# -gt 0 ]; do
   shift 1
 done
 
-################
-# GET VERSIONS
-################
-if [[ "${PLUGIN_VERSION}" == "__PLUGIN_VERSION__" ]]; then
-  echo "Installing from source" 1>&2
-  latest_tag="$(git describe --abbrev=0 --tags)"
-  latest_commit="$(git log --format="%H" -n 1 | cut -c1-7)"
-  PLUGIN_VERSION="${latest_tag}--patch-${latest_commit}"
-  echo "Setting plugin version as '${PLUGIN_VERSION}'"
-fi
-if [[ "${LIBICA_VERSION}" == "__LIBICA_VERSION__" ]]; then
-  echo "Getting libica version from requirements.txt" 1>&2
-  LIBICA_VERSION="$( \
-    grep libica "$(get_this_path)/src/plugins/requirements.txt" |
-    cut -f3 -d'=' \
-  )"
-  echo "Setting libica version as '${LIBICA_VERSION}'"
-fi
 
 #########
 # CHECKS
@@ -203,6 +243,21 @@ if ! check_yq_version; then
   print_help
   exit 1
 fi
+
+if ! check_curl_version; then
+  echo_stderr "Please update your version of curl to ${CURL_VERSION} or later and then rerun the installation"
+  print_help
+  exit 1
+fi
+
+set_python_binary_path
+
+if ! check_python_version; then
+  echo_stderr "Please update your version of python3 and then rerun the installation"
+  print_help
+  exit 1
+fi
+
 
 # Steps get configuration / icav2 plugins home directory
 # TODO - hardcode as $HOME/.icav2-cli-plugins/ for now
@@ -276,10 +331,8 @@ else
   python3 -m venv "${ICAV2_CLI_PLUGINS_HOME}/pyenv"
 fi
 
-cp "$(get_this_path)/src/plugins/requirements.txt" "${ICAV2_CLI_PLUGINS_HOME}/requirements.txt"
-cp "$(get_this_path)/src/plugins/requirements-pandoc.txt" "${ICAV2_CLI_PLUGINS_HOME}/requirements-pandoc.txt"
 "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" -m pip install --upgrade pip --quiet
-"${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" -m pip install --requirement "${ICAV2_CLI_PLUGINS_HOME}/requirements.txt" --quiet
+"${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" -m pip install "$(get_this_path)/." --quiet
 
 SITE_PACKAGES_DIR="$(
   find "${ICAV2_CLI_PLUGINS_HOME}/pyenv/lib/" \
@@ -292,17 +345,10 @@ SITE_PACKAGES_DIR="$(
 ##############
 mkdir -p "${ICAV2_CLI_PLUGINS_HOME}/plugins/"
 rsync --delete --archive \
-  "$(get_this_path)/src/plugins/bin/" "${ICAV2_CLI_PLUGINS_HOME}/plugins/bin/"
-rsync --delete --archive \
-  "$(get_this_path)/src/plugins/utils/" "${SITE_PACKAGES_DIR}/utils/"
-rsync --delete --archive \
-  "$(get_this_path)/src/plugins/subcommands/" "${SITE_PACKAGES_DIR}/subcommands/"
-rsync --delete --archive \
   "$(get_this_path)/templates/" "${ICAV2_CLI_PLUGINS_HOME}/plugins/templates/"
 rsync --delete --archive \
   "$(get_this_path)/shell_functions/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/"
-# Update shell function
-sed -i "s/__PLUGIN_VERSION__/${PLUGIN_VERSION}/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/icav2.sh"
+
 
 ######################
 # LINK PANDOC BINARY
@@ -310,7 +356,7 @@ sed -i "s/__PLUGIN_VERSION__/${PLUGIN_VERSION}/" "${ICAV2_CLI_PLUGINS_HOME}/shel
 # Link pandoc binary from site-packages/pypandoc/files/pandoc to ${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin
 if [[ "${install_pandoc}" == "true" ]]; then
   echo_stderr "Installing pandoc requirements"
-  "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" -m pip install --requirement "${ICAV2_CLI_PLUGINS_HOME}/requirements-pandoc.txt" --quiet
+  "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" -m pip install "$(get_this_path)/.[pandoc]"
   if [[ -f "${SITE_PACKAGES_DIR}/pypandoc/files/pandoc" ]]; then
     ( \
       cd "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/";
@@ -318,6 +364,34 @@ if [[ "${install_pandoc}" == "true" ]]; then
     )
   fi
 fi
+
+################
+# GET VERSIONS
+################
+if [[ "${PLUGIN_VERSION}" == "__PLUGIN_VERSION__" ]]; then
+  echo "Installing from source" 1>&2
+  latest_tag="$(git describe --abbrev=0 --tags)"
+  latest_commit="$(git log --format="%H" -n 1 | cut -c1-7)"
+  PLUGIN_VERSION="${latest_tag}--patch-${latest_commit}"
+  echo "Setting plugin version as '${PLUGIN_VERSION}'"
+fi
+if [[ "${LIBICA_VERSION}" == "__LIBICA_VERSION__" ]]; then
+  echo "Getting libica version from pyproject.toml" 1>&2
+  LIBICA_VERSION="$( \
+    "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python" -m pip show libica | \
+    grep Version | \
+    cut -d' ' -f2 \
+  )"
+  echo "Setting libica version as '${LIBICA_VERSION}'"
+fi
+
+
+#####################
+# UPDATE VERSIONS
+######################
+# Update shell function
+sed -i "s/__PLUGIN_VERSION__/${PLUGIN_VERSION}/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/icav2.sh"
+sed -i "s/__LIBICA_VERSION__/${LIBICA_VERSION}/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/icav2.sh"
 
 ######################
 # COPY AUTOCOMPLETIONS
@@ -339,7 +413,7 @@ fi
 echo_stderr "INSTALLATION COMPLETE!"
 echo_stderr "To start using the plugins, add the following lines to ${rc_profile}"
 echo_stderr "######ICAV2-CLI-PLUGINS######"
-echo_stderr "export ICAV2_CLI_PLUGINS_HOME=\"\${HOME}/.icav2-cli-plugins/\""
+echo_stderr "export ICAV2_CLI_PLUGINS_HOME=\"\${HOME}/.icav2-cli-plugins\""
 echo_stderr "# Source functions"
 echo_stderr "for file_name in \"\${ICAV2_CLI_PLUGINS_HOME}/shell_functions/\"*; do"
 echo_stderr "    . \${file_name}; "

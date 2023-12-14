@@ -29,6 +29,16 @@ subcommands:
                 __list_region_city_names.sh
           - name: json
             summary: Return bundle as json object to stdout
+      get:
+        summary: Initialise a bundle
+        parameters:
+          - name: bundle_name
+        options:
+          - name: output-yaml
+            summary: Path to output yaml
+            type: string
+          - name: json
+            summary: Return bundle as json object to stdout
       list:
         summary: List bundles
       add-data:
@@ -103,6 +113,27 @@ subcommands:
         summary: Get details of a pipeline
       list:
         summary: List pipelines
+      check-ownership:
+        summary: Check pipeline ownership
+        parameters:
+          - name: pipeline_id
+        options:
+          - name: --confirm-user-ownership
+            summary: Confirm pipeline is owned by user
+          - name: --confirm-tenant-ownership
+            summary: Confirm pipeline is owned by tenant
+      list-projects:
+        summary: List projects a pipeline resides in
+        parameters:
+          - name: pipeline_id
+        options:
+          - name: --json
+            summary: Output in json
+          - name: --include-bundle-linked
+            summary: Include projects where the pipeline is linked via a bundle
+          - name: --include-hidden-projects
+            summary: Include hidden projects
+
   projectanalyses:
     summary: Project analyses commands
     subcommands:
@@ -479,6 +510,17 @@ subcommands:
           - name: create-cwl-analysis-json-output-path
             summary: Optional, Path to output a json file that contains the body for a create cwl analysis (https://ica.illumina.com/ica/api/swagger/index.html#/Project%20Analysis/createCwlAnalysis)
             type: string
+      update:
+        parameters:
+          - name: zipped_workflow_path
+            summary: Path to zipped workflow file
+            type: file
+          - name: pipeline_id
+            summary: The pipeline id
+            type: string
+        options:
+          - name: force
+            summary: Dont confirm with user
 
   projects:
     summary: Project commands

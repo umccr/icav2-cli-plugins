@@ -23,14 +23,17 @@ icav2() {
     "_bundles"
   )
 
+  # Contain both plugins and non plugin subcommands
   plugin_subcommands_top_only_array=( \
     "_bundles" \
+    "_pipelines" \
     "_projectdata" \
     "_projectanalyses" \
     "_projectpipelines" \
     "_tenants" \
   )
 
+  # List of plugin commands
   plugin_subcommands_array=( \
     "_bundles__init_" \
     "_bundles__get_"
@@ -59,10 +62,16 @@ icav2() {
     "_projectanalyses__help_" \
     "_projectanalyses__-h_" \
     "_projectanalyses__--help_" \
+    "_pipelines__check-ownership_" \
+    "_pipelines__list-projects_" \
+    "_pipelines__help_" \
+    "_pipelines__-h_" \
+    "_pipelines__--help_" \
     "_projectpipelines__create-cwl-workflow-from-zip_" \
     "_projectpipelines__create-cwl-workflow-from-github-release_" \
     "_projectpipelines__create-cwl-wes-input-template_" \
     "_projectpipelines__start-cwl-wes_" \
+    "_projectpipelines__update_" \
     "_projectpipelines__release_" \
     "_projectpipelines__help_"
     "_projectpipelines__-h_" \
@@ -111,11 +120,11 @@ icav2() {
     eval "_icav2__plugins__cli__${top#_}__${bottom%_}" '"${@:3}"'
   # Run the wrapped python command
   elif [[ " ${plugin_subcommands_array[*]} " =~ ${top}__${bottom} ]]; then
-    eval PATH="'${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/:$PATH'" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" "${ICAV2_CLI_PLUGINS_HOME}/plugins/bin/icav2-cli-plugins.py" "${top#_}" "${bottom%_}" '"${@:3}"'
+    eval PATH="'${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/:$PATH'" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/icav2-cli-plugins.py" "${top#_}" "${bottom%_}" '"${@:3}"'
   # Dont eval if in a plugin_only subcommand
   elif [[ "${plugin_only_subcommands_top_only_array[*]} " =~ ${top} ]]; then
     echo "Unknown subcommand for icav2 ${top#_}"
-    eval PATH="'${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/:$PATH'" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" "${ICAV2_CLI_PLUGINS_HOME}/plugins/bin/icav2-cli-plugins.py" "${top#_}" "help"
+    eval PATH="'${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/:$PATH'" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/icav2-cli-plugins.py" "${top#_}" "help"
   else
     eval command icav2 '"${@}"'
   fi
