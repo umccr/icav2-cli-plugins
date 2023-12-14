@@ -376,3 +376,5 @@ def get_tenant_id_from_b64_tid(tenant_id):
     num_equals = (4 - len(tenant_id) % 4) % 4
 
     return b64decode(tenant_id + ("=" * num_equals)).decode().split(":")[-1]
+
+

@@ -70,10 +70,20 @@ def get_user_from_user_id(user_id: str) -> User:
     return api_response
 
 
-def get_username_from_configuration():
+def get_user_id_from_configuration():
     """
     Use jwt to get username from access token
     Returns:
     """
     return get_jwt_token_obj(get_libicav2_configuration().access_token, ICAV2_ACCESS_TOKEN_AUDIENCE).get("sub")
+
+
+def get_tenant_id_for_user():
+    """
+    Get user and return tenant id from user
+    :return:
+    """
+    user_id = get_user_id_from_configuration()
+
+    return get_user_from_user_id(user_id).tenant_id
 

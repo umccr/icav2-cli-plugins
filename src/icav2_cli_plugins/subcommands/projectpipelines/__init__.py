@@ -26,6 +26,7 @@ Plugin Commands:
   create-cwl-workflow-from-github-release  Upload a CWL Workflow to ICAv2 from a GitHub Release
   create-cwl-wes-input-template            Create a template for a CWL pipeline
   start-cwl-wes                            Launch a CWL workflow from a WES yaml
+  update                                   Update a projectpipeline
   release                                  Release a projectpipeline
 
 Flags:
@@ -53,6 +54,8 @@ Use "icav2 projectpipelines [command] --help" for more information about a comma
             from .create_wes_input_template import ProjectPipelinesCreateWESInputTemplate as subcommand
         elif cmd == "start-cwl-wes":
             from .launch_cwl_wes import ProjectPipelinesStartCWLWES as subcommand
+        elif cmd == "update":
+            from .pipelines_update import ProjectPipelinesUpdate as subcommand
         elif cmd == "release":
             from .release_pipeline import ProjectPipelineReleasePipeline as subcommand
         else:

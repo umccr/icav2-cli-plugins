@@ -3,6 +3,7 @@
 # Standard imports
 from datetime import datetime
 import json
+from io import IOBase
 from json import JSONDecodeError
 from pathlib import Path
 import re
@@ -12,6 +13,7 @@ import sys
 import contextlib
 from uuid import uuid4
 
+from libica.openapi.v2.api.pipeline_api import PipelineApi
 # Libica imports
 from libica.openapi.v2.model.analysis import Analysis
 from libica.openapi.v2.api.project_analysis_api import ProjectAnalysisApi
@@ -22,6 +24,8 @@ from libica.openapi.v2.model.cwl_analysis_input import CwlAnalysisInput
 from libica.openapi.v2.model.create_cwl_analysis import CreateCwlAnalysis
 from libica.openapi.v2.model.pipeline import Pipeline
 from libica.openapi.v2.model.analysis_input_data_mount import AnalysisInputDataMount
+from libica.openapi.v2.model.pipeline_file import PipelineFile
+from libica.openapi.v2.model.pipeline_file_list import PipelineFileList
 from libica.openapi.v2.model.project_data import ProjectData
 from libica.openapi.v2.model.analysis_tag import AnalysisTag
 from libica.openapi.v2.model.project_pipeline import ProjectPipeline
@@ -131,7 +135,7 @@ class ICAv2EngineParameters:
     def populate_placeholders_in_output_path(self, analysis_path: str):
         """
         Populate placeholders in the output path
-        :param placeholder_dict:
+        :param analysis_path:
         :return:
         """
         return fill_placeholder_path(
@@ -871,3 +875,248 @@ def redirect_stdout():
     sys.stdout = sys.stderr
     yield
     sys.stdout = sout
+
+
+def list_project_pipelines(project_id: str) -> List[Dict]:  # -> List[ProjectPipeline]:
+    """
+    # Due to https://github.com/umccr-illumina/ica_v2/issues/160
+    # # Create an instance of the API class
+    # # Enter a context with an instance of the API client
+    # with ApiClient(get_libicav2_configuration()) as api_client:
+    #     # Create an instance of the API class
+    #     api_instance = ProjectPipelineApi(api_client)
+    #
+    # # example passing only required values which don't have defaults set
+    # try:
+    #     # Retrieve a list of project pipelines.
+    #     api_response = api_instance.get_project_pipelines(project_id)
+    # except ApiException as e:
+    #     logger.error("Exception when calling ProjectPipelineApi->get_project_pipelines: %s\n" % e)
+    #     raise ApiException
+    #
+    # return api_response.items
+    # Launch get ids
+    """
+    returncode, stdout, stderr = run_subprocess_proc(
+        [
+            "curl", "--fail", "--silent", "--location", "--show-error",
+            "--request", "GET",
+            "--header", "Accept: application/vnd.illumina.v3+json",
+            "--header", f"Authorization: Bearer {get_libicav2_configuration().access_token}",
+            "--url", f"{get_libicav2_configuration().host}/api/projects/{project_id}/pipelines"
+        ],
+        capture_output=True
+    )
+    if not returncode == 0:
+        logger.error(f"Could not list pipelines")
+        logger.error(f"Stderr was:{stderr}")
+        raise ChildProcessError
+
+    return json.loads(stdout).get("items")
+
+
+def download_pipeline_to_directory(project_id: str, pipeline_id: str, directory: Path):
+    """
+    Download a pipeline to a directory
+    Args:
+        project_id:
+        pipeline_id:
+        directory:
+
+    Returns:
+
+    """
+    for pipeline_file in list_pipeline_files(project_id, pipeline_id):
+        # Get file path
+        file_path = directory / pipeline_file.name
+        # Download file
+        download_pipeline_file(project_id, pipeline_id, pipeline_file.id, file_path)
+
+
+def list_pipeline_files(project_id: str, pipeline_id: str) -> List[PipelineFile]:
+    """
+    List pipeline files
+    :param project_id:
+    :param pipeline_id:
+    :return:
+    """
+    # Enter a context with an instance of the API client
+    with ApiClient(get_libicav2_configuration()) as api_client:
+        # Create an instance of the API class
+        api_instance = ProjectPipelineApi(api_client)
+
+    # example passing only required values which don't have defaults set
+    try:
+        # Retrieve files for a project pipeline.
+        api_response = api_instance.get_pipeline_files1(project_id, pipeline_id)
+    except ApiException as e:
+        print("Exception when calling ProjectPipelineApi->get_pipeline_files1: %s\n" % e)
+
+    return api_response.items
+
+
+def download_pipeline_file(project_id: str, pipeline_id: str, file_id: str, file_path: Path):
+    """
+    Download pipeline file
+    :param pipeline_id:
+    :param file_id:
+    :param file_path:
+    :return:
+    """
+    configuration = get_libicav2_configuration()
+
+    # Ensure file path parent exists
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+
+    curl_command_list = [
+        "curl",
+        "--fail", "--silent", "--location",
+        "--request", "GET",
+        "--header", "Accept: application/octet-stream",
+        "--header", f"Authorization: Bearer {configuration.access_token}",
+        "--header", "Content-Type: multipart/form-data",
+        "--url", f"{configuration.host}/api/projects/{project_id}/pipelines/{pipeline_id}/files/{file_id}/content",
+        "--output", file_path
+    ]
+
+    # Run the curl command through subprocess.run
+    curl_download_returncode, curl_download_stdout, curl_download_stderr = \
+        run_subprocess_proc(curl_command_list, capture_output=True)
+
+    if not curl_download_returncode == 0:
+        logger.error(f"Could not download file id {file_id} in pipeline {pipeline_id} to {file_path}")
+        raise ValueError
+
+    # # Enter a context with an instance of the API client
+    # with ApiClient(get_libicav2_configuration()) as api_client:
+    #     # Create an instance of the API class
+    #     api_instance = PipelineApi(api_client)
+    #
+    # # example passing only required values which don't have defaults set
+    # try:
+    #     # Download the contents of a pipeline file.
+    #     api_response = api_instance.download_pipeline_file_content(pipeline_id, file_id)
+    # except ApiException as e:
+    #     logger.error("Exception when calling PipelineApi->download_pipeline_file_content: %s\n" % e)
+    #     raise ApiException
+
+
+def update_pipeline_file(project_id: str, pipeline_id: str, file_id: str, file_name: Path, file_path: Path):
+    """
+    Update the pipeline file on icav2
+    Args:
+        pipeline_id:
+        file_id:
+        file_name:
+        file_path:
+
+    Returns:
+
+    """
+    configuration = get_libicav2_configuration()
+    curl_command_list = [
+        "curl",
+        "--fail", "--silent", "--location",
+        "--request", "PUT",
+        "--header", "Accept: application/vnd.illumina.v3+json",
+        "--header", f"Authorization: Bearer {configuration.access_token}",
+        "--header", "Content-Type: multipart/form-data",
+        "--url", f"{configuration.host}/api/projects/{project_id}/pipelines/{pipeline_id}/files/{file_id}/content",
+        "--form", f"content=@{file_path}",
+    ]
+
+    # Run the curl command through subprocess.run
+    curl_update_returncode, curl_update_stdout, curl_update_stderr = \
+        run_subprocess_proc(curl_command_list, capture_output=True)
+
+    if not curl_update_returncode == 0:
+        logger.error(f"Could not update file id {file_id} name / {file_name} in pipeline {pipeline_id}")
+        raise ValueError
+
+    # # Enter a context with an instance of the API client
+    # with ApiClient(get_libicav2_configuration()) as api_client:
+    #     # Create an instance of the API class
+    #     api_instance = ProjectPipelineApi(api_client)
+    #
+    # # Set content handler
+    # content_h: IOBase
+    # with open(file_name, 'rb') as content_h:
+    #     # example passing only required values which don't have defaults set
+    #     try:
+    #         # Update the contents of a file for a pipeline.
+    #         api_instance.update_pipeline_file(project_id, pipeline_id, file_id, content_h)
+    #     except ApiException as e:
+    #         logger.error("Exception when calling ProjectPipelineApi->update_pipeline_file: %s\n" % e)
+    #         raise ApiException
+
+
+def delete_pipeline_file(project_id: str, pipeline_id: str, file_id: str):
+    """
+    Delete the pipeline file on icav2
+    Args:
+        project_id:
+        pipeline_id:
+        file_id:
+
+    Returns:
+
+    """
+    # Enter a context with an instance of the API client
+    with ApiClient(get_libicav2_configuration()) as api_client:
+        # Create an instance of the API class
+        api_instance = ProjectPipelineApi(api_client)
+
+        # example passing only required values which don't have defaults set
+        try:
+            # Delete a file for a pipeline.
+            api_instance.delete_pipeline_file(project_id, pipeline_id, file_id)
+        except ApiException as e:
+            print("Exception when calling ProjectPipelineApi->delete_pipeline_file: %s\n" % e)
+
+
+def add_pipeline_file(project_id: str, pipeline_id: str, file_name: Path, file_path: Path):
+    """
+    Update the pipeline file on icav2
+    Args:
+        project_id:
+        pipeline_id:
+        file_name:
+        file_path:
+
+    Returns:
+
+    """
+    # # Enter a context with an instance of the API client
+    # with ApiClient(get_libicav2_configuration()) as api_client:
+    #     # Create an instance of the API class
+    #     api_instance = ProjectPipelineApi(api_client)
+    #     pipeline_id = "pipelineId_example"  # str | The ID of the project pipeline to create a file for
+    #
+    # content_h: IOBase
+    # with open(file_name, 'rb') as content_h:
+    #     # example passing only required values which don't have defaults set
+    #     try:
+    #         # Create a file for a pipeline.
+    #         api_response = api_instance.create_pipeline_file(project_id, pipeline_id, content_h)
+    #     except ApiException as e:
+    #         logger.error("Exception when calling ProjectPipelineApi->create_pipeline_file: %s\n" % e)
+    #         raise ApiException
+    configuration = get_libicav2_configuration()
+    curl_command_list = [
+        "curl",
+        "--fail", "--silent", "--location",
+        "--request", "POST",
+        "--header", "Accept: application/vnd.illumina.v3+json",
+        "--header", f"Authorization: Bearer {configuration.access_token}",
+        "--header", "Content-Type: multipart/form-data",
+        "--url", f"{configuration.host}/api/projects/{project_id}/pipelines/{pipeline_id}/files",
+        "--form", f"content=@{file_path};filename={file_name}",
+    ]
+
+    # Run the curl command through subprocess.run
+    curl_add_returncode, curl_add_stdout, curl_add_stderr = \
+        run_subprocess_proc(curl_command_list, capture_output=True)
+
+    if not curl_add_returncode == 0:
+        logger.error(f"Could not add the file {file_name} into the pipeline {pipeline_id}")
+        raise ValueError
