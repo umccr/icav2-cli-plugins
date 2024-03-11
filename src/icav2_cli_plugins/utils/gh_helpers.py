@@ -77,6 +77,7 @@ def get_release_repo_and_tag_from_release_url(release_url: str) -> Tuple[str, st
 
     return release_regex_match.groups()
 
+
 def get_release_markdown_file_doc(repo: str, tag_name: str, output_path: Path):
     """
     From a release, collect the body of the release as a markdown file
