@@ -288,11 +288,14 @@ class ZippedCWLWorkflow:
         return hashlib.md5(json.dumps(self.cwl_pack, indent=4).encode()).hexdigest()
 
     # FIXME - this should be its own function outside of this class
-    def create_icav2_workflow_from_zip(self, project_id: str, analysis_storage_id: str,
-                                       workflow_description: str,
-                                       params_xml_file: Path,
-                                       html_documentation_path: Optional[Path],
-                                       ) -> Tuple[str, str]:
+    def create_icav2_workflow_from_zip(
+        self,
+        project_id: str,
+        analysis_storage_id: str,
+        workflow_description: str,
+        params_xml_file: Path,
+        html_documentation_path: Optional[Path],
+    ) -> Tuple[str, str]:
 
         configuration = get_libicav2_configuration()
 
@@ -300,7 +303,7 @@ class ZippedCWLWorkflow:
         
         curl_command_list = [
             "curl",
-            "--fail", "--silent", "--location",
+            "--fail", "--silent", "--location", "--show-error",
             "--request", "POST",
             "--header", "Accept: application/vnd.illumina.v3+json",
             "--header", f"Authorization: Bearer {configuration.access_token}",
