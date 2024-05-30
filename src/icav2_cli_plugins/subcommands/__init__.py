@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Union, List, Optional, Tuple, Type
 from docopt import docopt
 
+from wrapica.project_pipelines.functions.project_pipelines_functions import coerce_pipeline_id_or_code_to_pipeline_id
 # Get utils
 from ..utils import to_lower_camel_case
 from ..utils.errors import InvalidArgumentError
@@ -24,7 +25,7 @@ class Command:
 
     def __init__(self, command_argv):
         # Initialise any req vars
-        self.args = self.get_args(command_argv)
+        self.args = self._get_args(command_argv)
 
         # Check help
         self.check_length(command_argv)
@@ -35,11 +36,30 @@ class Command:
 
         # Confirm 'required' arguments are present and valid
         try:
+            self._assign_args()
             self.check_args()
         except InvalidArgumentError:
             self._help(fail=True)
 
-    def get_args(self, command_argv):
+    def _assign_args(self):
+        for key in self.args.keys():
+            # Positional keys
+            if key.startswith("<") and key.endswith(">"):
+                key_stripped = key.strip("<>")
+            elif key.startswith("--"):
+                key_stripped = key.lstrip("--").replace("-", "_")
+            else:
+                key_stripped = key
+
+            # Magicals
+            if key_stripped == "pipeline":
+                self.__setattr__("pipeline", coerce_pipeline_id_or_code_to_pipeline_id(self.project_id, self.args[key]))
+                continue
+
+            if key_stripped in self.__dict__.keys():
+                self.__setattr__(key_stripped, self.args[key])
+
+    def _get_args(self, command_argv):
         """
         :return:
         """
@@ -76,6 +96,7 @@ class Command:
         Defined in the subfunction
         :return:
         """
+        # While assign_args and
         raise NotImplementedError
 
     def _get_arg_in_input_yaml_arg_name(
@@ -101,6 +122,8 @@ class Command:
         :return:
         """
         # This might mean handling str in a subfunction and calling the subfunction over the list.
+        # FIXME - if we implement the auto-cli-assignment above
+        # FIXME - we can first check if this is already assigned (and not none)
         arg_value = self.args.get(arg_name, None)
         arg_source = "cli"
 

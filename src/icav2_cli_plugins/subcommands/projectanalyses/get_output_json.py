@@ -2,6 +2,18 @@
 
 """
 Get output json
+
+# FIXME - the output json is not the same as we should expect.
+# FIXME - see https://github.com/umccr-illumina/ica_v2/issues/185
+
+Instead we should do the following
+
+Collect the output json from stdout of the cwltool step.
+
+Rename the 'data/out/' location steps based on the outputs API -
+but this needs to wait for https://github.com/umccr-illumina/ica_v2/issues/182
+to also be solved
+
 """
 # External data
 import json

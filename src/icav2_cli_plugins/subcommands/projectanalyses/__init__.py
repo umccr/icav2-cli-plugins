@@ -24,11 +24,13 @@ CLI Commands:
   update      Update tags of analyses
 
 Plugin Commands:
+  list-v2                          A better implementation of the 'list' command
   get-cwl-analysis-input-json      Get input json for cwl analysis
   get-cwl-analysis-output-json     Get output json for cwl analysis
   list-analysis-steps              List the steps for a cwl analysis
   get-analysis-step-logs           Get the log outputs for a cwl analysis step
   gantt-plot                       Create a gantt-plot for analysis
+  abort                            Abort an analysis
 
 Flags:
   -h, --help   help for projectanalyses
@@ -57,6 +59,10 @@ Use "icav2 projectanalyses [command] --help" for more information about a comman
             from .get_step_logs import ProjectAnalysesGetStepLogs as subcommand
         elif cmd == "gantt-plot":
             from .gantt_plot import ProjectAnalysesGanttPlot as subcommand
+        elif cmd == "abort":
+            from .abort import ProjectAnalysesAbort as subcommand
+        elif cmd == "list-v2":
+            from .list_v2 import ProjectAnalysesListV2 as subcommand
         else:
             print(self.__doc__)
             print(f"Could not find cmd \"{cmd}\". Please refer to usage above")
