@@ -51,7 +51,9 @@ runs:
     - id: install-plugins-cli
       shell: bash
       run: |
-        pip install .
+        pip install \
+          --extra-index-url https://test.pypi.org/simple \
+          .
     - id: get-libica-version-from-pip-show
       shell: bash
       run: |
