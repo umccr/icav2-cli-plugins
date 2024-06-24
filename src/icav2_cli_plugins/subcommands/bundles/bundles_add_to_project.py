@@ -3,6 +3,7 @@
 """
 Add a bundle to a project
 """
+# Standard imports
 from typing import List, Optional
 
 # Wrapica imports
@@ -18,9 +19,11 @@ from wrapica.region import (
 )
 from wrapica.enums import BundleStatus
 
+# Utils
+from ...utils.logger import get_logger
+
 # Local imports
 from .. import Command, DocOptArg
-from ...utils.logger import get_logger
 
 logger = get_logger()
 
@@ -79,7 +82,7 @@ Example:
             "bundle_obj": DocOptArg(
                 cli_arg_keys=["bundle_id_or_name", "bundle"],
             ),
-            "project_list_obj": DocOptArg(
+            "project_obj_list": DocOptArg(
                 cli_arg_keys=["project"],
                 yaml_arg_keys=["projects"]
             )

@@ -9,10 +9,12 @@ from typing import Optional
 
 # Wrapica imports
 from wrapica.enums import ProjectAnalysisStatus
-from wrapica.project_analysis import abort_analysis, Analysis, get_analysis_obj_from_analysis_id
+from wrapica.project_analysis import (
+    abort_analysis, Analysis
+)
 
-# Import from utils
-from ...utils.config_helpers import get_project_id, set_project_id_env_var
+# Utils
+from ...utils.config_helpers import get_project_id
 from ...utils.logger import get_logger
 
 # locals

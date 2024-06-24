@@ -4,7 +4,7 @@
 Release a bundle
 """
 
-# External imports
+# Standard imports
 from typing import Optional
 
 # Wrapica imports
@@ -19,6 +19,8 @@ from ...utils.logger import get_logger
 # Local
 from .. import Command, DocOptArg
 
+
+# Set logger
 logger = get_logger()
 
 

@@ -8,6 +8,7 @@ Given a zip file, upload a workflow to ICAV2
 Create technical tags for
     inputs logic and override steps
 """
+
 # External imports
 import json
 import os
@@ -32,9 +33,9 @@ from ...utils.gh_helpers import (
 )
 from ...utils.logger import get_logger
 
-
-# Set command
+# Local imports
 from .. import Command, DocOptArg
+
 
 # Get logger
 logger = get_logger()
@@ -68,7 +69,7 @@ Example:
     """
 
     github_release_url: Optional[str]
-    analysis_storage: Optional[AnalysisStorage]
+    analysis_storage_obj: Optional[AnalysisStorage]
     is_output_json: Optional[bool]
 
     def __init__(self, command_argv):
@@ -77,7 +78,7 @@ Example:
             "github_release_url": DocOptArg(
                 cli_arg_keys=["github_release_url"],
             ),
-            "analysis_storage_size": DocOptArg(
+            "analysis_storage_obj": DocOptArg(
                 cli_arg_keys=["--analysis-storage"],
             ),
             "is_output_json": DocOptArg(
@@ -171,8 +172,8 @@ Example:
         self.set_zipped_workflow_obj_from_github_release_url()
 
         # Get analysis storage ID or go to default
-        if self.analysis_storage is None:
-            self.analysis_storage = get_analysis_storage_from_analysis_storage_size(AnalysisStorage.SMALL)
+        if self.analysis_storage_obj is None:
+            self.analysis_storage_obj = get_analysis_storage_from_analysis_storage_size(AnalysisStorage.SMALL)
 
         # Set the description as the GitHub release url
         self.description = f"GitHub Release URL: {self.github_release_url}"

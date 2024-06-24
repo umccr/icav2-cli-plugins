@@ -4,19 +4,19 @@
 List registered tenants for the plugin
 """
 
-# External data
-from typing import Optional, List, Dict
+# Standard imports
+from typing import Optional, List
 import pandas as pd
-from ruamel.yaml import YAML
 
+# Utils
 from ...utils.config_helpers import read_config_file
-# Set utils
 from ...utils.logger import get_logger
 from ...utils.plugin_helpers import get_tenants_directory
 
 # Locals
 from .. import Command
 
+# Set logger
 logger = get_logger()
 
 

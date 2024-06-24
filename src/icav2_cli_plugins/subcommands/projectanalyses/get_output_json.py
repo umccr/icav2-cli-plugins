@@ -21,10 +21,10 @@ from typing import Optional, Dict
 
 # Wrapica imports
 from wrapica.libica_models import Analysis
-from wrapica.project_analysis import get_cwl_analysis_output_json, get_analysis_obj_from_analysis_id
+from wrapica.project_analysis import get_cwl_analysis_output_json
 
 # Utils imports
-from ...utils.config_helpers import get_project_id, set_project_id_env_var
+from ...utils.config_helpers import get_project_id
 from ...utils.logger import get_logger
 
 # Locals

@@ -3,8 +3,8 @@
 """
 Initialise a tenant from an api key
 """
+# Standard imports
 import os
-# External data
 from pathlib import Path
 from typing import Optional
 from getpass import getpass

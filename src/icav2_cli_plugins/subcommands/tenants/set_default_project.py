@@ -5,7 +5,7 @@ Set the project id in the tenants session ica yaml file.
 This means when tenants enter command is invoked the ICAV2_PROJECT_ID is added
 """
 
-# External data
+# Standard imports
 from collections import OrderedDict
 from pathlib import Path
 from typing import Optional
@@ -20,7 +20,10 @@ from ...utils.config_helpers import (
 )
 from ...utils.logger import get_logger
 from ...utils.plugin_helpers import get_tenants_directory
-from ...utils.tenant_helpers import get_tenant_api_key_from_config_file, get_session_file_path_from_config_file
+from ...utils.tenant_helpers import (
+    get_tenant_api_key_from_config_file,
+    get_session_file_path_from_config_file
+)
 
 # Locals
 from .. import Command, DocOptArg
@@ -59,10 +62,10 @@ Example:
         # Add in the cli args
         self._docopt_type_args = {
             "tenant_name": DocOptArg(
-                cli_arg_keys=["tenant_name"]
+                cli_arg_keys=["<tenant_name>"]
             ),
             "project_name": DocOptArg(
-                cli_arg_keys=["project_name"]
+                cli_arg_keys=["--project-name"]
             )
         }
 

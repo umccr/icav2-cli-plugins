@@ -5,15 +5,15 @@ Get the logs of a step
 
 This is entirely the wrong spot for this, but the code was already all here!
 """
+# Standard imports
 import sys
-# External imports
 import tempfile
 from pathlib import Path
 from typing import Optional
 
+# Wrapica imports
 from wrapica.enums import AnalysisLogStreamName, ProjectAnalysisStepStatus
 from wrapica.libica_models import Analysis
-# Wrapica imports
 from wrapica.project_analysis import (
     AnalysisStepLogs,
     get_analysis_steps,
@@ -22,7 +22,7 @@ from wrapica.project_analysis import (
 )
 
 # Utils
-from ...utils.config_helpers import get_project_id, set_project_id_env_var
+from ...utils.config_helpers import get_project_id
 from ...utils.logger import get_logger
 
 # Locals
@@ -30,9 +30,6 @@ from .. import Command, DocOptArg
 
 # Get logger
 logger = get_logger()
-
-# Set project id environment variable
-set_project_id_env_var()
 
 
 class ProjectAnalysesGetStepLogs(Command):
@@ -120,7 +117,7 @@ Example:
                 logger.error(f"Parent of {self.output_path} does not exist, please create it first")
                 raise NotADirectoryError
         else:
-            self.output_path = sys.stdout.fileno()
+            self.output_path: int = sys.stdout.fileno()
 
     def get_analysis_logs(self) -> AnalysisStepLogs:
         # Get workflow steps

@@ -4,7 +4,7 @@
 List the existing bundles
 """
 
-# External imports
+# Standard imports
 from typing import Optional, List, Union
 
 # Wrapica
@@ -20,6 +20,7 @@ from ...utils.logger import get_logger
 # Locals
 from .. import Command, DocOptArg
 
+# Set logger
 logger = get_logger()
 
 

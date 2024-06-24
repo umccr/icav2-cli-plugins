@@ -24,10 +24,10 @@ from ...utils.projectdata_helpers import (
     run_s3_sync_command
 )
 from ...utils.logger import get_logger
+from ...utils.subprocess_handler import run_subprocess_proc
 
 # Local imports
 from .. import Command, DocOptArg
-from ...utils.subprocess_handler import run_subprocess_proc
 
 # Get logger
 logger = get_logger()

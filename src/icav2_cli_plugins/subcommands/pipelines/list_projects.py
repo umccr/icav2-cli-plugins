@@ -3,7 +3,7 @@
 """
 List projects a pipeline resides in
 """
-# External imports
+# Standard imports
 import json
 from typing import Optional, List, Dict
 

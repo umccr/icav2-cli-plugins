@@ -24,7 +24,7 @@ from wrapica.project_pipelines import (
 from ...utils.config_helpers import get_project_id
 from ...utils.logger import get_logger
 
-# Set command
+# Local imports
 from .. import Command, DocOptArg
 
 # Get logger

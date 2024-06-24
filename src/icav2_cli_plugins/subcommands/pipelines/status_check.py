@@ -4,14 +4,16 @@
 Check ownership of a pipeline / tenant and user
 """
 
-# External imports
+# Standard imports
 from typing import Optional
 import sys
 
-from wrapica.enums import PipelineStatus
 # Wrapica imports
-from wrapica.user import User, get_user_name_from_user_id, get_user_id_from_configuration, get_tenant_id_for_user
-from wrapica.pipelines import get_pipeline_obj_from_pipeline_id, Pipeline
+from wrapica.enums import PipelineStatus
+from wrapica.user import (
+    get_user_id_from_configuration, get_tenant_id_for_user
+)
+from wrapica.pipelines import Pipeline
 
 # Utils
 from ...utils.logger import get_logger

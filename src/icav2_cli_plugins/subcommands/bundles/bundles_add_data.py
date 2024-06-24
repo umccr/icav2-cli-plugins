@@ -3,8 +3,8 @@
 """
 Add a data object (or list of data objects) to a bundle
 """
-import sys
 # Standard imports
+import sys
 from typing import List, Optional
 
 # Wrapica imports
@@ -13,15 +13,16 @@ from wrapica.project import check_project_has_data_sharing_enabled
 from wrapica.data import Data
 from wrapica.bundle import (
     Bundle,
-    add_data_to_bundle, get_bundle_obj_from_bundle_id
+    add_data_to_bundle
 )
 from wrapica.region import Region
-from ...utils import is_interactive
 
+# Utils
+from ...utils import is_interactive
 from ...utils.errors import InvalidArgumentError
 from ...utils.logger import get_logger
 
-# Local imports
+# Local
 from .. import Command, DocOptArg
 
 # Set logger

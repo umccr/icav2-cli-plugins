@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-from pathlib import Path
 # External imports
+from pathlib import Path
 from typing import List, Optional
 
 # Wrapica
-from wrapica.data import Data
-from wrapica.enums import DataType, ProjectDataSortParameter
+from wrapica.enums import (
+    DataType, ProjectDataSortParameter
+)
 from wrapica.project_data import (
     ProjectData,
     list_project_data_non_recursively
@@ -60,21 +61,18 @@ Example: icav2 projectdata ls /reference_data/
 
     def __init__(self, command_argv):
         # Collect args from doc strings
-        # command_argv = command_argv
-        # command_argv[1] = {"<data_path>": command_argv[1]}
-        # command_argv[2] = {"-l": command_argv[2]}
         self._docopt_type_args = {
             "project_data_obj": DocOptArg(
                 cli_arg_keys=["data"],
             ),
             "long_listing": DocOptArg(
-                cli_arg_keys=["long_listing"],
+                cli_arg_keys=["--long-listing"],
             ),
             "sort_time": DocOptArg(
-                cli_arg_keys=["time"],
+                cli_arg_keys=["--time"],
             ),
             "sort_reverse": DocOptArg(
-                cli_arg_keys=["reverse"],
+                cli_arg_keys=["--reverse"],
             ),
         }
 

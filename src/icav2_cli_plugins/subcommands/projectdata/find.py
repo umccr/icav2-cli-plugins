@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-from pathlib import Path
 
-# External imports
+# Standard imports
+from pathlib import Path
 from typing import List, Optional, Union, Pattern
 
 # Wrapica imports
@@ -14,10 +14,10 @@ from wrapica.user import User
 from ...utils.errors import InvalidArgumentError
 from ...utils.config_helpers import get_project_id
 from ...utils.logger import get_logger
+from ...utils.projectdata_helpers import list_files_short, list_files_long
 
 # Locals
 from .. import Command, DocOptArg
-from ...utils.projectdata_helpers import list_files_short, list_files_long
 
 # Set logger
 logger = get_logger()

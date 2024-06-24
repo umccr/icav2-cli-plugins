@@ -27,17 +27,19 @@ from wrapica.project_pipelines import (
     AnalysisStorage,
     get_analysis_storage_from_analysis_storage_size
 )
-from wrapica.project_pipelines import ProjectPipeline
-from wrapica.project_pipelines.functions.project_pipelines_functions import create_nextflow_pipeline_from_nf_core_zip
+from wrapica.project_pipelines import (
+    ProjectPipeline,
+    create_nextflow_pipeline_from_nf_core_zip
+)
 
 # Utils
 from ...utils.config_helpers import get_project_id
 from ...utils.logger import get_logger
-
+from ...utils.nextflow_helpers import download_nf_core_pipeline_to_zip
 
 # Set command
 from .. import Command, DocOptArg
-from ...utils.nextflow_helpers import download_nf_core_pipeline_to_zip
+
 
 # Get logger
 logger = get_logger()

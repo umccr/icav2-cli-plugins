@@ -3,17 +3,16 @@
 """
 List the existing bundles
 """
+# Standard imports
 import sys
-# External imports
 from pathlib import Path
 from typing import Optional
 import json
-
 from ruamel.yaml import YAML
 
 # Wrapica imports
 from wrapica.bundle import (
-    Bundle, get_bundle_obj_from_bundle_id
+    Bundle
 )
 
 # Utils

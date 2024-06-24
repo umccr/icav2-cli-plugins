@@ -4,7 +4,7 @@
 Create a gantt plot for an analysis run
 """
 
-# External imports
+# Standard imports
 from pathlib import Path
 from typing import Optional, List
 
@@ -15,7 +15,7 @@ from wrapica.project_analysis import (
 )
 
 # Utils
-from ...utils.config_helpers import get_project_id, set_project_id_env_var
+from ...utils.config_helpers import get_project_id
 from ...utils.gantt_plot_helpers import (
     filter_workflow_steps_df, analysis_steps_list_to_df, plot_workflow_steps_df,
     add_task_duration_columns, add_task_colour_column

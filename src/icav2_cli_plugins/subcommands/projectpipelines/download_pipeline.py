@@ -4,7 +4,7 @@
 Download a CWL or Nextflow pipeline to a CWL file object
 """
 
-# External imports
+# Standard imports
 from pathlib import Path
 from typing import Optional
 from libica.openapi.v2.model.project_pipeline import ProjectPipeline

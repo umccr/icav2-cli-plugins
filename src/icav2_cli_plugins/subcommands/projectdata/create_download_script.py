@@ -21,8 +21,8 @@ from fileinput import FileInput
 import pandas as pd
 from humanfriendly import format_size
 
-from wrapica.enums import DataType
 # Wrapica
+from wrapica.enums import DataType
 from wrapica.project_data import (
     ProjectData,
     presign_folder,
@@ -31,8 +31,12 @@ from wrapica.project_data import (
 
 # Import utils
 from ...utils.config_helpers import get_project_id
-from ...utils.datetime_helpers import file_friendly_datetime_format, calculate_presigned_url_expiry
-from ...utils.encryption_helpers import encrypt_presigned_url_with_public_key, encrypt_presigned_url_with_keybase
+from ...utils.datetime_helpers import (
+    file_friendly_datetime_format, calculate_presigned_url_expiry
+)
+from ...utils.encryption_helpers import (
+    encrypt_presigned_url_with_public_key, encrypt_presigned_url_with_keybase
+)
 from ...utils.logger import get_logger
 from ...utils.subprocess_handler import run_subprocess_proc
 from ...utils.template_helpers import get_templates_dir
@@ -123,16 +127,16 @@ Examples: icav2 projectdata create-download-script /test_data/outputs/
                 cli_arg_keys=["--output-directory"]
             ),
             "public_key": DocOptArg(
-                cli_arg_keys=["public_key"]
+                cli_arg_keys=["--public-key"]
             ),
             "keybase_username": DocOptArg(
-                cli_arg_keys=["keybase_username"]
+                cli_arg_keys=["--keybase-username"]
             ),
             "keybase_team": DocOptArg(
-                cli_arg_keys=["keybase_team"]
+                cli_arg_keys=["--keybase-team"]
             ),
             "file_regex": DocOptArg(
-                cli_arg_keys=["file-regex"]
+                cli_arg_keys=["--file-regex"]
             )
         }
 

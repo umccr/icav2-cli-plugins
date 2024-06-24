@@ -3,12 +3,12 @@
 """
 Initialise a bundle
 """
+
+# Standard imports
 import json
 import sys
-# External Data
 from pathlib import Path
 from typing import Optional, List
-
 from ruamel.yaml import YAML
 
 # Wrapica
@@ -31,12 +31,12 @@ from wrapica.data import (
 from wrapica.region import (
     get_default_region
 )
-from ...utils.bundle_helpers import bundle_to_dict, bundle_to_yaml_obj
 
 # Utils
+from ...utils.bundle_helpers import bundle_to_dict, bundle_to_yaml_obj
 from ...utils.logger import get_logger
 
-# Internals
+# Local
 from .. import Command, DocOptArg
 
 logger = get_logger()

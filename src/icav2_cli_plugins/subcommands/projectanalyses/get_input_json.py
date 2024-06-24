@@ -3,15 +3,15 @@
 """
 Get input json
 """
-# External imports
+# Standard imports
 import json
 from typing import Optional, Dict
 
 # Wrapica imports
-from wrapica.project_analysis import get_cwl_analysis_input_json, Analysis, get_analysis_obj_from_analysis_id
+from wrapica.project_analysis import get_cwl_analysis_input_json, Analysis
 
 # Utils
-from ...utils.config_helpers import get_project_id, set_project_id_env_var
+from ...utils.config_helpers import get_project_id
 from ...utils.logger import get_logger
 
 # Local

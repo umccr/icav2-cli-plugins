@@ -15,9 +15,7 @@ from typing import Optional, Dict, List
 from wrapica.project_analysis import get_analysis_steps, Analysis
 
 # Import from utils
-from ...utils import is_uuid_format
-from ...utils.config_helpers import get_project_id, set_project_id_env_var
-from ...utils.errors import InvalidArgumentError
+from ...utils.config_helpers import get_project_id
 from ...utils.projectanalysis_helpers import filter_analysis_steps
 from ...utils.logger import get_logger
 
@@ -26,9 +24,6 @@ from .. import Command, DocOptArg
 
 # Get logger
 logger = get_logger()
-
-# Set project id environment variable
-set_project_id_env_var()
 
 
 class ProjectAnalysesListAnalysisSteps(Command):
@@ -83,7 +78,7 @@ Example:
         # Get workflow steps
         workflow_steps = get_analysis_steps(
             project_id=self.project_id,
-            analysis_id=self.analysis_id
+            analysis_id=self.analysis_obj.id
         )
 
         return filter_analysis_steps(workflow_steps, self.is_show_technical_steps)

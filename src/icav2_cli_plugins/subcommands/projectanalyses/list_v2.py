@@ -7,29 +7,29 @@ This is entirely the wrong spot for this, but the code was already all here!
 
 """
 
-# External imports
+# Standard imports
 import sys
 from datetime import datetime
 from typing import Optional, List
 import pandas as pd
 
 # Wrapica
-from wrapica.enums import ProjectAnalysisStatus, ProjectAnalysisSortParameters
+from wrapica.enums import (
+    ProjectAnalysisStatus, ProjectAnalysisSortParameters
+)
 from wrapica.pipelines import Pipeline
 from wrapica.project_analysis import list_analyses
 
 # Import from utils
-from ...utils.config_helpers import get_project_id, set_project_id_env_var
+from ...utils.config_helpers import get_project_id
 from ...utils.logger import get_logger
 
 # locals
 from .. import Command, DocOptArg
 
+
 # Get logger
 logger = get_logger()
-
-# Set the project id env var
-set_project_id_env_var()
 
 
 class ProjectAnalysesListV2(Command):
@@ -125,16 +125,16 @@ Example:
                 cli_arg_keys="--status-filter"
             ),
             "creation_date_before": DocOptArg(
-                cli_arg_keys=["creation_date_before"]
+                cli_arg_keys=["--creation-date-before"]
             ),
             "creation_date_after": DocOptArg(
-                cli_arg_keys=["creation_date_after"]
+                cli_arg_keys=["--creation-date-after"]
             ),
             "modification_date_before": DocOptArg(
-                cli_arg_keys=["modification_date_before"]
+                cli_arg_keys=["--modification-date-before"]
             ),
             "modification_date_after": DocOptArg(
-                cli_arg_keys=["modification_date_after"]
+                cli_arg_keys=["--modification-date-after"]
             )
         }
 

@@ -50,7 +50,7 @@ Example:
         # Add in the cli args
         self._docopt_type_args = {
             "tenant_name": DocOptArg(
-                cli_arg_keys=["tenant_name"]
+                cli_arg_keys=["<tenant_name>"]
             )
         }
 

@@ -92,7 +92,7 @@ Example:
             "zipped_pipeline_path": DocOptArg(
                 cli_arg_keys=["<zipped_pipeline_path>"]
             ),
-            "pipeline": DocOptArg(
+            "project_pipeline_obj": DocOptArg(
                 cli_arg_keys=["<pipeline>"]
             ),
             "force": DocOptArg(

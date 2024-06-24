@@ -4,7 +4,7 @@
 'Release' a project pipeline
 """
 
-# External data
+# Standard imports
 from typing import Optional
 
 # Wrapica imports
@@ -54,8 +54,8 @@ Example:
     def __init__(self, command_argv):
         # Set the docopt args
         self._docopt_type_args = {
-            "pipeline": DocOptArg(
-                cli_arg_keys=["pipeline_name"],
+            "project_pipeline_obj": DocOptArg(
+                cli_arg_keys=["<pipeline>"],
             )
         }
 

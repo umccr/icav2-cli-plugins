@@ -8,19 +8,17 @@ Given a pipeline id or pipeline code, create a wes input template that comprises
 * engine parameters
 """
 
-# External data
+# Standard imports
 import sys
 from tempfile import NamedTemporaryFile
 from typing import Optional, List
 from urllib.parse import urlparse
-
 from ruamel.yaml import YAML, CommentedMap
 from pathlib import Path
 
+# Wrapica import
 from wrapica.enums import WorkflowLanguage
 from wrapica.project_analysis import AnalysisStorage
-
-# Wrapica import
 from wrapica.utils.cwl_typing_helpers import WorkflowType
 from wrapica.project_pipelines import (
     ProjectPipeline,
@@ -28,10 +26,16 @@ from wrapica.project_pipelines import (
 from wrapica.pipelines import (
     get_cwl_obj_from_pipeline_id
 )
-from wrapica.utils.cwl_helpers import create_template_from_workflow_inputs, get_overrides_from_workflow_steps
-from wrapica.utils.nextflow_helpers import download_nextflow_schema_file_from_pipeline_id, \
-    generate_input_yaml_from_schema_json, generate_samplesheet_yaml_template_from_schema_input, \
+from wrapica.utils.cwl_helpers import (
+    create_template_from_workflow_inputs,
+    get_overrides_from_workflow_steps
+)
+from wrapica.utils.nextflow_helpers import (
+    download_nextflow_schema_file_from_pipeline_id,
+    generate_input_yaml_from_schema_json,
+    generate_samplesheet_yaml_template_from_schema_input,
     download_nextflow_schema_input_json_from_pipeline_id
+)
 
 # From utils
 from ...utils.errors import InvalidArgumentError
@@ -208,15 +212,15 @@ Example:
                 yaml_arg_keys=["user_tags"]
             ),
             "technical_tags": DocOptArg(
-                cli_arg_keys=["--techincal-tag"],
+                cli_arg_keys=["--technical-tag"],
                 yaml_arg_keys=["technical_tags"]
             ),
             "reference_tags": DocOptArg(
-                cli_arg_keys=["--refernece-tag"],
+                cli_arg_keys=["--reference-tag"],
                 yaml_arg_keys=["reference_tags"]
             ),
             "idempotency_key": DocOptArg(
-                cli_arg_keys=["--idempotence-key"],
+                cli_arg_keys=["--idempotency-key"],
             ),
             "output_template_yaml_path": DocOptArg(
                 cli_arg_keys=["--output-template-yaml-path"],

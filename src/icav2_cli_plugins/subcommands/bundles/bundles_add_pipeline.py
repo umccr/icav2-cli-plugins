@@ -3,19 +3,18 @@
 """
 Add a pipeline object (or list of pipeline objects) to a bundle
 """
-import sys
 # External imports
+import sys
 from typing import List, Optional
 
 # Wrapica imports
 from wrapica.bundle import (
     Bundle,
-    add_pipeline_to_bundle, get_bundle_obj_from_bundle_id
+    add_pipeline_to_bundle
 )
 from wrapica.enums import PipelineStatus, BundleStatus
 from wrapica.pipelines import (
-    Pipeline,
-    get_pipeline_obj_from_pipeline_id
+    Pipeline
 )
 
 # Utils
