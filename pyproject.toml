@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "icav2-cli-plugins"
-version = "2.27.0.dev20240624171728"
+version = "2.27.0.dev20240625083129"
 authors = [
     { name = "Alexis Lucattini", email = "alexis.lucattini@umccr.org" },
 ]
