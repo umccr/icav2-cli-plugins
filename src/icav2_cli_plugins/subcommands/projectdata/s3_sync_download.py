@@ -7,32 +7,38 @@ Use AWS sync command to download data from ICAv2
 # External imports
 from pathlib import Path
 from typing import List, Optional, Dict
+from urllib.parse import urlunparse
+
+# Wrapica imports
+from wrapica.enums import DataType
+from wrapica.project_data import (
+    ProjectData,
+    get_aws_credentials_access_for_project_folder
+)
 
 # Utils imports
 from ...utils.errors import InvalidArgumentError
 from ...utils.config_helpers import get_project_id
 from ...utils.projectdata_helpers import (
-    check_is_directory,
-    get_data_obj_from_project_id_and_path,
     get_s3_sync_script,
-    get_aws_credentials_access,
     run_s3_sync_command
 )
 from ...utils.logger import get_logger
 
 # Local imports
-from .. import Command
+from .. import Command, DocOptArg
+from ...utils.subprocess_handler import run_subprocess_proc
 
-
+# Get logger
 logger = get_logger()
 
 
 class S3SyncDownload(Command):
     """Usage:
     icav2 projectdata s3-sync-download help
-    icav2 projectdata s3-sync-download <data_path> <download_path>
-                                     [-w=<file_path> | --write-script-path=<file_path> ]
-                                     [-s=<s3_sync_arg> | --s3-sync-arg=<s3_sync_arg>]...
+    icav2 projectdata s3-sync-download <data> <download_path>
+                                       [-w=<file_path> | --write-script-path=<file_path> ]
+                                       [-s=<s3_sync_arg> | --s3-sync-arg=<s3_sync_arg>]...
 
 
 Description:
@@ -40,7 +46,9 @@ Description:
 
 
 Options:
-    <data_path>                                        Required, path to icav2 data folder you wish to download from
+    <data>                                             Required, the data path to icav2 data folder you wish to download from
+                                                       May also specify a folder id or an icav2 uri
+
     <download_path>                                    Required, the local download directory, parent folder must exist
 
     -w=<file_path>, --write-script-path=<file_path>    Optional, write out a script instead of invoking aws s3 command
@@ -66,46 +74,55 @@ Examples: icav2 projectdata s3-sync-download /test_data/outputs/ $HOME/outputs/
     icav2 projectdata s3-sync-download /test_data/outputs/ $HOME/outputs/ --s3-sync-arg --dryrun
     icav2 projectdata s3-sync-download /test_data/outputs/ $HOME/outputs/ --s3-sync-arg --exclude='*' --s3-sync-arg --include='*.bam'
     """
+    project_data_obj: Optional[ProjectData]
+    download_path: Optional[Path]
+    write_script_path: Optional[Path]
+    s3_sync_args: Optional[List]
 
     def __init__(self, command_argv):
+        self._docopt_type_args = {
+            # CLI ARGS
+            "project_data_obj": DocOptArg(
+                cli_arg_keys=["data"],
+            ),
+            "download_path": DocOptArg(
+                cli_arg_keys=["download_path"],
+            ),
+            "write_script_path": DocOptArg(
+                cli_arg_keys=["write_script_path"],
+            ),
+            "s3_sync_args": DocOptArg(
+                cli_arg_keys=["s3_sync_args"],
+            ),
+        }
+
         # Initialise parameters
-        self.data_path: Optional[str] = None
-        self.data_id: Optional[str] = None
-        self.download_path: Optional[Path] = None
         self.project_id: Optional[str] = None
-        self.write_script_path: Optional[Path] = None
-        self.s3_sync_args: Optional[List] = None
-        self.s3_env_vars: Optional[Dict] = None
         self.s3_path: Optional[str] = None
+        self.s3_env_vars: Optional[Dict] = None
 
         super().__init__(command_argv)
 
+    def __call__(self):
+        # Run command
+        if self.write_script_path is not None:
+            self.create_sync_script()
+        else:
+            self.run_aws_s3_sync_download_command()
+
     def check_args(self):
-        # Get data path
-        self.data_path = self.args.get("<data_path>", None)
-
-        # Check data path ends with a '/'
-        if not self.data_path.endswith("/"):
-            logger.error("data path parameter should end in a '/'")
-            raise InvalidArgumentError
-
+        # Get project id
         self.project_id = get_project_id()
 
-        # Check data path exists
-        if not check_is_directory(
-            project_id=self.project_id,
-            folder_path=self.data_path
-        ):
-            logger.error(f"Path '{self.data_path}' does not exist in project id '{self.project_id}'")
-            raise ValueError
+        # Set data path arg
+        if self.project_data_obj is not None:
+            if not DataType(self.project_data_obj.data.details.data_type) == DataType.FOLDER:
+                logger.error(f"Data '{self.project_data_obj.data.details.path}' is not a folder")
+                raise ValueError
 
-        # Get download path
-        self.download_path = self.args.get("<download_path>", None)
-        self.download_path = Path(self.download_path)
-
-        self.write_script_path = self.args.get("--write-script-path", None)
-        if self.write_script_path is not None:
-            self.write_script_path = Path(self.write_script_path)
+        else:
+            logger.error("Cannot set data parameter to '/' directory, we cannot get AWS sync credentials from the top directory")
+            raise InvalidArgumentError
 
         # Check if parent of download path exists (if write-script-path not set)
         if not self.download_path.parent.is_dir() and \
@@ -136,28 +153,29 @@ Examples: icav2 projectdata s3-sync-download /test_data/outputs/ $HOME/outputs/
         # Check awsv2 is installed if write script path is not set
         if self.write_script_path is None:
             # Check awsv2 is installed
-            # TODO
-            pass
-
-        # Get s3 sync args
-        self.s3_sync_args = []
-        for s3_sync_arg in self.args.get("--s3-sync-arg"):
-            self.s3_sync_args.append(s3_sync_arg)
-
-        # Get the data id now we know all the arguments are working
-        self.data_id = get_data_obj_from_project_id_and_path(
-            project_id=self.project_id,
-            data_path=self.data_path
-        ).data.id
+            aws_v2_returncode, aws_v2_stdout, aws_v2_stderr = run_subprocess_proc(
+                [
+                    "aws", "--version"
+                ],
+                capture_output=True
+            )
+            if not aws_v2_returncode == 0:
+                logger.error("AWS CLI V2 not installed")
+                raise InvalidArgumentError
 
         # Get s3 env vars
-        self.s3_env_vars = get_aws_credentials_access(
+        self.s3_env_vars = get_aws_credentials_access_for_project_folder(
             project_id=self.project_id,
-            data_id=self.data_id
+            folder_id=self.project_data_obj.data.id
         )
 
         # Trailing slash already part of object prefix
-        self.s3_path = f"s3://{self.s3_env_vars.get('bucket')}/{self.s3_env_vars.get('object_prefix')}"
+        self.s3_path = urlunparse(
+            (
+                "s3", self.s3_env_vars.get('bucket'), self.s3_env_vars.get('object_prefix'),
+                None, None, None
+            )
+        )
 
     def create_sync_script(self):
         with open(self.write_script_path, "w") as file_h:
@@ -182,9 +200,4 @@ Examples: icav2 projectdata s3-sync-download /test_data/outputs/ $HOME/outputs/
             download_path=self.download_path
         )
 
-    def __call__(self):
-        # Run command
-        if self.write_script_path is not None:
-            self.create_sync_script()
-        else:
-            self.run_aws_s3_sync_download_command()
+

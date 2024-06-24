@@ -23,7 +23,7 @@ from ...utils.plugin_helpers import get_tenants_directory
 from ...utils.tenant_helpers import get_tenant_api_key_from_config_file, get_session_file_path_from_config_file
 
 # Locals
-from .. import Command
+from .. import Command, DocOptArg
 
 # Get logger
 logger = get_logger()
@@ -39,6 +39,8 @@ Description:
     Given a tenant name and project name parameter, set the project in the tenants session ica yaml file.
     This means ICAV2_PROJECT_ID env var is added when icav2 tenants enter is used.
 
+    This command is the equivalent of running icav2 projects enter -g <project_name> from inside the tenant context.
+
 Options:
     --project-name <project_name>    Required
 
@@ -49,9 +51,22 @@ Example:
     icav2 tenants set-default-project umccr-beta --project-name playground_v2
     """
 
+    tenant_name: str
+    project_name: str
+
     def __init__(self, command_argv):
+        # CLI Args
+        # Add in the cli args
+        self._docopt_type_args = {
+            "tenant_name": DocOptArg(
+                cli_arg_keys=["tenant_name"]
+            ),
+            "project_name": DocOptArg(
+                cli_arg_keys=["project_name"]
+            )
+        }
+
         # The tenant name provided by the user
-        self.tenant_name: Optional[str] = None
         self.tenant_path: Optional[Path] = None
         self.tenant_config_file: Optional[Path] = None
         self.tenant_session_file: Optional[Path] = None
@@ -75,28 +90,15 @@ Example:
         self.write_session_file()
 
     def check_args(self):
-        # Check the tenant name arg exists
-        tenant_name_arg = self.args.get("<tenant_name>", None)
-        if tenant_name_arg is None:
-            logger.error("Could not get arg <tenant_name>")
-            raise InvalidArgumentError
-
-        self.tenant_name = tenant_name_arg
-
         # Check the tenant directory
         self.tenant_path = get_tenants_directory() / self.tenant_name
 
         if not self.tenant_path.is_dir():
             logger.error(f"Could not find tenant {self.tenant_name}, have you run 'icav2 tenants init \"{self.tenant_name}\"'")
+            raise InvalidArgumentError
 
         # Set the tenant session and config files
         self.tenant_config_file = self.tenant_path / "config.yaml"
-
-        # Get the project name parameter
-        project_name_arg = self.args.get("--project-name", None)
-        if project_name_arg is None:
-            logger.error("Please specify project name argument")
-            raise InvalidArgumentError
 
         # Collect tenant api key
         self.tenant_api_key = get_tenant_api_key_from_config_file(self.tenant_config_file)
@@ -111,12 +113,16 @@ Example:
         self.tenant_access_token = create_access_token_from_api_key(self.tenant_api_key)
 
         # Check project
-        if is_uuid_format(project_name_arg):
+        if is_uuid_format(self.project_name):
             # Check project id is in tenant
-            self.project_id = project_name_arg
+            self.project_id = self.project_name
         else:
             # Get project id from project name
-            self.project_id = get_project_id_from_project_name_curl(get_icav2_base_url(), project_name_arg, self.tenant_access_token)
+            self.project_id = get_project_id_from_project_name_curl(
+                base_url=get_icav2_base_url(self.tenant_name),
+                project_name=self.project_name,
+                access_token=self.tenant_access_token
+            )
 
     def read_tenant_session_file(self):
         """

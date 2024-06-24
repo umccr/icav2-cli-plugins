@@ -3,18 +3,24 @@
 """
 Add a bundle to a project
 """
-from pathlib import Path
 from typing import List, Optional
 
-from .. import Command
-from ...utils import is_uuid_format
-from ...utils.bundle_helpers import read_input_yaml_file, \
-    get_bundle_from_id, add_bundle_to_project, \
-    get_project_ids_from_yaml_obj
-from ...utils.config_helpers import get_project_id_from_project_name
-from ...utils.errors import InvalidArgumentError
+# Wrapica imports
+from wrapica.bundle import (
+    Bundle,
+    link_bundle_to_project
+)
+from wrapica.project import (
+    Project
+)
+from wrapica.region import (
+    Region
+)
+from wrapica.enums import BundleStatus
+
+# Local imports
+from .. import Command, DocOptArg
 from ...utils.logger import get_logger
-from ...utils.region_helpers import get_project_region_id_from_project_id
 
 logger = get_logger()
 
@@ -22,19 +28,22 @@ logger = get_logger()
 class BundlesAddToProject(Command):
     """Usage:
     icav2 bundles add-bundle-to-project help
-    icav2 bundles add-bundle-to-project <bundle_id>
-                                        (--input-yaml=<bundle.yaml> | --project=<project_name_or_id>)
+    icav2 bundles add-bundle-to-project <bundle_id_or_name>
+                                        (--project=<project_name_or_id>)...
+    icav2 bundles add-bundle-to-project (--cli-input-yaml=<file>)
+                                        [--bundle=<bundle_id_or_name>]
+                                        [--project=<project_name_or_id>]...
+
 
 Description:
     Add bundle to a project. Bundle MUST be released
 
-    The input yaml may contain one of the following attributes:
-    Where the projects key is a list.
-    Each list attribute may be a string or a dict containing either the project_id, project_name or project key
+    The cli input yaml may look like the following
+
+    bundle: my_bundle_name or bundle-id
     projects:
-      - project: <project_name_or_id>
-      OR
-      - <project_name_or_id>
+      - my_project_id_1
+      - my_project_name_2
 
     If you have only one project to link to, you wish to may specify the project on the commandline instead.
 
@@ -42,72 +51,70 @@ Description:
 
 
 Options:
-  --input-yaml=<file>                   Optional, path to input yaml file.
-  --project=<project_name_or_id         Optional, the project to add the bundle to
+  --bundle=<bundle_id_or_name>          Required, the bundle id (or bundle name) to be linked to the project(s)
+                                        Use as a positional parameter when not using the yaml file,
+                                        otherwise, the bundle id is read from the yaml file or can be specified
+                                        on the command line with this option
+  --project=<project_name_or_id>        Optional, the project to add the bundle to.  This option can be specified
+                                        multiple times to add the bundle to multiple projects.
+                                        When using the yaml file use the 'projects' key.
+
+  --cli-input-yaml=<file>               Optional, path to input yaml file (see yaml example above)
+
 
 Environment variables:
     ICAV2_BASE_URL           Optional, default set as https://ica.illumina.com/ica/rest
 
 Example:
-    icav2 bundles add-bundle-to-project bundle1234 --input-yaml path-to-input.yaml
     icav2 bundles add-bundle-to-project bundle1234 --project my-project
+    icav2 bundles add-bundle-to-project --cli-input-yaml /path/to/input.yaml
     """
 
+    bundle_obj: Bundle
+    project_obj_list: List[Project]
+
     def __init__(self, command_argv):
-        # The bundle id to link to the user
-        self.project_ids: Optional[List] = None
-        self.bundle_id: Optional[str] = None
-        self.bundle_region: Optional[str] = None
-        self.input_yaml: Optional[Path] = None
+        # CLI ARGS
+        self._docopt_type_args = {
+            "bundle_obj": DocOptArg(
+                cli_arg_keys=["bundle_id_or_name", "bundle"],
+            ),
+            "project_list_obj": DocOptArg(
+                cli_arg_keys=["project"],
+                yaml_arg_keys=["projects"]
+            )
+        }
+
+        # Additional parameters
+        self.bundle_region: Optional[Region] = None
 
         super().__init__(command_argv)
 
     def __call__(self):
-        for project_id in self.project_ids:
-            if not get_project_region_id_from_project_id(project_id) == self.bundle_region:
-                logger.warning(f"Cannot add bundle '{self.bundle_id}' "
-                               f"to project '{project_id}' as they are in different region")
-            add_bundle_to_project(project_id, self.bundle_id)
+        for project_iter in self.project_obj_list:
+            logger.info(f"Linking bundle {self.bundle_obj.id} to project {project_iter.id}")
+            link_bundle_to_project(project_iter.id, self.bundle_obj.id)
+            logger.info(f"Successfully linked bundle {self.bundle_obj.id} to project {project_iter.id}")
 
     def check_args(self):
-        # Check the bundle name arg exists
-        bundle_id_arg = self.args.get("<bundle_id>", None)
-        if bundle_id_arg is None:
-            logger.error("Could not get arg <bundle_id>")
-            raise InvalidArgumentError
 
-        self.bundle_id = bundle_id_arg
-        self.bundle_region = get_bundle_from_id(self.bundle_id).region.id
+        # Set the bundle region
+        self.bundle_region = self.bundle_obj.region
 
         # Check the bundle status
-        if not get_bundle_from_id(self.bundle_id).status.lower() == "released":
+        if not BundleStatus(self.bundle_obj.status) == BundleStatus.RELEASED:
             logger.error("Bundle must be released before being added to a project")
-            raise InvalidArgumentError
+            raise ValueError
 
-        # Check input yaml arg AND project arg
+        # Check regions match
+        has_errors = False
+        for project_obj_iter in self.project_obj_list:
+            if not project_obj_iter.region.id == self.bundle_region.id:
+                logger.error(
+                    f"Cannot add bundle '{self.bundle_obj.id}' "
+                    f"to project '{project_obj_iter.id}' as they are in different regions"
+                )
+                has_errors = True
 
-        # Read the bundle object from input yaml parameter (if specified)
-        input_yaml_arg = self.args.get("--input-yaml", None)
-        # Check if the project arg
-        project_arg = self.args.get("--project")
-
-        if input_yaml_arg is not None and project_arg is not None:
-            logger.error("Please specify one (and only one) of --input-yaml and --project")
-            raise InvalidArgumentError
-        elif input_yaml_arg is None and project_arg is None:
-            logger.error("Please specify one (and only one) of --input-yaml and --project")
-            raise InvalidArgumentError
-
-        if input_yaml_arg is not None:
-            if not Path(input_yaml_arg).is_file():
-                logger.error(f"Could not file file {input_yaml_arg}", None)
-                raise FileNotFoundError
-            self.input_yaml = Path(input_yaml_arg)
-            yaml_obj = read_input_yaml_file(self.input_yaml)
-            self.project_ids = get_project_ids_from_yaml_obj(yaml_obj.get("projects"))
-
-        if project_arg is not None:
-            if is_uuid_format(project_arg):
-                self.project_ids = [project_arg]
-            else:
-                self.project_ids = [get_project_id_from_project_name(project_arg)]
+        if has_errors:
+            raise ValueError

@@ -7,16 +7,17 @@ Release a bundle
 # External imports
 from typing import Optional
 
-# Libica
-from libica.openapi.v2 import ApiException
+# Wrapica imports
+from wrapica.bundle import release_bundle, get_bundle_obj_from_bundle_id, Bundle
+from wrapica.enums import BundleStatus
+from wrapica.libica_exceptions import ApiException
 
 # Utils
-from ...utils.bundle_helpers import get_bundle_from_id, release_bundle
 from ...utils.errors import InvalidArgumentError
 from ...utils.logger import get_logger
 
 # Local
-from .. import Command
+from .. import Command, DocOptArg
 
 logger = get_logger()
 
@@ -24,12 +25,13 @@ logger = get_logger()
 class BundlesRelease(Command):
     """Usage:
     icav2 bundles release help
-    icav2 bundles release <bundle_id>
+    icav2 bundles release <bundle_id_or_name>
 
 Description:
     Release a bundle
 
 Options:
+    bundle_id_or_name        Required - The ID or name of the bundle to release
 
 Environment variables:
     ICAV2_BASE_URL           Optional, default set as https://ica.illumina.com/ica/rest
@@ -38,29 +40,31 @@ Example:
     icav2 bundles release abcdefg.12345
     """
 
+    bundle_obj: Optional[Bundle]
+
     def __init__(self, command_argv):
-        # The bundle name provided by the user
-        self.bundle_id: Optional[str] = None
+        # CLI Args
+        self._docopt_type_args = {
+            "bundle_obj": DocOptArg(
+                cli_arg_keys=["bundle_id_or_name"],
+            ),
+        }
 
         super().__init__(command_argv)
 
     def __call__(self):
-        logger.info(f"Releasing bundle {self.bundle_id}")
-        release_bundle(self.bundle_id)
+        logger.info(f"Releasing bundle {self.bundle_obj.id}")
+        release_bundle(self.bundle_obj.id)
 
     def check_args(self):
-        # Check the bundle name arg exists
-        bundle_id_arg = self.args.get("<bundle_id>", None)
-        if bundle_id_arg is None:
-            logger.error("Could not get arg <bundle_id>")
-            raise InvalidArgumentError
-
-        self.bundle_id = bundle_id_arg
-
         # Check bundle ID is valid
         try:
-            get_bundle_from_id(self.bundle_id)
+            bundle_obj = get_bundle_obj_from_bundle_id(self.bundle_obj.id)
         except ApiException:
-            logger.error(f"Could not get bundle {self.bundle_id}")
+            logger.error(f"Could not get bundle {self.bundle_obj.id}")
             raise InvalidArgumentError
 
+        # Confirm bundle status is in 'DRAFT' state
+        if not BundleStatus[bundle_obj.status] == BundleStatus.DRAFT:
+            logger.error(f"Bundle {self.bundle_obj.id} is not in 'DRAFT' state, cannot release bundle")
+            raise InvalidArgumentError

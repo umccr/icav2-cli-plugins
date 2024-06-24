@@ -1,83 +1,96 @@
 #!/usr/bin/env python3
 
 """
-Create CWL Workflow
+Create nextflow pipeline from the nfcore pipeline,
 
-Given a zip file, upload a workflow to ICAV2
+This will create a pipeline from the nfcore pipeline
 
-Create technical tags for
-    inputs logic and override steps
+Step 1. Download nfcore pipeline using nf-core-cli i.e
+nf-core download ampliseq --revision 2.8.0 --compress zip --outdir ampliseq
+
+Step 2. Update the base.config file to cater for illumina pod like syntax
+
+Step 3. Upload the pipeline to icav2 with a YYYYMMDDHHMMSS tag until we figure out what we're doing
 """
+
 # External imports
 import json
 import os
 import shutil
+from datetime import datetime, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Optional
-import requests
 
 # Wrapica imports
 from wrapica.project_pipelines import (
     AnalysisStorage,
-    create_cwl_workflow_from_zip, get_analysis_storage_from_analysis_storage_size
+    get_analysis_storage_from_analysis_storage_size
 )
 from wrapica.project_pipelines import ProjectPipeline
+from wrapica.project_pipelines.functions.project_pipelines_functions import create_nextflow_pipeline_from_nf_core_zip
 
 # Utils
-from ...utils.errors import InvalidArgumentError
 from ...utils.config_helpers import get_project_id
-from ...utils.gh_helpers import (
-    download_zipped_workflow_from_github_release, get_release_repo_and_tag_from_release_url
-)
 from ...utils.logger import get_logger
 
 
 # Set command
 from .. import Command, DocOptArg
+from ...utils.nextflow_helpers import download_nf_core_pipeline_to_zip
 
 # Get logger
 logger = get_logger()
 
 
-class ProjectPipelinesCreateCWLWorkflowFromGitHubRelease(Command):
+class ProjectPipelinesCreateNextflowPipelineFromNfCore(Command):
     """Usage:
-    icav2 projectpipelines create-cwl-workflow-from-github-release help
-    icav2 projectpipelines create-cwl-workflow-from-github-release <github_release_url>
-                                                                   [--analysis-storage=<analysis_storage_id_or_size>]
-                                                                   [--json]
+    icav2 projectpipelines create-nextflow-pipeline-from-nf-core help
+    icav2 projectpipelines create-nextflow-pipeline-from-nf-core <pipeline_name>
+                                                                 (--revision=<revision>)
+                                                                 [--analysis-storage=<analysis_storage_id_or_size>]
+                                                                 [--json]
 
 Description:
-    From a GitHub release, deploy a workflow to ICAv2
+    Deploy an nf-core workflow as an ICAv2 Pipeline.
 
 Options:
-    <github_release_url>                               Required, path to GitHub release url
+    <pipeline_name>                                    Required, the pipeline core, use `nf-core list`
+                                                       to get the list of pipelines
+    --revision=<revision>                              Required, the revision of the pipeline.
     --analysis-storage=<analysis_storage_id_or_size>   Optional, analysis storage id or size [default: Small]
     --json                                             Optional, write pipeline id and code to stdout in json format
 
+
 Environment variables:
+    GITHUB_TOKEN             Optional, will prevent nf-core raising a warning about API throttling
+                             Can be set through `export GITHUB_TOKEN="$(gh auth token)"`
     ICAV2_BASE_URL           Optional, default set as https://ica.illumina.com/ica/rest
     ICAV2_PROJECT_ID         Optional, taken from "$HOME/.icav2/.session.ica.yaml" if not set
     ICAV2_ACCESS_TOKEN       Optional, taken from "$HOME/.icav2/.session.ica.yaml" if not set
 
 Requirements:
-    Requires 'gh' binary to be installed
+    Requires 'nf-core' binary to be installed, but this should be installed in the icav2 cli plugins venv
 
 Example:
-    icav2 projectpipelines create-cwl-workflow-from-github-release https://github.com/umccr/cwl-ica/releases/tag/dragen-pon-qc/3.9.3__221221152834 --analysis-storage-size Small
+    icav2 projectpipelines create-nextflow-pipeline-from-nf-core ampliseq --revision 2.8.0 --analysis-storage-size SMALL
     """
 
-    github_release_url: Optional[str]
+    pipeline_name: str
+    revision: str
     analysis_storage: Optional[AnalysisStorage]
     is_output_json: Optional[bool]
 
     def __init__(self, command_argv):
         # CLI ARGS
         self._docopt_type_args = {
-            "github_release_url": DocOptArg(
-                cli_arg_keys=["github_release_url"],
+            "pipeline_name": DocOptArg(
+                cli_arg_keys=["pipeline_name"],
             ),
-            "analysis_storage_size": DocOptArg(
+            "revision": DocOptArg(
+                cli_arg_keys=["--revision"],
+            ),
+            "analysis_storage": DocOptArg(
                 cli_arg_keys=["--analysis-storage"],
             ),
             "is_output_json": DocOptArg(
@@ -86,10 +99,6 @@ Example:
         }
 
         # Additional args
-        # URL split by repo and tag name
-        self.github_repo: Optional[str] = None
-        self.github_tag_name: Optional[str] = None
-
         # From the repo and tag name we can collect the zipped workflow obj and path
         self.zipped_workflow_tmp_dir = TemporaryDirectory()
         self.zipped_workflow_path: Optional[Path] = None
@@ -98,8 +107,8 @@ Example:
         self.project_id: Optional[str] = None
         self.pipeline_obj: Optional[ProjectPipeline] = None
 
-        # Get the input template based on the cwl object
-        self.params_xml_file: Optional[Path] = None  #
+        # Get the input template based on the nextflow object
+        self.params_xml_file: Optional[Path] = None
 
         # Set the description as the url from the release page
         self.description: Optional[str] = None
@@ -134,9 +143,18 @@ Example:
         # html_doc = generate_standalone_html_through_pandoc(markdown_path)
 
         # Create output file from zipped workflow apth
-        self.pipeline_obj = create_cwl_workflow_from_zip(
+        self.pipeline_obj = create_nextflow_pipeline_from_nf_core_zip(
             project_id=self.project_id,
-            pipeline_code=self.zipped_workflow_path.stem.replace(".", "_"),
+            pipeline_code=(
+                "__".join(
+                    [
+                        self.zipped_workflow_path.stem.replace(".", "_"),
+                        self.revision.replace(".", '_'),
+                        datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
+                    ]
+                )
+            ),
+            pipeline_revision=self.revision,
             zip_path=self.zipped_workflow_path,
             workflow_description=self.description
         )
@@ -158,31 +176,21 @@ Example:
         # Check we can get project id
         self.project_id = get_project_id()
 
+        # Set zip path
+        self.zipped_workflow_path = Path(self.zipped_workflow_tmp_dir.name) / (self.pipeline_name + ".zip")
+
         # Check GitHub release url is valid
-        url_obj = requests.get(self.github_release_url)
-        if not url_obj.status_code == 200:
-            logger.error(f"Got status code {url_obj.status_code}, reason {url_obj.reason}")
-            raise InvalidArgumentError
-
-        # Split GitHub release url into repo and tag
-        self.github_repo, self.github_tag_name = get_release_repo_and_tag_from_release_url(self.github_release_url)
-
-        # Get workflow object
-        self.set_zipped_workflow_obj_from_github_release_url()
+        self.download_nf_core_pipeline_to_zip()
 
         # Get analysis storage ID or go to default
         if self.analysis_storage is None:
             self.analysis_storage = get_analysis_storage_from_analysis_storage_size(AnalysisStorage.SMALL)
 
         # Set the description as the GitHub release url
-        self.description = f"GitHub Release URL: {self.github_release_url}"
+        self.description = f"nf-core pipeline {self.pipeline_name} at revision {self.revision}"
 
         # Check is json
         self.is_output_json = self.is_output_json if self.is_output_json is not None else False
-
-    def set_zipped_workflow_obj_from_github_release_url(self):
-        self.zipped_workflow_path = Path(self.zipped_workflow_tmp_dir.name) / (self.github_tag_name + ".zip").replace("/", "__")
-        download_zipped_workflow_from_github_release(self.github_repo, self.github_tag_name, self.zipped_workflow_path)
 
     def print_to_stdout(self):
         print(
@@ -193,4 +201,11 @@ Example:
                 },
                 indent=2
             )
+        )
+
+    def download_nf_core_pipeline_to_zip(self):
+        download_nf_core_pipeline_to_zip(
+            pipeline_name=self.pipeline_name,
+            pipeline_revision=self.revision,
+            output_zip_path=self.zipped_workflow_path
         )
