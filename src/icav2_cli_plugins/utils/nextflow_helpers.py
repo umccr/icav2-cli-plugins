@@ -24,7 +24,7 @@ def download_nf_core_pipeline_to_zip(
             pipeline_name,
             "--revision", pipeline_revision,
             "--compress", "zip",
-            "--outdir", output_zip_path.with_suffix("").name
+            "--outdir", output_zip_path.stem
         ],
         cwd=str(output_zip_path.parent),
         capture_output=True

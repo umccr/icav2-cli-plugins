@@ -17,7 +17,7 @@ jobs:
       # Standard checkout step
       - name: Checkout code
         id: git_checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
       # Get tag name, from /ref/heads/<tag> to <tag>
       - name: Get Tag Name
@@ -39,29 +39,17 @@ jobs:
         uses: ./.github/actions/build-release
         with:
           git_tag: ${{ steps.get_tag_name.outputs.tag_name }}
-      # Create release zip file
+      # Create release zip file and upload
       - name: Create Release
         id: create_release
-        uses: actions/create-release@v1
+        uses: softprops/action-gh-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tag_name: ${{ steps.get_tag_name.outputs.tag_name }}
-          release_name: release-${{ steps.get_tag_name.outputs.tag_name }}
+          name: release-${{ steps.get_tag_name.outputs.tag_name }}
           draft: false
           body: ${{ github.event.head_commit.message }}
           prerelease: ${{ steps.is_prerelease.outputs.prerelease == 'true' }}
-      # Upload zip file as an asset
-      - name: Upload Release Asset
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          # This pulls from the CREATE RELEASE step above,
-          # referencing its ID to get its outputs object, which includes an `upload_url`.
-          # See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: icav2-plugins-cli--${{ steps.get_tag_name.outputs.tag_name }}.zip
-          asset_name: icav2-plugins-cli--${{ steps.get_tag_name.outputs.tag_name }}.zip
-          asset_content_type: application/zip
+          files: |
+            release-${{ steps.get_tag_name.outputs.tag_name }}.zip

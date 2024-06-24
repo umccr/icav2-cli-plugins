@@ -165,6 +165,6 @@ Example:
 
         # Set pipeline code and workflow description
         self.pipeline_code = "__".join([
-            self.zipped_workflow_path.with_suffix("").name,
+            self.zipped_workflow_path.stem,
             datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
         ])
