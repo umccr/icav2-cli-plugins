@@ -52,4 +52,4 @@ jobs:
           body: ${{ github.event.head_commit.message }}
           prerelease: ${{ steps.is_prerelease.outputs.prerelease == 'true' }}
           files: |
-            release-${{ steps.get_tag_name.outputs.tag_name }}.zip
+            icav2-plugins-cli--${{ steps.get_tag_name.outputs.tag_name }}.zip
