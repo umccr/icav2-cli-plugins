@@ -3,46 +3,62 @@
 """
 List the existing bundles
 """
+import sys
 # External imports
 from pathlib import Path
-from typing import Optional, Dict
+from typing import Optional
 import json
+
+from ruamel.yaml import YAML
+
+# Wrapica imports
+from wrapica.bundle import (
+    Bundle, get_bundle_obj_from_bundle_id
+)
 
 # Utils
 from ...utils.bundle_helpers import (
-    bundle_to_yaml_obj, get_bundle_dict_object
+    bundle_to_yaml_obj, bundle_to_dict
 )
-from ...utils.errors import InvalidArgumentError
 from ...utils.logger import get_logger
 
 # Local
-from .. import Command
+from .. import Command, DocOptArg
 
+# Set logger
 logger = get_logger()
 
 
 class BundlesGet(Command):
     """Usage:
     icav2 bundles get help
-    icav2 bundles get <bundle_id>
-                      [--json]
-                      [--output-yaml <path_to_yaml>]
+    icav2 bundles get <bundle_id_or_name>
+                      (--json | --yaml)
+                      [--include-metadata]
+                      [--output-path <path_to_file>]
 
 Description:
-    Get a bundle, if specifying --output-yaml the output object has the following attributes:
-    region: <region_id>
+    Get a bundle, the output object has the following attributes:  (comments only available when --yaml is set)
+    id: <bundle_id>  # Bundle name
+    region: <region_id>  # Region name
+    tenant: <tenant_id>  # Tenant name
     pipelines:
-      - pipeline_id: <pipeline_id>
-        pipeline_code: <pipeline_code>
+      - <pipeline_id>  # pipeline-code
       ...
     data:
-      - data_id: <data_id>
-        data_uri: <data_uri>
+      - <data_id>  # Data uri
       ...
+    metadata:  (Only included when --include-metadata is set)
+      name: <bundle_name>
+      short_description: <bundle_short_description>
+      version: <bundle_version>
+      version_description: <bundle_version_description>
 
 Options:
-  --json                       Optional: Return bundle object in json format to stdout
-  --output-yaml=<output_yaml>  Optional: Write out bundle attributes into yaml object
+  --json                       Optional: Return bundle object in json format
+  --yaml                       Optional: Return the bundle in yaml format
+  --include-metadata           Optional: Include metadata in the bundle object
+  --output-path=<path>         Optional: Write out bundle attributes out to a file, otherwise to stdout
 
 Environment variables:
     ICAV2_BASE_URL           Optional, default set as https://ica.illumina.com/ica/rest
@@ -51,46 +67,62 @@ Example:
     icav2 bundles get abcdefg.12345 --output-yaml bundle.abcdefg.yaml
     """
 
+    bundle_obj: Optional[Bundle]
+    is_json: Optional[bool]
+    is_yaml: Optional[bool]
+    include_metadata: Optional[bool]
+    output_path: Optional[Path]
+
     def __init__(self, command_argv):
-        # The bundle name provided by the user
-        self.bundle_id: Optional[str] = None
-        self.bundle_obj: Optional[Dict] = None
-        self.output_yaml: Optional[Path] = None
-        self.json_arg: Optional[bool] = None
+        # CLI ARGS
+        self._docopt_type_args = {
+            "bundle_obj": DocOptArg(
+                cli_arg_keys=["bundle_id_or_name"],
+            ),
+            "is_json": DocOptArg(
+                cli_arg_keys=["--json"],
+            ),
+            "is_yaml": DocOptArg(
+                cli_arg_keys=["--yaml"]
+            ),
+            "include_metadata": DocOptArg(
+                cli_arg_keys=["--include-metadata"]
+            ),
+            "output_path": DocOptArg(
+                cli_arg_keys=["--output-path"],
+            )
+        }
 
         super().__init__(command_argv)
 
     def __call__(self):
-        if self.json_arg:
-            print(json.dumps(get_bundle_dict_object(self.bundle_id), indent=2))
-        if self.output_yaml is not None:
-            logger.info(f"Writing bundle info to {self.output_yaml}")
-            with open(self.output_yaml, "w") as yaml_h:
-                bundle_to_yaml_obj(self.bundle_id, yaml_h)
+        with open(self.output_path, "w") as output_h:
+            if self.is_json:
+                json.dump(
+                    bundle_to_dict(
+                        self.bundle_obj,
+                        include_metadata=self.include_metadata
+                    ),
+                    indent=2,
+                    fp=output_h
+                )
+            else:
+                yaml = YAML()
+                yaml.indent(mapping=2, sequence=4, offset=2)
+                yaml.dump(
+                    bundle_to_yaml_obj(
+                        self.bundle_obj,
+                        include_metadata=self.include_metadata
+                    ),
+                    output_h
+                )
 
     def check_args(self):
-        # Check if the bundle name arg exists
-        bundle_id_arg = self.args.get("<bundle_id>", None)
-        if bundle_id_arg is not None:
-            self.bundle_id = bundle_id_arg
+        # Check that the parent directory is required for the output path
+        if self.output_path is not None and not self.output_path.parent.exists():
+            raise FileNotFoundError(f"Parent directory {self.output_path.parent} does not exist")
 
-        # Check if the json arg exists
-        json_arg = self.args.get("--json", None)
-        if json_arg is not None and json_arg is not False:
-            self.json_arg = True
-        else:
-            self.json_arg = False
-
-        # Check if the output yaml arg exists AND parent exists
-        output_yaml_arg = self.args.get("--output-yaml", None)
-        if output_yaml_arg is not None:
-            if not Path(output_yaml_arg).parent.is_dir():
-                logger.error(f"--output-yaml specified but parent directory of '{output_yaml_arg}' does not exist. "
-                             "Please create this directory and try again")
-                raise InvalidArgumentError
-            self.output_yaml = Path(output_yaml_arg)
-
-        if not self.json_arg and output_yaml_arg is None:
-            logger.error("Please specify at least one of --json OR --output-yaml")
-            raise InvalidArgumentError
-
+        # Set self.output_path to stdout if not provided
+        if self.output_path is None:
+            self.output_path = sys.stdout.fileno()
+        logger.info("Finished checking args")

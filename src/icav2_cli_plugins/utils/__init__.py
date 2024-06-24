@@ -1,5 +1,6 @@
 import re
 from typing import Dict, Any
+import sys
 from urllib.parse import urlparse
 from uuid import UUID
 
@@ -50,3 +51,7 @@ def is_uri_format(uri_str: str) -> bool:
         return True
     except ValueError:
         return False
+
+
+def is_interactive() -> bool:
+    return sys.stdin.isatty()

@@ -34,7 +34,7 @@ PLUGIN_VERSION="__PLUGIN_VERSION__"
 LIBICA_VERSION="__LIBICA_VERSION__"
 YQ_VERSION="4.18.1"
 CURL_VERSION="7.76.0"
-PYTHON_VERSION="3.11"
+PYTHON_VERSION="3.12"
 
 ###########
 # Functions
@@ -260,8 +260,6 @@ fi
 
 
 # Steps get configuration / icav2 plugins home directory
-# TODO - hardcode as $HOME/.icav2-cli-plugins/ for now
-
 user_shell="$(get_user_shell)"
 
 if [[ -z "${user_shell}" ]]; then
@@ -316,6 +314,14 @@ fi
 mkdir -p "${ICAV2_CLI_PLUGINS_HOME}"
 
 
+#############################
+# TOUCH DEFAULT CONFIGURATION
+#############################
+if [[ ! -r "${HOME}/.icav2/config.yaml" ]]; then
+  mkdir -p "${HOME}/.icav2/"
+  touch "${HOME}/.icav2/config.yaml"
+fi
+
 ############################
 # CREATE PYTHON3 VIRTUAL ENV
 ############################
@@ -332,7 +338,10 @@ else
 fi
 
 "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" -m pip install --upgrade pip --quiet
-"${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" -m pip install "$(get_this_path)/." --quiet
+# Install dev version of wrapica from test pypi
+"${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" -m pip install \
+  --extra-index-url https://test.pypi.org/simple \
+  "$(get_this_path)/." --quiet
 
 SITE_PACKAGES_DIR="$(
   find "${ICAV2_CLI_PLUGINS_HOME}/pyenv/lib/" \
@@ -390,8 +399,8 @@ fi
 # UPDATE VERSIONS
 ######################
 # Update shell function
-sed -i "s/__PLUGIN_VERSION__/${PLUGIN_VERSION}/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/icav2.sh"
-sed -i "s/__LIBICA_VERSION__/${LIBICA_VERSION}/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/icav2.sh"
+sed -i "s/__PLUGIN_VERSION__/${PLUGIN_VERSION}/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/_icav2"
+sed -i "s/__LIBICA_VERSION__/${LIBICA_VERSION}/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/_icav2"
 
 ######################
 # COPY AUTOCOMPLETIONS
@@ -410,28 +419,36 @@ else
   rc_profile="${HOME}/.${user_shell}rc"
 fi
 
-echo_stderr "INSTALLATION COMPLETE!"
-echo_stderr "To start using the plugins, add the following lines to ${rc_profile}"
-echo_stderr "######ICAV2-CLI-PLUGINS######"
-echo_stderr "export ICAV2_CLI_PLUGINS_HOME=\"\${HOME}/.icav2-cli-plugins\""
-echo_stderr "# Source functions"
-echo_stderr "for file_name in \"\${ICAV2_CLI_PLUGINS_HOME}/shell_functions/\"*; do"
-echo_stderr "    . \${file_name}; "
-echo_stderr "done"
+########################
+# GENERATE SOURCE SCRIPT
+########################
+echo "#!/usr/bin/env bash" > "${ICAV2_CLI_PLUGINS_HOME}/source.sh"
+echo "export ICAV2_CLI_PLUGINS_HOME=\"\${HOME}/.icav2-cli-plugins\"" >> "${ICAV2_CLI_PLUGINS_HOME}/source.sh"
+echo "# Source functions" >> "${ICAV2_CLI_PLUGINS_HOME}/source.sh"
+echo "for file_name in \"\${ICAV2_CLI_PLUGINS_HOME}/shell_functions/\"*; do" >> "${ICAV2_CLI_PLUGINS_HOME}/source.sh"
+echo "    . \${file_name}; " >> "${ICAV2_CLI_PLUGINS_HOME}/source.sh"
+echo "done" >> "${ICAV2_CLI_PLUGINS_HOME}/source.sh"
 
 # Autocompletion differs between shells
-echo_stderr "# Source autocompletions"
+echo "# Source autocompletions" >> "${ICAV2_CLI_PLUGINS_HOME}/source.sh"
 if [[ "${user_shell}" == "bash" ]]; then
-  echo_stderr "for f in \"\$ICAV2_CLI_PLUGINS_HOME/autocompletion/${user_shell}/\"*\".bash\"; do"
-  echo_stderr "    . \"\$f\""
-  echo_stderr "done"
+  echo "for f in \"\$ICAV2_CLI_PLUGINS_HOME/autocompletion/${user_shell}/\"*\".bash\"; do" >> "${ICAV2_CLI_PLUGINS_HOME}/source.sh"
+  echo "    . \"\$f\"" >> "${ICAV2_CLI_PLUGINS_HOME}/source.sh"
+  echo "done" >> "${ICAV2_CLI_PLUGINS_HOME}/source.sh"
 elif [[ "${user_shell}" == "zsh" ]]; then
-  echo_stderr "fpath=(\"\$ICAV2_CLI_PLUGINS_HOME/autocompletion/${user_shell}/\" \$fpath)"
+  echo "fpath=(\"\$ICAV2_CLI_PLUGINS_HOME/autocompletion/${user_shell}/\" \$fpath)" >> "${ICAV2_CLI_PLUGINS_HOME}/source.sh"
   if [[ "${OSTYPE}" == "darwin"* ]]; then
     # Mac Users need to run 'autoload' before running compinit
-    echo_stderr "autoload -Uz compinit"
+    echo "autoload -Uz compinit" >> "${ICAV2_CLI_PLUGINS_HOME}/source.sh"
   fi
-  echo_stderr "compinit"
+  echo "compinit" >> "${ICAV2_CLI_PLUGINS_HOME}/source.sh"
 fi
 
-echo_stderr "########################"
+############################
+# SHOW BASHRC LINE TO ADD
+#############################
+
+echo_stderr "Add the following line(s) to your ${rc_profile} file"
+echo_stderr "############# ICAV2 CLI PLUGINS #############"
+echo_stderr ". \"\${HOME}/.icav2-cli-plugins/source.sh\""
+echo_stderr "#############################################"

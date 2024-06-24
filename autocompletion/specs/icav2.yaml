@@ -113,7 +113,7 @@ subcommands:
         summary: Get details of a pipeline
       list:
         summary: List pipelines
-      check-ownership:
+      status-check:
         summary: Check pipeline ownership
         parameters:
           - name: pipeline_id

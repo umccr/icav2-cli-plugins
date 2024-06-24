@@ -24,9 +24,12 @@ Available Commands:
 Plugin Commands:
   create-cwl-workflow-from-zip             Upload a CWL Workflow to ICAv2 from a local zip path
   create-cwl-workflow-from-github-release  Upload a CWL Workflow to ICAv2 from a GitHub Release
-  create-cwl-wes-input-template            Create a template for a CWL pipeline
-  start-cwl-wes                            Launch a CWL workflow from a WES yaml
+  create-nextflow-pipeline-from-nf-core    Upload a nf-core pipeline to ICAv2
+  create-nextflow-pipeline-from-zip        Upload a nextflow pipeline from a zip file
+  create-wes-input-template                Create a template for an ICAv2 pipeline
+  start-wes                                Launch an ICAv2 Pipeline from a WES yaml
   update                                   Update a projectpipeline
+  download                                 Download a projectpipeline to a zip file
   release                                  Release a projectpipeline
 
 Flags:
@@ -50,12 +53,18 @@ Use "icav2 projectpipelines [command] --help" for more information about a comma
             from .create_cwl_workflow_from_zip import ProjectPipelinesCreateCWLWorkflow as subcommand
         elif cmd == "create-cwl-workflow-from-github-release":
             from .create_cwl_workflow_from_github_release import ProjectPipelinesCreateCWLWorkflowFromGitHubRelease as subcommand
-        elif cmd == "create-cwl-wes-input-template":
+        elif cmd == "create-nextflow-pipeline-from-nf-core":
+            from .create_nextflow_pipeline_from_nf_core import ProjectPipelinesCreateNextflowPipelineFromNfCore as subcommand
+        elif cmd == "create-nextflow-pipeline-from-zip":
+            from .create_nextflow_pipeline_from_zip import ProjectPipelinesCreateNextflowPipelineFromZip as subcommand
+        elif cmd == "create-wes-input-template":
             from .create_wes_input_template import ProjectPipelinesCreateWESInputTemplate as subcommand
-        elif cmd == "start-cwl-wes":
-            from .launch_cwl_wes import ProjectPipelinesStartCWLWES as subcommand
+        elif cmd == "start-wes":
+            from .launch_wes import ProjectPipelinesStartWES as subcommand
         elif cmd == "update":
             from .pipelines_update import ProjectPipelinesUpdate as subcommand
+        elif cmd == "download":
+            from .download_pipeline import ProjectPipelinesDownload as subcommand
         elif cmd == "release":
             from .release_pipeline import ProjectPipelineReleasePipeline as subcommand
         else:

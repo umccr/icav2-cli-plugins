@@ -6,7 +6,6 @@ Helper functions for getting information from a release
 """
 import json
 import shutil
-import subprocess
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Dict, Tuple

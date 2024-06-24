@@ -3,23 +3,27 @@
 """
 Add a pipeline object (or list of pipeline objects) to a bundle
 """
-
+import sys
 # External imports
-from pathlib import Path
-from typing import List, Optional, Union
+from typing import List, Optional
 
-# Libica imports
-from libica.openapi.v2.model.pipeline import Pipeline
+# Wrapica imports
+from wrapica.bundle import (
+    Bundle,
+    add_pipeline_to_bundle, get_bundle_obj_from_bundle_id
+)
+from wrapica.enums import PipelineStatus, BundleStatus
+from wrapica.pipelines import (
+    Pipeline,
+    get_pipeline_obj_from_pipeline_id
+)
 
 # Utils
-from ...utils.bundle_helpers import add_pipeline_to_bundle, read_input_yaml_file, get_pipelines_from_input_yaml_list
-from ...utils.config_helpers import get_project_id
-from ...utils.errors import InvalidArgumentError
+from ...utils import is_interactive
 from ...utils.logger import get_logger
-from ...utils.projectpipeline_helpers import get_pipeline_id_from_pipeline_code
 
 # Local
-from .. import Command
+from .. import Command, DocOptArg
 
 logger = get_logger()
 
@@ -27,87 +31,79 @@ logger = get_logger()
 class BundlesAddPipeline(Command):
     """Usage:
     icav2 bundles add-pipeline help
-    icav2 bundles add-pipeline <bundle_id>
-                               (--input-yaml=<bundle.yaml> | --pipeline-id=<pipeline_id> | --pipeline-code=<pipeline_code>)
+    icav2 bundles add-pipeline <bundle_id_or_name>
+                               (--pipeline=<pipeline_id_or_code>...)
+    icav2 bundles add-pipeline (--cli-input-yaml=<file>)
+                               [--bundle=<bundle_id_or_name>]
+                               [--pipeline=<pipeline_id_or_code>]...
 
 Description:
     Add a released pipeline to a bundle
 
-    The yaml file may look like the following, in this subcommand however, we only look at the 'pipelines' key
-    region:
-      id: abcdefg
+    The cli-input-yaml may look like the following
+    bundle: my_bundle_id
     pipelines:
-      - pipeline_code: abcdeg
-      - pipeline_id: a1b2c3de-uuid
-    data:
-      - data_id: fil.12345567
-      - data_id: fol.12345678
-      - data_uri: icav2://playground/path-to-file/
-      - data_uri: icav2://playground/path-to-folder/
-
+      - my_pipeline_code_or_id
 
 Options:
-  --input-yaml=<file>                   Optional, path to input yaml file.
-  --pipeline-id=<pipeline-id>           Optional, the pipeline id to add to the bundle
-  --pipeline-code=<pipeline-code>       Optional, the pipeline code to add to the bundle
+  --bundle=<bundle_id_or_name>          Required, the bundle id (or bundle name) to add the pipeline to
+                                        Use as a positional parameter when not using the yaml file,
+                                        otherwise, the bundle id is read from the yaml file or can be specified
+                                        on the command line with this option
+  --pipeline=<pipeline_id_or_code>      Required, the pipeline id or code to add to the bundle,
+                                        can be specified either on the command line or through the input yaml file.
+                                        When specified in the yaml file, the key should be 'pipelines'
+
+  --cli-input-yaml=<file>               Optional, path to input yaml file (see yaml example above)
 
 Environment variables:
     ICAV2_BASE_URL           Optional, default set as https://ica.illumina.com/ica/rest
 
 Example:
-    icav2 bundles add-pipeline-to-bundle --input-yaml path-to-input.yaml
+    icav2 bundles add-pipeline-to-bundle my_bundle --pipeline my_pipeline_code
+    icav2 bundles add-pipeline-to-bundle --cli-input-yaml /path/to/input.yaml
     """
 
-    def __init__(self, command_argv):
-        # The bundle name provided by the user
-        self.bundle_id: Optional[str] = None
+    bundle_obj: Optional[Bundle]
+    pipeline_obj_list: List[Pipeline]
 
-        self.pipeline_id: Optional[Union[str | List[Pipeline]]] = None
-        self.input_yaml: Optional[Path] = None
+    def __init__(self, command_argv):
+        # CLI ARGS
+        self._docopt_type_args = {
+            "bundle_obj": DocOptArg(
+                cli_arg_keys=["bundle_id_or_name", "bundle"],
+            ),
+            "pipeline_obj_list": DocOptArg(
+                cli_arg_keys=["pipeline"],
+                yaml_arg_keys=["pipelines"],
+            )
+        }
 
         super().__init__(command_argv)
 
     def __call__(self):
-        if isinstance(self.pipeline_id, List):
-            pipeline: Pipeline
-            for pipeline in self.pipeline_id:
-                # Add pipeline to the bundle
-                add_pipeline_to_bundle(
-                    bundle_id=self.bundle_id,
-                    pipeline_id=pipeline.id
-                )
-        else:
+        for pipeline in self.pipeline_obj_list:
             # Add pipeline to the bundle
             add_pipeline_to_bundle(
-                bundle_id=self.bundle_id,
-                pipeline_id=self.pipeline_id
+                bundle_id=self.bundle_obj.id,
+                pipeline_id=pipeline.id
             )
 
     def check_args(self):
-        # Check the bundle name arg exists
-        bundle_id_arg = self.args.get("<bundle_id>", None)
-        if bundle_id_arg is None:
-            logger.error("Could not get arg <bundle_id>")
-            raise InvalidArgumentError
+        # Check bundle status
+        if BundleStatus[self.bundle_obj.status] == BundleStatus.RELEASED and is_interactive():
+            logger.warning("Bundle is already released, are you sure you wish to add data to it?")
+            continue_or_exit = input("Continue? (y/n): ")
+            if continue_or_exit.lower() != "y":
+                sys.exit(0)
 
-        self.bundle_id = bundle_id_arg
-
-        # Read the bundle object from input yaml parameter (if specified)
-        input_yaml_arg = self.args.get("--input-yaml", None)
-        if input_yaml_arg is not None:
-            if not Path(input_yaml_arg).is_file():
-                logger.error(f"Could not file file {input_yaml_arg}", None)
-                raise FileNotFoundError
-            self.input_yaml = Path(input_yaml_arg)
-            yaml_obj = read_input_yaml_file(self.input_yaml)
-            # Get the pipeline and data objects
-            self.pipeline_id: List[Pipeline] = get_pipelines_from_input_yaml_list(yaml_obj)
-
-        pipeline_id_arg = self.args.get("--pipeline-id", None)
-        pipeline_code_arg = self.args.get("--pipeline-code", None)
-
-        if pipeline_id_arg is not None:
-            self.pipeline_id = pipeline_id_arg
-
-        if pipeline_code_arg is not None:
-            self.pipeline_id = get_pipeline_id_from_pipeline_code(get_project_id(), pipeline_code_arg)
+        # Check each pipeline has been released
+        has_errors = False
+        for pipeline_obj in self.pipeline_obj_list:
+            if not PipelineStatus[pipeline_obj.status] == PipelineStatus.RELEASED:
+                logger.error(
+                    f"Pipeline {pipeline_obj.id} is not released, only released pipelines can be added to a bundle"
+                )
+                has_errors = True
+        if has_errors:
+            raise ValueError("One or more pipelines has not yet been released")

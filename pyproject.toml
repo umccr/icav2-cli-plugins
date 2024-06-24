@@ -6,13 +6,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "icav2-cli-plugins"
-version = "2.20.0"
+version = "2.20.1"
 authors = [
     { name = "Alexis Lucattini", email = "alexis.lucattini@umccr.org" },
 ]
 description = "icav2-cli-plugins"
 readme = "Readme.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
@@ -39,6 +39,8 @@ dependencies = [
     "invoke >= 2.0.0, < 3",
     "fabric >= 3.0.0, < 4",
     "deepdiff >= 6.7.1, < 7",
+    "wrapica >= 2.27.0.dev20240624105312",
+    "nf-core >= 2.14"
 ]
 
 [project.urls]
@@ -55,4 +57,10 @@ pandoc = [
 ]
 toml = [
     "tomli_w >= 1.0.0, < 2",
+]
+docs = [
+    "sphinx >= 7.2.6, < 8",
+    "sphinx-rtd-theme >= 2.0.0, < 3",
+    "sphinx_autodoc_typehints",
+    "toml-to-requirements",
 ]

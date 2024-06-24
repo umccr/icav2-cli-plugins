@@ -3,7 +3,7 @@
 """
 Initialise a tenant from an api key
 """
-
+import os
 # External data
 from pathlib import Path
 from typing import Optional
@@ -11,8 +11,6 @@ from getpass import getpass
 from ruamel.yaml import YAML
 
 # Utils
-from ...utils import is_uuid_format
-from ...utils.errors import InvalidArgumentError
 from ...utils.config_helpers import (
     create_access_token_from_api_key, get_jwt_token_obj,
     get_project_name_from_project_id_curl, get_project_id_from_project_name_curl,
@@ -27,7 +25,7 @@ from ...utils.tenant_helpers import (
 )
 
 # Locals
-from .. import Command
+from .. import Command, DocOptArg
 
 # Get logger
 logger = get_logger()
@@ -53,9 +51,21 @@ Example:
     icav2 tenants init umccr-beta
     """
 
+    tenant_name: str
+    default_project: Optional[str]
+
     def __init__(self, command_argv):
+        # CLI ARGS
+        self._docopt_type_args = {
+            "tenant_name": DocOptArg(
+                cli_arg_keys=["tenant_name"],
+            ),
+            "default_project": DocOptArg(
+                cli_arg_keys=["--default-project"],
+            )
+        }
+
         # The tenant name provided by the user
-        self.tenant_name: Optional[str] = None
         self.tenant_path: Optional[Path] = None
         self.tenant_config_file: Optional[Path] = None
         self.tenant_session_file: Optional[Path] = None
@@ -90,6 +100,12 @@ Example:
         )
 
         # Create the access token
+        # Set the ICAV2_TENANT_NAME env var before calling this function
+        os.environ["ICAV2_TENANT_NAME"] = self.tenant_name
+        # And write out the initial config file (containing just the server url and api key)
+        self.write_config_file()
+
+        # Now collect the access token which will query the server url from the configuration file
         self.access_token = create_access_token_from_api_key(
             self.x_api_key
         )
@@ -101,9 +117,17 @@ Example:
 
         # Use the access token to collect the project name if set
         if self.project_id is not None:
-            self.project_name = get_project_name_from_project_id_curl(f"https://{self.server_url}/ica/rest", self.project_id, self.access_token)
+            self.project_name = get_project_name_from_project_id_curl(
+                base_url=f"https://{self.server_url}/ica/rest",
+                project_id=self.project_id,
+                access_token=self.access_token
+            )
         elif self.project_name is not None:
-            self.project_id = get_project_id_from_project_name_curl(f"https://{self.server_url}/ica/rest", self.project_name, self.access_token)
+            self.project_id = get_project_id_from_project_name_curl(
+                base_url=f"https://{self.server_url}/ica/rest",
+                project_name=self.project_name,
+                access_token=self.access_token
+            )
 
         # Write out configuration yaml to file
         self.write_config_file()
@@ -117,16 +141,20 @@ Example:
         # Chmod of session file to 600
         self.tenant_session_file.chmod(0o600)
 
-
     def write_session_file(self):
         yaml = YAML()
 
         with open(self.tenant_session_file, "w") as file_h:
             yaml.dump(
-                {
-                    "access-token": self.access_token,
-                    "project-id": self.project_id
-                },
+                dict(
+                    filter(
+                        lambda dict_iter: dict_iter[1] is not None,
+                        {
+                            "access-token": self.access_token,
+                            "project-id": self.project_id
+                        }.items()
+                    )
+                ),
                 file_h
             )
 
@@ -135,33 +163,29 @@ Example:
 
         with open(self.tenant_config_file, "w") as file_h:
             yaml.dump(
-                {
-                    "server-url": self.server_url,
-                    "x-api-key": self.x_api_key,
-                    "token-tid": get_tenant_id_from_b64_tid(self.tid),
-                    "token-tns": self.tns,
-                    "api-tid": get_tenant_id_from_project_list(f"https://{self.server_url}/ica/rest", self.access_token),
-                    "api-tns": get_tenant_name_from_project_list(f"https://{self.server_url}/ica/rest", self.access_token)
-                },
+                dict(
+                    filter(
+                        lambda dict_iter: dict_iter[1] is not None,
+                        {
+                            "server-url": self.server_url,
+                            "x-api-key": self.x_api_key,
+                            "token-tid": get_tenant_id_from_b64_tid(self.tid) if self.tid is not None else None,
+                            "token-tns": self.tns,
+                            "api-tid": get_tenant_id_from_project_list(
+                                base_url=f"https://{self.server_url}/ica/rest",
+                                access_token=self.access_token
+                            ) if self.access_token is not None else None,
+                            "api-tns": get_tenant_name_from_project_list(
+                                base_url=f"https://{self.server_url}/ica/rest",
+                                access_token=self.access_token
+                            ) if self.access_token is not None else None,
+                        }.items()
+                    )
+                ),
                 file_h
             )
 
     def check_args(self):
-        # Check the tenant name arg exists
-        tenant_name_arg = self.args.get("<tenant_name>", None)
-        if tenant_name_arg is None:
-            logger.error("Could not get arg <tenant_name>")
-            raise InvalidArgumentError
-
-        self.tenant_name = tenant_name_arg
-
-        project_name_arg = self.args.get("--project-name", None)
-        if project_name_arg is not None:
-            if is_uuid_format(project_name_arg):
-                self.project_id = project_name_arg
-            else:
-                self.project_name = project_name_arg
-
         # Create the tenant directory
         self.tenant_path = get_tenants_directory() / self.tenant_name
         self.tenant_path.mkdir(mode=0o700, parents=True, exist_ok=True)
