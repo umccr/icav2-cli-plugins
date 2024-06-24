@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "icav2-cli-plugins"
-version = "2.20.1"
+version = "2.27.0.dev20240624111336"
 authors = [
     { name = "Alexis Lucattini", email = "alexis.lucattini@umccr.org" },
 ]
@@ -40,7 +40,7 @@ dependencies = [
     "fabric >= 3.0.0, < 4",
     "deepdiff >= 6.7.1, < 7",
     "wrapica >= 2.27.0.dev20240624105312",
-    "nf-core >= 2.14"
+    "nf-core >= 2.14",
 ]
 
 [project.urls]
