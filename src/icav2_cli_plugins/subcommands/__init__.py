@@ -343,19 +343,34 @@ class DocOptArg:
     def coerce_arg_type(self):
         if self.arg_type == int:
             if self.arg_value is not None and not isinstance(self.arg_value, int):
-                self.arg_value = int(self.arg_value)
+                if self.is_list:
+                    self.arg_value = list(map(int, self.arg_value))
+                else:
+                    self.arg_value = int(self.arg_value)
         if self.arg_type == str:
             if self.arg_value is not None and not isinstance(self.arg_value, str):
-                self.arg_value = str(self.arg_value)
+                if self.is_list:
+                    self.arg_value = list(map(str, self.arg_value))
+                else:
+                    self.arg_value = str(self.arg_value)
         if self.arg_type == Path:
             if self.arg_value is not None and not isinstance(self.arg_value, Path):
-                self.arg_value = Path(self.arg_value)
+                if self.is_list:
+                    self.arg_value = list(map(Path, self.arg_value))
+                else:
+                    self.arg_value = Path(self.arg_value)
         if self.arg_type == datetime:
             if self.arg_value is not None and not isinstance(self.arg_value, datetime):
-                self.arg_value = pd.to_datetime(self.arg_value)
+                if self.is_list:
+                    self.arg_value = map(pd.to_datetime, self.arg_value)
+                else:
+                    self.arg_value = pd.to_datetime(self.arg_value)
         if isclass(self.arg_type) and issubclass(self.arg_type, Enum):
             if self.arg_value is not None and not isinstance(self.arg_value, self.arg_type):
-                self.arg_value = self.arg_type[self.arg_value]
+                if self.is_list:
+                    self.arg_value = list(map(self.arg_type, self.arg_value))
+                else:
+                    self.arg_value = self.arg_type[self.arg_value]
 
     def assign_arg_value_to_class_attribute(self, command_obj: 'Command', attribute: str):
         """
