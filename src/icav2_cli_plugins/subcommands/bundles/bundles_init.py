@@ -31,6 +31,7 @@ from wrapica.data import (
 from wrapica.region import (
     get_default_region
 )
+from ...utils import is_interactive
 
 # Utils
 from ...utils.bundle_helpers import bundle_to_dict, bundle_to_yaml_obj
@@ -228,7 +229,10 @@ Example:
             self.region = get_default_region()
 
         # Check if we have a bundle of the same name in the same region?
-        existing_bundle: Optional[Bundle] = get_bundle_obj_from_bundle_name(self.bundle_name, self.region.id)
+        try:
+            existing_bundle: Optional[Bundle] = get_bundle_obj_from_bundle_name(self.bundle_name, self.region.id)
+        except IndexError:
+            existing_bundle = None
         if existing_bundle is not None:
             # Not currently possible, see https://github.com/umccr-illumina/ica_v2/issues/42
             # self.bundle_version = int(existing_bundle.bundle_version) + 1
@@ -246,8 +250,14 @@ Example:
                 raise AssertionError
 
         # Check we got some actual objects
-        if (self.pipeline_obj_list is None or len(self.pipeline_obj_list) == 0) \
-                and (self.data_obj_list is None or len(self.data_obj_list) == 0):
+        if (
+                # No pipelines
+                (self.pipeline_obj_list is None or len(self.pipeline_obj_list) == 0) and
+                # No data
+                (self.data_obj_list is None or len(self.data_obj_list) == 0) and
+                # This is an interactive session
+                is_interactive()
+        ):
             logger.warning(
                 "Found neither pipelines nor data objects to add to the bundle. "
                 "Do you wish to continue to generate an empty bundle?"
