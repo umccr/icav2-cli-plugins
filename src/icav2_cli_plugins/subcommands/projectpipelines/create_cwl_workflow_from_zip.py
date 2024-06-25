@@ -11,23 +11,19 @@ Create technical tags for
 
 # External data
 import json
-import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
 # Wrapica imports
 from wrapica.project_pipelines import (
-    AnalysisStorage,
+    AnalysisStorage, ProjectPipeline,
     create_cwl_workflow_from_zip
 )
 
 # Get utils
 from ...utils.errors import InvalidArgumentError
 from ...utils.config_helpers import get_project_id
-from ...utils.cwl_helpers import (
-    ZippedCWLWorkflow
-)
 from ...utils.logger import get_logger
 
 # Local
@@ -79,7 +75,7 @@ Example:
         }
 
         # Set the command argv
-        self.zipped_workflow_obj: Optional[ZippedCWLWorkflow] = None
+        self.pipeline_obj: Optional[ProjectPipeline] = None
         self.project_id: Optional[str] = None
 
         # For printing
@@ -90,12 +86,14 @@ Example:
 
     def __call__(self):
         # Create the pipeline from zip
-        self.zipped_workflow_obj = create_cwl_workflow_from_zip(
+        self.pipeline_obj = create_cwl_workflow_from_zip(
             project_id=self.project_id,
             pipeline_code=self.pipeline_code,
             zip_path=self.zipped_workflow_path,
             analysis_storage=self.analysis_storage_obj,
         )
+        self.pipeline_id = self.pipeline_obj.pipeline.id
+        self.pipeline_code = self.pipeline_obj.pipeline.code
         logger.info(
             f"Successfully created pipeline "
             f"with pipeline id {self.pipeline_id} and "
@@ -103,24 +101,24 @@ Example:
         )
 
         # # Generate workflow plot
-        # num_cwl_inputs = len(self.zipped_workflow_obj.cwl_obj.inputs)
+        # num_cwl_inputs = len(self.pipeline_obj.cwl_obj.inputs)
         # png_plot_path = generate_plot_png(
-        #     self.zipped_workflow_obj.cwl_pack,
+        #     self.pipeline_obj.cwl_pack,
         #     round(min(1 / math.log(num_cwl_inputs), 1.0), 3) if num_cwl_inputs > 1 else 1
         # )
         #
         # # Generate markdown doc
         # markdown_path = generate_markdown_doc(
         #     title=f"{self.zipped_workflow_path.stem} Pipeline",
-        #     description=self.zipped_workflow_obj.cwl_obj.doc,
-        #     label=self.zipped_workflow_obj.cwl_obj.label,
-        #     cwl_inputs=self.zipped_workflow_obj.cwl_obj.inputs,
-        #     cwl_steps=self.zipped_workflow_obj.cwl_obj.steps,
-        #     cwl_outputs=self.zipped_workflow_obj.cwl_obj.outputs,
+        #     description=self.pipeline_obj.cwl_obj.doc,
+        #     label=self.pipeline_obj.cwl_obj.label,
+        #     cwl_inputs=self.pipeline_obj.cwl_obj.inputs,
+        #     cwl_steps=self.pipeline_obj.cwl_obj.steps,
+        #     cwl_outputs=self.pipeline_obj.cwl_obj.outputs,
         #     workflow_image_page_path=png_plot_path,
-        #     workflow_md5sum=self.zipped_workflow_obj.get_md5sum_from_packed_dict(),
-        #     input_json_template=self.zipped_workflow_obj.get_cwl_inputs_template_dict(),
-        #     overrides_template=self.zipped_workflow_obj.get_override_steps_dict()
+        #     workflow_md5sum=self.pipeline_obj.get_md5sum_from_packed_dict(),
+        #     input_json_template=self.pipeline_obj.get_cwl_inputs_template_dict(),
+        #     overrides_template=self.pipeline_obj.get_override_steps_dict()
         # )
         #
         # # Generate html file through pandoc

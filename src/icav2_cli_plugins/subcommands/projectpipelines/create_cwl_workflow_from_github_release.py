@@ -189,8 +189,8 @@ Example:
         print(
             json.dumps(
                 {
-                    "pipeline_id": self.pipeline_obj.id,
-                    "pipeline_code": self.pipeline_obj.code
+                    "pipeline_id": self.pipeline_obj.pipeline.id,
+                    "pipeline_code": self.pipeline_obj.pipeline.code
                 },
                 indent=2
             )
