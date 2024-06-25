@@ -184,7 +184,7 @@ Example:
         logger.info(f"Created the bundle {self.bundle_id}")
 
         # Add pipeline objects to bundle
-        if len(self.pipeline_obj_list) is not None and len(self.pipeline_obj_list) > 0:
+        if self.pipeline_obj_list is not None and len(self.pipeline_obj_list) > 0:
             logger.info(f"Adding pipelines to bundle {self.bundle_id}")
             for pipeline_obj in self.pipeline_obj_list:
                 if add_pipeline_to_bundle(self.bundle_id, pipeline_obj.id):
@@ -193,7 +193,7 @@ Example:
                     logger.warning(f"Could not add pipeline {pipeline_obj.id} to bundle {self.bundle_id}")
 
         # Add data objects to bundle
-        if len(self.data_obj_list) is not None:
+        if self.data_obj_list is not None and len(self.data_obj_list) > 0:
             logger.info(f"Adding data to bundle {self.bundle_id}")
             data_obj: Data
             for data_obj in self.data_obj_list:
