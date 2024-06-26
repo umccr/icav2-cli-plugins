@@ -20,8 +20,10 @@ import json
 from typing import Optional, Dict
 
 # Wrapica imports
-from wrapica.libica_models import Analysis
-from wrapica.project_analysis import get_cwl_analysis_output_json
+from wrapica.project_analysis import (
+    AnalysisType,
+    get_cwl_analysis_output_json
+)
 
 # Utils imports
 from ...utils.config_helpers import get_project_id
@@ -54,7 +56,7 @@ Example:
     icav2 projectanalyses get-cwl-analysis-output-json abc--123456789
     """
 
-    analysis_obj: Analysis
+    analysis_obj: AnalysisType
 
     def __init__(self, command_argv):
         # CLI Args

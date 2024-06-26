@@ -5,7 +5,7 @@ List the existing bundles
 """
 
 # Standard imports
-from typing import Optional, List, Union
+from typing import Optional, List
 
 # Wrapica
 from wrapica.region import Region
@@ -52,11 +52,10 @@ Example:
     """
 
     bundle_name: Optional[str]
-    status: Optional[Union[BundleStatus]]
+    status: Optional[BundleStatus]
     creator_obj: Optional[User]
-    region: Optional[Region]
+    region_obj: Optional[Region]
     is_json: Optional[bool]
-
 
     def __init__(self, command_argv):
         # CLI ARGS
@@ -91,7 +90,7 @@ Example:
         # Get bundles list
         self.bundle_obj_list: List[Bundle] = filter_bundles(
             bundle_name=self.bundle_name,
-            region_id=self.region.id if self.region is not None else None,
+            region_id=self.region_obj.id if self.region_obj is not None else None,
             status=BundleStatus(self.status) if self.status is not None else None,
             creator_id=self.creator_obj.id if self.creator_obj is not None else None
         )

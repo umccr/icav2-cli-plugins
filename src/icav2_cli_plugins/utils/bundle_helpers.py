@@ -5,6 +5,7 @@ import json
 from typing import OrderedDict, Optional, List, Dict
 from pathlib import Path
 
+from libica.openapi.v2 import ApiException
 from ruamel.yaml import YAML, CommentedMap, CommentedSeq
 
 # Wrapica
@@ -86,12 +87,15 @@ def print_bundles(bundles_list: List[Bundle], json_output: bool = False):
         if creator_id is None:
             continue
         # Get user from user ids
+        og_log_level = logger.level
+        logger.setLevel("CRITICAL")
         try:
             user = get_user_obj_from_user_id(creator_id)
             # Set value as firstname ' ' lastname
             creator_dict[user.id] = f"{user.firstname} {user.lastname}"
-        except ValueError:
+        except (ApiException, ValueError):
             creator_dict[creator_id] = "Unknown"
+        logger.setLevel(og_log_level)
 
     bundle_items_df["creator_user"] = bundle_items_df["creator_id"].apply(
         lambda x: creator_dict.get(x, None)

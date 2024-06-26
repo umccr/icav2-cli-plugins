@@ -15,10 +15,10 @@ from pathlib import Path
 # Wrapica
 from wrapica.data import get_project_data_obj_from_data_id
 from wrapica.enums import WorkflowLanguage
-from wrapica.project_analysis import Analysis
+from wrapica.project_analysis import AnalysisType
 from wrapica.project_pipelines import (
     ProjectPipeline,
-    AnalysisStorage,
+    AnalysisStorageType,
     ICAv2CwlAnalysisJsonInput,
     ICAv2CWLPipelineAnalysis,
     ICAv2PipelineAnalysisTags,
@@ -141,7 +141,7 @@ Example:
     analysis_output_obj: Optional[ProjectData]
     ica_logs_obj: Optional[ProjectData]
     cache_obj: Optional[ProjectData]
-    analysis_storage_obj: Optional[AnalysisStorage]
+    analysis_storage_obj: Optional[AnalysisStorageType]
     activation_id: Optional[str]
     user_tags: Optional[List[str]]
     technical_tags: Optional[List[str]]
@@ -443,7 +443,7 @@ Example:
 
     def launch_workflow(self):
         logger.info("Launching analysis")
-        analysis_launch_obj: Analysis = self.analysis_obj()
+        analysis_launch_obj: AnalysisType = self.analysis_obj()
         self.analysis_id = analysis_launch_obj.id
         if self.create_analysis_json_output_path is not None:
             logger.info(f"Dumping launch analysis payload to {self.create_analysis_json_output_path}")

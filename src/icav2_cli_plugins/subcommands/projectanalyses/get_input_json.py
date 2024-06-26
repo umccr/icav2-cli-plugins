@@ -8,7 +8,7 @@ import json
 from typing import Optional, Dict
 
 # Wrapica imports
-from wrapica.project_analysis import get_cwl_analysis_input_json, Analysis
+from wrapica.project_analysis import get_cwl_analysis_input_json, AnalysisType
 
 # Utils
 from ...utils.config_helpers import get_project_id
@@ -44,7 +44,7 @@ Example:
     icav2 projectanalyses get-cwl-analysis-input-json abc--123456789
     """
 
-    analysis_obj: Analysis
+    analysis_obj: AnalysisType
 
     def __init__(self, command_argv):
         # CLI ARGS

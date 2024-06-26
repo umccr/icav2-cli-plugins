@@ -13,7 +13,7 @@ from wrapica.enums import PipelineStatus
 from wrapica.user import (
     get_user_id_from_configuration, get_tenant_id_for_user
 )
-from wrapica.pipelines import Pipeline
+from wrapica.pipelines import PipelineType
 
 # Utils
 from ...utils.logger import get_logger
@@ -60,7 +60,7 @@ Example:
     icav2 pipelines status-check 12345678-1234-1234-1234-123456789012 --is-editable
     """
 
-    pipeline_obj: Optional[Pipeline]
+    pipeline_obj: Optional[PipelineType]
     is_editable: Optional[bool]
     is_linkable: Optional[bool]
 

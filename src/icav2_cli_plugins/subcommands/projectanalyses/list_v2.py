@@ -17,7 +17,7 @@ import pandas as pd
 from wrapica.enums import (
     ProjectAnalysisStatus, ProjectAnalysisSortParameters
 )
-from wrapica.pipelines import Pipeline
+from wrapica.pipelines import PipelineType
 from wrapica.project_analysis import list_analyses
 
 # Import from utils
@@ -89,7 +89,7 @@ Example:
     reverse: Optional[bool]
     max_items: Optional[bool]
 
-    pipeline: Optional[Pipeline]
+    pipeline: Optional[PipelineType]
     user_reference: Optional[str]
     status_filter: Optional[ProjectAnalysisStatus]
     creation_date_before: Optional[datetime]

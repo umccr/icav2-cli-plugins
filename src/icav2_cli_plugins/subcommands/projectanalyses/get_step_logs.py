@@ -13,8 +13,8 @@ from typing import Optional
 
 # Wrapica imports
 from wrapica.enums import AnalysisLogStreamName, ProjectAnalysisStepStatus
-from wrapica.libica_models import Analysis
 from wrapica.project_analysis import (
+    AnalysisType,
     AnalysisStepLogs,
     get_analysis_steps,
     write_analysis_step_logs,
@@ -64,7 +64,7 @@ Example:
     icav2 projectanalyses get-analysis-step-logs abcd12345 --step-name cwltool --stderr --output-path cwltool-debug-logs.txt
     """
 
-    analysis_obj: Analysis
+    analysis_obj: AnalysisType
     step_name: str
     stdout: bool
     stderr: bool

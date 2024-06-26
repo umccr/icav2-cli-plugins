@@ -17,7 +17,7 @@ from typing import Optional
 
 # Wrapica imports
 from wrapica.project_pipelines import (
-    AnalysisStorage, ProjectPipeline,
+    AnalysisStorageType, ProjectPipeline,
     create_cwl_workflow_from_zip
 )
 
@@ -57,7 +57,7 @@ Example:
     """
 
     zipped_workflow_path: Path
-    analysis_storage_obj: AnalysisStorage
+    analysis_storage_obj: AnalysisStorageType
     is_json: bool
 
     def __init__(self, command_argv):

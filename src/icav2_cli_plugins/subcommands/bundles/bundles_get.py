@@ -123,5 +123,5 @@ Example:
 
         # Set self.output_path to stdout if not provided
         if self.output_path is None:
-            self.output_path = sys.stdout.fileno()
+            self.output_path: int = sys.stdout.fileno()
         logger.info("Finished checking args")

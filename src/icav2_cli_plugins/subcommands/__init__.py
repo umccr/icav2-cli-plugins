@@ -19,7 +19,7 @@ from wrapica.bundle import Bundle, coerce_bundle_id_or_name_to_bundle_obj
 from wrapica.data import coerce_data_id_path_or_icav2_uri_to_data_obj, Data
 from wrapica.enums import AnalysisStorageSize
 from wrapica.pipelines import (
-    Pipeline,
+    PipelineType,
     coerce_pipeline_id_or_code_to_pipeline_obj
 )
 from wrapica.project_data import (
@@ -29,7 +29,7 @@ from wrapica.project import (
     coerce_project_id_or_name_to_project_id, Project, get_project_id
 )
 from wrapica.project_analysis import (
-    AnalysisStorage, Analysis,
+    AnalysisStorageType, AnalysisType,
     coerce_analysis_id_or_user_reference_to_analysis_obj
 )
 from wrapica.project_pipelines import (
@@ -148,14 +148,17 @@ class DocOptArg:
             value = coerce_project_id_or_name_to_project_id(value)
 
         if key in ["pipeline", "pipelines", "pipeline_id_or_code"]:
-            if not isclass(self.arg_type) or not issubclass(self.arg_type, Pipeline) and not issubclass(self.arg_type, ProjectPipeline):
+            if (
+                    (not self.arg_type == PipelineType) and
+                    not (isclass(self.arg_type) and issubclass(self.arg_type, ProjectPipeline))
+            ):
                 logger.warning("Got a pipeline id or code but the arg type is not a pipeline")
 
-        if isclass(self.arg_type) and (issubclass(self.arg_type, Pipeline) or issubclass(self.arg_type, ProjectPipeline)):
+        if self.arg_type == PipelineType or (isclass(self.arg_type) and issubclass(self.arg_type, ProjectPipeline)):
             # Set value as the pipeline id
-            if issubclass(self.arg_type, Pipeline):
+            if self.arg_type == PipelineType:
                 value = coerce_pipeline_id_or_code_to_pipeline_obj(value)
-            elif issubclass(self.arg_type, ProjectPipeline):
+            elif isclass(self.arg_type) and issubclass(self.arg_type, ProjectPipeline):
                 # Suppress logging
                 og_log_level = logger.level
                 try:
@@ -174,7 +177,10 @@ class DocOptArg:
 
         if key in ["data", "data_id_or_uri"]:
             # Check arg type
-            if not isclass(self.arg_type) or not issubclass(self.arg_type, Data) and not issubclass(self.arg_type, ProjectData):
+            if (
+                    not isclass(self.arg_type) or
+                    not (issubclass(self.arg_type, Data) and not issubclass(self.arg_type, ProjectData))
+            ):
                 logger.warning("Got a data id or uri but the arg type is not a data object")
 
         if isclass(self.arg_type) and (issubclass(self.arg_type, Data) or issubclass(self.arg_type, ProjectData)):
@@ -228,12 +234,14 @@ class DocOptArg:
 
         if key in ["analysis_storage", "analysis_storage_id_or_size"]:
             if (
-                    (not isclass(self.arg_type) or not issubclass(self.arg_type, AnalysisStorage)) and
+                    not self.arg_type == AnalysisStorageType and
+                    (isclass(self.arg_type) and not issubclass(self.arg_type, AnalysisStorageType)) and
                     (not isinstance(value, str) or value not in AnalysisStorageSize)
             ):
                 logger.warning("Got a analysis storage id or size but the arg type is not an AnalysisStorage type")
         if (
-                (isclass(self.arg_type) and issubclass(self.arg_type, AnalysisStorage)) or
+                self.arg_type == AnalysisStorageType or
+                (isclass(self.arg_type) and issubclass(self.arg_type, AnalysisStorageType)) or
                 (isinstance(value, str) and value in AnalysisStorageSize)
         ):
             value = coerce_analysis_storage_id_or_size_to_analysis_storage(
@@ -251,9 +259,15 @@ class DocOptArg:
             )
 
         if key in ["analysis_id_or_user_reference"]:
-            if not isclass(self.arg_type) or not issubclass(self.arg_type, Analysis):
+            if (
+                    not self.arg_type == AnalysisType and
+                    not (isclass(self.arg_type) and not issubclass(self.arg_type, AnalysisType))
+            ):
                 logger.warning("Got an analysis id or user reference but the arg type is not an Analysis type")
-        if isclass(self.arg_type) and issubclass(self.arg_type, Analysis):
+        if (
+                self.arg_type == AnalysisType or
+                (isclass(self.arg_type) and issubclass(self.arg_type, AnalysisType))
+        ):
             value = coerce_analysis_id_or_user_reference_to_analysis_obj(
                 project_id=get_project_id(),
                 analysis_id_or_user_reference=value
@@ -403,6 +417,11 @@ class DocOptArg:
         if is_list_type(arg_hints):
             self.is_list = True
             arg_hints = strip_list_type(arg_hints)
+
+        # Check if in the types list
+        if arg_hints in [PipelineType, AnalysisType, AnalysisStorageType]:
+            self.arg_type = arg_hints
+            return
 
         # Check if the arg type is a multi type
         if is_union(arg_hints):

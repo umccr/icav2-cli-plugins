@@ -7,7 +7,6 @@ Initialise a bundle
 # Standard imports
 import json
 import sys
-from pathlib import Path
 from typing import Optional, List
 from ruamel.yaml import YAML
 
@@ -20,10 +19,10 @@ from wrapica.bundle import (
     get_bundle_obj_from_bundle_name
 )
 from wrapica.pipelines import (
-    Pipeline, get_pipeline_obj_from_pipeline_id
+    PipelineType
 )
 from wrapica.region import (
-    Region, get_region_obj_from_region_id
+    Region
 )
 from wrapica.data import (
     Data
@@ -118,7 +117,7 @@ Example:
     short_description: str
     bundle_version: str
     bundle_version_description: str
-    pipeline_obj_list: Optional[List[Pipeline]]
+    pipeline_obj_list: Optional[List[PipelineType]]
     data_obj_list: Optional[List[Data]]
     categories: Optional[List[str]]
     region: Optional[Region]

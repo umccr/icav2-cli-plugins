@@ -24,7 +24,7 @@ from typing import Optional
 
 # Wrapica imports
 from wrapica.project_pipelines import (
-    AnalysisStorage,
+    AnalysisStorageType,
     get_analysis_storage_from_analysis_storage_size
 )
 from wrapica.project_pipelines import (
@@ -80,7 +80,7 @@ Example:
 
     pipeline_name: str
     revision: str
-    analysis_storage: Optional[AnalysisStorage]
+    analysis_storage: Optional[AnalysisStorageType]
     is_output_json: Optional[bool]
 
     def __init__(self, command_argv):
@@ -186,7 +186,7 @@ Example:
 
         # Get analysis storage ID or go to default
         if self.analysis_storage is None:
-            self.analysis_storage = get_analysis_storage_from_analysis_storage_size(AnalysisStorage.SMALL)
+            self.analysis_storage = get_analysis_storage_from_analysis_storage_size(AnalysisStorageType.SMALL)
 
         # Set the description as the GitHub release url
         self.description = f"nf-core pipeline {self.pipeline_name} at revision {self.revision}"

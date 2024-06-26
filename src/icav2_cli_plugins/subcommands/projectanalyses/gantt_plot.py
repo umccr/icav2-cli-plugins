@@ -10,7 +10,7 @@ from typing import Optional, List
 
 # Wrapica
 from wrapica.project_analysis import (
-    AnalysisStep, Analysis,
+    AnalysisStep, AnalysisType,
     get_analysis_steps
 )
 
@@ -55,7 +55,7 @@ Example:
     icav2 projectanalyses gantt-plot abc12345 --output-path gantt.png
     """
 
-    analysis_obj: Analysis
+    analysis_obj: AnalysisType
     output_path: Path
 
     def __init__(self, command_argv):

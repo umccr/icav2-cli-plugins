@@ -13,7 +13,7 @@ from typing import Optional
 
 # Wrapica imports
 from wrapica.project_pipelines import (
-    AnalysisStorage,
+    AnalysisStorageType,
 )
 from wrapica.project_pipelines import (
     ProjectPipeline,
@@ -65,7 +65,7 @@ Example:
 
     zipped_workflow_path: Path
     workflow_description: Optional[str]
-    analysis_storage: Optional[AnalysisStorage]
+    analysis_storage: Optional[AnalysisStorageType]
     is_output_json: Optional[bool]
 
     def __init__(self, command_argv):

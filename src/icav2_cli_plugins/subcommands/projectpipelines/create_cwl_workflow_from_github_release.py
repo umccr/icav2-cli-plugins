@@ -20,8 +20,9 @@ import requests
 
 # Wrapica imports
 from wrapica.project_pipelines import (
-    AnalysisStorage,
-    create_cwl_workflow_from_zip, get_analysis_storage_from_analysis_storage_size
+    AnalysisStorageType,
+    create_cwl_workflow_from_zip,
+    get_analysis_storage_from_analysis_storage_size
 )
 from wrapica.project_pipelines import ProjectPipeline
 
@@ -29,7 +30,8 @@ from wrapica.project_pipelines import ProjectPipeline
 from ...utils.errors import InvalidArgumentError
 from ...utils.config_helpers import get_project_id
 from ...utils.gh_helpers import (
-    download_zipped_workflow_from_github_release, get_release_repo_and_tag_from_release_url
+    download_zipped_workflow_from_github_release,
+    get_release_repo_and_tag_from_release_url
 )
 from ...utils.logger import get_logger
 
@@ -69,7 +71,7 @@ Example:
     """
 
     github_release_url: Optional[str]
-    analysis_storage_obj: Optional[AnalysisStorage]
+    analysis_storage_obj: Optional[AnalysisStorageType]
     is_output_json: Optional[bool]
 
     def __init__(self, command_argv):
@@ -173,7 +175,7 @@ Example:
 
         # Get analysis storage ID or go to default
         if self.analysis_storage_obj is None:
-            self.analysis_storage_obj = get_analysis_storage_from_analysis_storage_size(AnalysisStorage.SMALL)
+            self.analysis_storage_obj = get_analysis_storage_from_analysis_storage_size(AnalysisStorageType.SMALL)
 
         # Set the description as the GitHub release url
         self.description = f"GitHub Release URL: {self.github_release_url}"

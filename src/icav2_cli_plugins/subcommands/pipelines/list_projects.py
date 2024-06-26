@@ -9,7 +9,7 @@ from typing import Optional, List, Dict
 
 # Wrapica imports
 from wrapica.project import list_projects, Project
-from wrapica.pipelines import Pipeline
+from wrapica.pipelines import PipelineType
 from wrapica.project_pipelines import list_project_pipelines
 
 # Utils
@@ -59,7 +59,7 @@ Example:
     icav2 pipelines list-projects abcd-efgh-ijkl-mnop
     """
 
-    pipeline_obj: Optional[Pipeline]
+    pipeline_obj: Optional[PipelineType]
     include_hidden_projects: Optional[bool]
     is_json: Optional[bool]
     include_bundle_linked: Optional[bool]

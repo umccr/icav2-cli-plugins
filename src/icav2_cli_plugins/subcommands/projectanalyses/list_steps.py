@@ -12,7 +12,9 @@ import json
 from typing import Optional, Dict, List
 
 # Wrapica
-from wrapica.project_analysis import get_analysis_steps, Analysis
+from wrapica.project_analysis import (
+    get_analysis_steps, AnalysisType
+)
 
 # Import from utils
 from ...utils.config_helpers import get_project_id
@@ -51,7 +53,7 @@ Example:
     icav2 projectanalyses list-analysis-steps <analysis_id>
     """
 
-    analysis_obj: Analysis
+    analysis_obj: AnalysisType
     is_show_technical_steps: Optional[bool]
 
     def __init__(self, command_argv):

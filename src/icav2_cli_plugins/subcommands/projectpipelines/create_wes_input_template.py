@@ -18,7 +18,7 @@ from pathlib import Path
 
 # Wrapica import
 from wrapica.enums import WorkflowLanguage
-from wrapica.project_analysis import AnalysisStorage
+from wrapica.project_analysis import AnalysisStorageType
 from wrapica.utils.cwl_typing_helpers import WorkflowType
 from wrapica.project_pipelines import (
     ProjectPipeline,
@@ -167,7 +167,7 @@ Example:
     cache: Optional[str]
 
     # Analysis storage
-    analysis_storage: Optional[AnalysisStorage]
+    analysis_storage: Optional[AnalysisStorageType]
 
     # Activation ID - rarely set here
     activation_id: Optional[str]

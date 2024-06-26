@@ -10,7 +10,7 @@ from typing import Optional
 # Wrapica imports
 from wrapica.enums import ProjectAnalysisStatus
 from wrapica.project_analysis import (
-    abort_analysis, Analysis
+    abort_analysis, AnalysisType
 )
 
 # Utils
@@ -46,7 +46,7 @@ Example:
     icav2 projectanalyses abort <analysis_id>
     """
 
-    analysis_obj: Optional[Analysis]
+    analysis_obj: Optional[AnalysisType]
 
     def __init__(self, command_argv):
         # CLI ARGS

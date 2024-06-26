@@ -7,10 +7,10 @@ Download a CWL or Nextflow pipeline to a CWL file object
 # Standard imports
 from pathlib import Path
 from typing import Optional
-from libica.openapi.v2.model.project_pipeline import ProjectPipeline
 
 # Wrapica imports
 from wrapica.pipelines import download_pipeline_to_zip
+from wrapica.project_pipelines import ProjectPipeline
 
 # Utils
 from ...utils.config_helpers import get_project_id

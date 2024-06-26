@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 # External imports
 from pathlib import Path
 from typing import List, Optional
