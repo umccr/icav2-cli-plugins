@@ -26,7 +26,9 @@ from wrapica.project_data import (
     coerce_data_id_icav2_uri_or_path_to_project_data_obj, ProjectData
 )
 from wrapica.project import (
-    coerce_project_id_or_name_to_project_id, Project, get_project_id
+    Project,
+    coerce_project_id_or_name_to_project_obj,
+    get_project_id
 )
 from wrapica.project_analysis import (
     AnalysisStorageType, AnalysisType,
@@ -45,11 +47,14 @@ from wrapica.user import (
 )
 
 # Get utils
+from ..utils import is_uuid_format
 from ..utils.errors import InvalidArgumentError
 from ..utils.logger import get_logger
 from ..utils.docopt_helpers import clean_multi_args
-from ..utils.typing_helpers import is_optional_type, is_multi_type, split_multi_type, \
+from ..utils.typing_helpers import (
+    is_optional_type, is_multi_type, split_multi_type,
     is_list_type, strip_optional_type, strip_list_type, is_union, strip_union_type
+)
 
 # Collect logger
 logger = get_logger()
@@ -130,7 +135,7 @@ class DocOptArg:
             env_arg_keys if isinstance(env_arg_keys, List) else [env_arg_keys]
         )
 
-    def coerce_magical_value(self, key, value):
+    def coerce_magical_value(self, key: str, value: str):
         """
         Magicals
         For project, pipeline, data, region, user, bundle or analysis-storage-size,
@@ -145,7 +150,7 @@ class DocOptArg:
             if not isclass(self.arg_type) or not issubclass(self.arg_type, Project):
                 logger.warning("Got a project id or name but the arg type is not a project")
         if isclass(self.arg_type) and issubclass(self.arg_type, Project):
-            value = coerce_project_id_or_name_to_project_id(value)
+            value: Project = coerce_project_id_or_name_to_project_obj(value)
 
         if key in ["pipeline", "pipelines", "pipeline_id_or_code"]:
             if (
@@ -157,18 +162,18 @@ class DocOptArg:
         if self.arg_type == PipelineType or (isclass(self.arg_type) and issubclass(self.arg_type, ProjectPipeline)):
             # Set value as the pipeline id
             if self.arg_type == PipelineType:
-                value = coerce_pipeline_id_or_code_to_pipeline_obj(value)
+                value: PipelineType = coerce_pipeline_id_or_code_to_pipeline_obj(value)
             elif isclass(self.arg_type) and issubclass(self.arg_type, ProjectPipeline):
                 # Suppress logging
                 og_log_level = logger.level
                 try:
                     logger.setLevel(logging.CRITICAL + 1)
-                    value = coerce_pipeline_id_or_code_to_project_pipeline_obj(value)
+                    value: ProjectPipeline = coerce_pipeline_id_or_code_to_project_pipeline_obj(value)
                 except ValueError:
                     # Set logging back to original level
                     logger.setLevel(og_log_level)
                     logger.error(
-                        f"Tried to get the data object for {value} but failed because could not get the project id")
+                        f"Tried to get the pipeline object for {value} but failed because could not get the project id")
                     logger.error("Could not get the project id from either the env var OR the icav2 session file")
                     raise InvalidArgumentError
                 finally:
@@ -199,12 +204,12 @@ class DocOptArg:
             try:
                 logger.setLevel(logging.CRITICAL + 1)
                 if issubclass(self.arg_type, ProjectData):
-                    value = coerce_data_id_icav2_uri_or_path_to_project_data_obj(
+                    value: ProjectData = coerce_data_id_icav2_uri_or_path_to_project_data_obj(
                         value,
                         create_data_if_not_found=create_data_if_not_found
                     )
                 else:  # issubclass(self.arg_type, Data):
-                    value = coerce_data_id_path_or_icav2_uri_to_data_obj(
+                    value: Data = coerce_data_id_path_or_icav2_uri_to_data_obj(
                         value,
                         create_data_if_not_found=create_data_if_not_found
                     )
@@ -224,37 +229,19 @@ class DocOptArg:
                 logger.warning("Got a region id or city name but the arg type is not of type 'Region'")
 
         if isclass(self.arg_type) and issubclass(self.arg_type, Region):
-            value = coerce_region_id_or_city_name_to_region_obj(value)
+            value: Region = coerce_region_id_or_city_name_to_region_obj(value)
 
         if key in ["creator", "creator_id_or_name", "user", "user_id_or_name"]:
             if not isclass(self.arg_type) or not issubclass(self.arg_type, User):
                 logger.warning("Got a user id or name but the arg type is not a user")
         if isclass(self.arg_type) and issubclass(self.arg_type, User):
-            value = coerce_user_id_or_name_to_user_obj(value)
-
-        if key in ["analysis_storage", "analysis_storage_id_or_size"]:
-            if (
-                    not self.arg_type == AnalysisStorageType and
-                    (isclass(self.arg_type) and not issubclass(self.arg_type, AnalysisStorageType)) and
-                    (not isinstance(value, str) or value not in AnalysisStorageSize)
-            ):
-                logger.warning("Got a analysis storage id or size but the arg type is not an AnalysisStorage type")
-        if (
-                self.arg_type == AnalysisStorageType or
-                (isclass(self.arg_type) and issubclass(self.arg_type, AnalysisStorageType)) or
-                (isinstance(value, str) and value in AnalysisStorageSize)
-        ):
-            value = coerce_analysis_storage_id_or_size_to_analysis_storage(
-                AnalysisStorageSize(value)
-                if value in AnalysisStorageSize
-                else value
-            )
+            value: User = coerce_user_id_or_name_to_user_obj(value)
 
         if key in ["bundle", "bundle_id_or_name"]:
             if not isclass(self.arg_type) or not issubclass(self.arg_type, Bundle):
                 logger.warning("Got a bundle id or name but the arg type is not an Bundle type")
         if isclass(self.arg_type) and issubclass(self.arg_type, Bundle):
-            value = coerce_bundle_id_or_name_to_bundle_obj(
+            value: Bundle = coerce_bundle_id_or_name_to_bundle_obj(
                 value
             )
 
@@ -268,9 +255,26 @@ class DocOptArg:
                 self.arg_type == AnalysisType or
                 (isclass(self.arg_type) and issubclass(self.arg_type, AnalysisType))
         ):
-            value = coerce_analysis_id_or_user_reference_to_analysis_obj(
+            value: AnalysisType = coerce_analysis_id_or_user_reference_to_analysis_obj(
                 project_id=get_project_id(),
                 analysis_id_or_user_reference=value
+            )
+
+        if key in ["analysis_storage", "analysis_storage_id_or_size"]:
+            if (
+                    not self.arg_type == AnalysisStorageType or
+                    (isclass(self.arg_type) and not issubclass(self.arg_type, AnalysisStorageType)) or
+                    (not isinstance(value, str) or (value not in AnalysisStorageSize or not is_uuid_format(value)))
+            ):
+                logger.warning("Got a analysis storage id or size but the arg type is not an AnalysisStorage type")
+        if (
+                self.arg_type == AnalysisStorageType or
+                (isclass(self.arg_type) and issubclass(self.arg_type, AnalysisStorageType))
+        ):
+            value: AnalysisStorageType = coerce_analysis_storage_id_or_size_to_analysis_storage(
+                AnalysisStorageSize(value)
+                if value in AnalysisStorageSize
+                else value
             )
 
         return value
