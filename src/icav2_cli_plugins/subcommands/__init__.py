@@ -423,8 +423,8 @@ class DocOptArg:
             arg_hints = strip_list_type(arg_hints)
 
         # Check if in the types list
-        if arg_hints in [PipelineType, AnalysisType, AnalysisStorageType]:
-            self.arg_type = arg_hints
+        if Union[arg_hints] in [PipelineType, AnalysisType, AnalysisStorageType]:
+            self.arg_type = Union[arg_hints]
             return
 
         # Check if the arg type is a multi type

@@ -68,8 +68,8 @@ Environment variables:
     ICAV2_BASE_URL           Optional, default set as https://ica.illumina.com/ica/rest
 
 Example:
-    icav2 bundles add-data-to-bundle my_bundle --data fil.12345678
-    icav2 bundles add-data-to-bundle --cli-input-yaml /path/to/input.yaml
+    icav2 bundles add-data my_bundle --data fil.12345678
+    icav2 bundles add-data --cli-input-yaml /path/to/input.yaml
     """
 
     bundle_obj: Bundle

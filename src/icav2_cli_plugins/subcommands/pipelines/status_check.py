@@ -60,7 +60,7 @@ Example:
     icav2 pipelines status-check 12345678-1234-1234-1234-123456789012 --is-editable
     """
 
-    pipeline_obj: Optional[PipelineType]
+    pipeline_obj: PipelineType
     is_editable: Optional[bool]
     is_linkable: Optional[bool]
 

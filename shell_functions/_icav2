@@ -73,12 +73,15 @@ Use 'icav2 [command] --help' for more information about a command.
   }
 
   __icav2__create_token_from_api_key() {
+    local icav2_base_url="$1"
+    local x_api_key="$2"
+
     set -o pipefail
     curl --fail --silent --location --show-error \
       --request 'POST' \
-      --url "${ICAV2_BASE_URL}/api/tokens" \
+      --url "${icav2_base_url}/api/tokens" \
       --header "Accept: application/vnd.illumina.v3+json" \
-      --header "X-API-Key: $1" \
+      --header "X-API-Key: ${x_api_key}" \
       -d '' |
     jq --raw-output \
       '.token'
@@ -398,7 +401,7 @@ Use 'icav2 [command] --help' for more information about a command.
 
         # Create a new token from the API key
         if ! access_token="$( \
-          __icav2__create_token_from_api_key "${x_api_key}"
+          __icav2__create_token_from_api_key "${base_url}" "${x_api_key}"
         )"; then
           echo "Failed to create access token from api-key in '${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/config.yaml'" 1>&2
           return 1

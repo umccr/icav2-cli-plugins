@@ -60,8 +60,8 @@ Environment variables:
     ICAV2_BASE_URL           Optional, default set as https://ica.illumina.com/ica/rest
 
 Example:
-    icav2 bundles add-pipeline-to-bundle my_bundle --pipeline my_pipeline_code
-    icav2 bundles add-pipeline-to-bundle --cli-input-yaml /path/to/input.yaml
+    icav2 bundles add-pipeline my_bundle --pipeline my_pipeline_code
+    icav2 bundles add-pipeline --cli-input-yaml /path/to/input.yaml
     """
 
     bundle_obj: Optional[Bundle]
@@ -92,7 +92,7 @@ Example:
     def check_args(self):
         # Check bundle status
         if (
-                BundleStatus[self.bundle_obj.status] == BundleStatus.RELEASED
+                BundleStatus(self.bundle_obj.status) == BundleStatus.RELEASED
                 and is_interactive()
         ):
             logger.warning("Bundle is already released, are you sure you wish to add data to it?")
