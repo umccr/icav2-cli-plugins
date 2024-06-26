@@ -149,10 +149,11 @@ Example:
 
     def check_data_region_matches_bundle_region(self):
         # Check if the data region matches the bundle region
-        for project_data_obj in self.data_obj_list:
-            if project_data_obj.data.region.id != self.bundle_region.id:
+        data_obj: Data
+        for data_obj in self.data_obj_list:
+            if data_obj.details.region.id != self.bundle_region.id:
                 logger.error(
                     f"Cannot add data to bundle"
-                    f"as the data region {project_data_obj.data.region.city_name} does not match the bundle region {self.bundle_region.city_name}"
+                    f"as the data region {data_obj.details.region.city_name} does not match the bundle region {self.bundle_region.city_name}"
                 )
                 raise ValueError
