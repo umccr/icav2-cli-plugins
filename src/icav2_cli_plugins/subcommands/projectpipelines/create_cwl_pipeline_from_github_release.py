@@ -186,7 +186,7 @@ Example:
         self.is_output_json = self.is_output_json if self.is_output_json is not None else False
 
     def set_zipped_workflow_obj_from_github_release_url(self):
-        self.zipped_workflow_path = Path(self.zipped_workflow_tmp_dir.name) / (self.github_tag_name_clean + ".zip").replace("/", "__")
+        self.zipped_workflow_path = Path(self.zipped_workflow_tmp_dir.name) / (self.github_tag_name_clean + ".zip")
         download_zipped_workflow_from_github_release(self.github_repo, self.github_tag_name, self.zipped_workflow_path)
 
     def print_to_stdout(self):
