@@ -35,8 +35,8 @@ logger = get_logger()
 
 class ProjectPipelinesCreateCWLWorkflow(Command):
     """Usage:
-    icav2 projectpipelines create-cwl-workflow-from-zip help
-    icav2 projectpipelines create-cwl-workflow-from-zip <zipped_workflow_path>
+    icav2 projectpipelines create-cwl-pipeline-from-zip help
+    icav2 projectpipelines create-cwl-pipeline-from-zip <zipped_workflow_path>
                                                         [--analysis-storage=<analysis_storage_id_or_size>]
                                                         [--json]
 
@@ -53,7 +53,7 @@ Environment variables:
     ICAV2_ACCESS_TOKEN       Optional, taken from "$HOME/.icav2/.session.ica.yaml" if not set
 
 Example:
-    icav2 projectpipelines create-cwl-workflow-from-zip tabix_workflow.zip --analysis-storage-size Small
+    icav2 projectpipelines create-cwl-pipeline-from-zip tabix_workflow.zip --analysis-storage-size Small
     """
 
     zipped_workflow_path: Path

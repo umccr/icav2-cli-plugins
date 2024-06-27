@@ -392,7 +392,7 @@ subcommands:
       unlink:
         summary: Unlink pipeline from a project
       # CUSTOM FUNCTIONS
-      create-cwl-workflow-from-zip:
+      create-cwl-pipeline-from-zip:
         summary: From a zip file, deploy a workflow to icav2
         parameters:
           - name: zipped_workflow_path
@@ -406,7 +406,7 @@ subcommands:
             summary: analysis storage size
             type: string
             enum: [Small, Medium, Large]
-      create-cwl-workflow-from-github-release:
+      create-cwl-pipeline-from-github-release:
         summary: From a github release, deploy a workflow to icav2
         parameters:
           - name: github_release_url

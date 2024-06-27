@@ -9,7 +9,7 @@ import shutil
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Dict, Tuple
-from urllib.parse import urlparse
+from urllib.parse import urlparse, unquote
 
 from bs4 import BeautifulSoup
 
@@ -74,7 +74,9 @@ def get_release_repo_and_tag_from_release_url(release_url: str) -> Tuple[str, st
         logger.error(f"Groups were {release_regex_match.groups()}")
         raise AssertionError
 
-    return release_regex_match.groups()
+    github_repo = release_regex_match.group(1)
+    github_tag = unquote(release_regex_match.group(2))
+    return github_repo, github_tag
 
 
 def get_release_markdown_file_doc(repo: str, tag_name: str, output_path: Path):

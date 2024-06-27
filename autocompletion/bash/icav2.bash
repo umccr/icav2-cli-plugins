@@ -812,7 +812,7 @@ _icav2() {
 
         1)
             __comp_current_options || return
-            __icav2_dynamic_comp 'commands' 'create'$'\t''Create a pipeline'$'\n''create-cwl-wes-input-template'$'\t''Create a WES input template for a CWL workflow ready for launch'$'\n''create-cwl-workflow-from-github-release'$'\t''From a github release, deploy a workflow to icav2'$'\n''create-cwl-workflow-from-zip'$'\t''From a zip file, deploy a workflow to icav2'$'\n''input'$'\t''Retrieve input parameters of pipeline'$'\n''link'$'\t''Link pipeline to a project'$'\n''list'$'\t''List of pipelines for a project'$'\n''start'$'\t''Start a pipeline'$'\n''start-cwl-wes'$'\t''Launch an analysis on icav2'$'\n''unlink'$'\t''Unlink pipeline from a project'$'\n''update'
+            __icav2_dynamic_comp 'commands' 'create'$'\t''Create a pipeline'$'\n''create-cwl-wes-input-template'$'\t''Create a WES input template for a CWL workflow ready for launch'$'\n''create-cwl-pipeline-from-github-release'$'\t''From a github release, deploy a workflow to icav2'$'\n''create-cwl-pipeline-from-zip'$'\t''From a zip file, deploy a workflow to icav2'$'\n''input'$'\t''Retrieve input parameters of pipeline'$'\n''link'$'\t''Link pipeline to a project'$'\n''list'$'\t''List of pipelines for a project'$'\n''start'$'\t''Start a pipeline'$'\n''start-cwl-wes'$'\t''Launch an analysis on icav2'$'\n''unlink'$'\t''Unlink pipeline from a project'$'\n''update'
 
         ;;
         *)
@@ -868,7 +868,7 @@ _icav2() {
             ;;
             esac
           ;;
-          create-cwl-workflow-from-github-release)
+          create-cwl-pipeline-from-github-release)
             OPTIONS+=('--analysis-storage-id' 'analysis storage id' '--analysis-storage-size' 'analysis storage size')
             __icav2_handle_options_flags
             case ${MYWORDS[$INDEX-1]} in
@@ -891,7 +891,7 @@ _icav2() {
             ;;
             esac
           ;;
-          create-cwl-workflow-from-zip)
+          create-cwl-pipeline-from-zip)
             OPTIONS+=('--analysis-storage-id' 'analysis storage id' '--analysis-storage-size' 'analysis storage size')
             __icav2_handle_options_flags
             case ${MYWORDS[$INDEX-1]} in

@@ -12,6 +12,7 @@ from wrapica.region import Region
 from wrapica.bundle import filter_bundles, Bundle
 from wrapica.enums import BundleStatus
 from wrapica.user import User
+from wrapica.project import Project
 
 # Utils
 from ...utils.bundle_helpers import print_bundles
@@ -29,6 +30,7 @@ class BundlesList(Command):
     icav2 bundles list help
     icav2 bundles list [--name <name_or_regex>]
                        [--status <status>]
+                       [--project <project_id_or_name>]
                        [--creator <creator_id_or_username>]
                        [--region <region_id_or_city_name>]
                        [--json]
@@ -40,6 +42,7 @@ Options:
   --name=<name>                         Optional, show only bundles that match a certain bundle name,
                                         can use a regex here too
   --status=<status>                     Optional, show only bundles by status (one of DRAFT, RELEASED, DEPRECATED)
+  --project=<project_id_or_name>        Optional, show only bundles that are part of this project
   --creator=<creator_id_or_username>    Optional, show only bundles that are created by this user
   --region=<region_id_or_city_name>     Optional, show only bundles of a certain region
   --json                                Return bundle list as json list object to stdout (table by default)
@@ -53,6 +56,7 @@ Example:
 
     bundle_name: Optional[str]
     status: Optional[BundleStatus]
+    project_obj: Optional[Project]
     creator_obj: Optional[User]
     region_obj: Optional[Region]
     is_json: Optional[bool]
@@ -65,6 +69,9 @@ Example:
             ),
             "status": DocOptArg(
                 cli_arg_keys=["--status"]
+            ),
+            "project_obj": DocOptArg(
+                cli_arg_keys=["--project"]
             ),
             "creator_obj": DocOptArg(
                 cli_arg_keys=["--creator"]
@@ -90,6 +97,7 @@ Example:
         # Get bundles list
         self.bundle_obj_list: List[Bundle] = filter_bundles(
             bundle_name=self.bundle_name,
+            project_id=self.project_obj.id if self.project_obj is not None else None,
             region_id=self.region_obj.id if self.region_obj is not None else None,
             status=BundleStatus(self.status) if self.status is not None else None,
             creator_id=self.creator_obj.id if self.creator_obj is not None else None

@@ -45,8 +45,8 @@ logger = get_logger()
 
 class ProjectPipelinesCreateCWLWorkflowFromGitHubRelease(Command):
     """Usage:
-    icav2 projectpipelines create-cwl-workflow-from-github-release help
-    icav2 projectpipelines create-cwl-workflow-from-github-release <github_release_url>
+    icav2 projectpipelines create-cwl-pipeline-from-github-release help
+    icav2 projectpipelines create-cwl-pipeline-from-github-release <github_release_url>
                                                                    [--analysis-storage=<analysis_storage_id_or_size>]
                                                                    [--json]
 
@@ -67,7 +67,7 @@ Requirements:
     Requires 'gh' binary to be installed
 
 Example:
-    icav2 projectpipelines create-cwl-workflow-from-github-release https://github.com/umccr/cwl-ica/releases/tag/dragen-pon-qc/3.9.3__221221152834 --analysis-storage-size Small
+    icav2 projectpipelines create-cwl-pipeline-from-github-release https://github.com/umccr/cwl-ica/releases/tag/dragen-pon-qc/3.9.3__221221152834 --analysis-storage-size Small
     """
 
     github_release_url: Optional[str]
@@ -92,6 +92,7 @@ Example:
         # URL split by repo and tag name
         self.github_repo: Optional[str] = None
         self.github_tag_name: Optional[str] = None
+        self.github_tag_name_clean: Optional[str] = None  # 'bclconvert-interop-qc%2F1.3.1--1.21__20240627011541' to 'bclconvert-interop-qc/1.3.1--1.21__20240627011541'
 
         # From the repo and tag name we can collect the zipped workflow obj and path
         self.zipped_workflow_tmp_dir = TemporaryDirectory()
@@ -169,6 +170,7 @@ Example:
 
         # Split GitHub release url into repo and tag
         self.github_repo, self.github_tag_name = get_release_repo_and_tag_from_release_url(self.github_release_url)
+        self.github_tag_name_clean = self.github_tag_name.replace("/", "__")
 
         # Get workflow object
         self.set_zipped_workflow_obj_from_github_release_url()
@@ -184,7 +186,7 @@ Example:
         self.is_output_json = self.is_output_json if self.is_output_json is not None else False
 
     def set_zipped_workflow_obj_from_github_release_url(self):
-        self.zipped_workflow_path = Path(self.zipped_workflow_tmp_dir.name) / (self.github_tag_name + ".zip").replace("/", "__")
+        self.zipped_workflow_path = Path(self.zipped_workflow_tmp_dir.name) / (self.github_tag_name_clean + ".zip").replace("/", "__")
         download_zipped_workflow_from_github_release(self.github_repo, self.github_tag_name, self.zipped_workflow_path)
 
     def print_to_stdout(self):

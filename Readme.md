@@ -303,8 +303,8 @@ View a component for a cwltool step
 [project_data_wiki_s3_sync_upload]: https://github.com/umccr/icav2-cli-plugins/wiki/ProjectData#s3-sync-commands
 [project_data_wiki_create_download_script]: https://github.com/umccr/icav2-cli-plugins/wiki/ProjectData#create-download-script
 
-[project_pipelines_create_workflow_from_zip]: https://github.com/umccr/icav2-cli-plugins/wiki/ProjectPipelines#create-cwl-workflow-from-zip
-[project_pipelines_create_workflow_from_github_release]: https://github.com/umccr/icav2-cli-plugins/wiki/ProjectPipelines#create-cwl-workflow-from-github-release
+[project_pipelines_create_workflow_from_zip]: https://github.com/umccr/icav2-cli-plugins/wiki/ProjectPipelines#create-cwl-pipeline-from-zip
+[project_pipelines_create_workflow_from_github_release]: https://github.com/umccr/icav2-cli-plugins/wiki/ProjectPipelines#create-cwl-pipeline-from-github-release
 [project_pipelines_create_wes_input_template]: https://github.com/umccr/icav2-cli-plugins/wiki/ProjectPipelines#create-cwl-wes-input-template
 [project_pipelines_start_cwl_wes]: https://github.com/umccr/icav2-cli-plugins/wiki/ProjectPipelines#start-cwl-wes
 [project_pipelines_release]: https://github.com/umccr/icav2-cli-plugins/wiki/ProjectPipelines#release

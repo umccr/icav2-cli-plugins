@@ -185,6 +185,8 @@ Use 'icav2 [command] --help' for more information about a command.
     "_bundles__add-data_" \
     "_bundles__add-pipeline_" \
     "_bundles__add-bundle-to-project_" \
+    "_bundles__remove-bundle-from-project_" \
+    "_bundles__deprecate_" \
     "_bundles__help_" \
     "_bundles__-h_" \
     "_bundles__--help_" \
@@ -212,8 +214,8 @@ Use 'icav2 [command] --help' for more information about a command.
     "_pipelines__help_" \
     "_pipelines__-h_" \
     "_pipelines__--help_" \
-    "_projectpipelines__create-cwl-workflow-from-zip_" \
-    "_projectpipelines__create-cwl-workflow-from-github-release_" \
+    "_projectpipelines__create-cwl-pipeline-from-zip_" \
+    "_projectpipelines__create-cwl-pipeline-from-github-release_" \
     "_projectpipelines__create-nextflow-pipeline-from-nfcore_" \
     "_projectpipelines__create-wes-input-template_" \
     "_projectpipelines__start-wes_" \

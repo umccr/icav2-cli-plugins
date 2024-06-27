@@ -22,8 +22,8 @@ Available Commands:
   unlink      Unlink pipeline from a project
 
 Plugin Commands:
-  create-cwl-workflow-from-zip             Upload a CWL Workflow to ICAv2 from a local zip path
-  create-cwl-workflow-from-github-release  Upload a CWL Workflow to ICAv2 from a GitHub Release
+  create-cwl-pipeline-from-zip             Upload a CWL Workflow to ICAv2 from a local zip path
+  create-cwl-pipeline-from-github-release  Upload a CWL Workflow to ICAv2 from a GitHub Release
   create-nextflow-pipeline-from-nf-core    Upload a nf-core pipeline to ICAv2
   create-nextflow-pipeline-from-zip        Upload a nextflow pipeline from a zip file
   create-wes-input-template                Create a template for an ICAv2 pipeline
@@ -49,10 +49,10 @@ Use "icav2 projectpipelines [command] --help" for more information about a comma
 
     def get_subcommand_obj(self, cmd, command_argv):
 
-        if cmd == "create-cwl-workflow-from-zip":
+        if cmd == "create-cwl-pipeline-from-zip":
             from .create_cwl_workflow_from_zip import ProjectPipelinesCreateCWLWorkflow as subcommand
-        elif cmd == "create-cwl-workflow-from-github-release":
-            from .create_cwl_workflow_from_github_release import ProjectPipelinesCreateCWLWorkflowFromGitHubRelease as subcommand
+        elif cmd == "create-cwl-pipeline-from-github-release":
+            from .create_cwl_pipeline_from_github_release import ProjectPipelinesCreateCWLWorkflowFromGitHubRelease as subcommand
         elif cmd == "create-nextflow-pipeline-from-nf-core":
             from .create_nextflow_pipeline_from_nf_core import ProjectPipelinesCreateNextflowPipelineFromNfCore as subcommand
         elif cmd == "create-nextflow-pipeline-from-zip":
