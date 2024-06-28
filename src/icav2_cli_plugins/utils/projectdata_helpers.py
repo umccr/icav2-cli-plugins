@@ -141,11 +141,15 @@ def view_in_browser(download_url):
         raise SubprocessError
 
 
-def run_s3_sync_command(aws_env_vars: Dict, aws_s3_sync_args: List,
-                        aws_s3_path: str,
-                        upload: Optional[bool] = False, download: Optional[bool] = True,
-                        upload_path: Optional[Path] = None, download_path: Optional[Path] = None
-                        ) -> bool:
+def run_s3_sync_command(
+        aws_env_vars: Dict,
+        aws_s3_sync_args: Optional[List[str]],
+        aws_s3_path: str,
+        upload: Optional[bool] = False,
+        download: Optional[bool] = True,
+        upload_path: Optional[Path] = None,
+        download_path: Optional[Path] = None
+) -> bool:
     """
     Run the aws s3 command through the subprocess tool
     :param aws_env_vars:
@@ -185,9 +189,10 @@ def run_s3_sync_command(aws_env_vars: Dict, aws_s3_sync_args: List,
         )
 
     # Extend with aws s3 sync args
-    aws_s3_command.extend(
-        aws_s3_sync_args
-    )
+    if aws_s3_sync_args is not None:
+        aws_s3_command.extend(
+            aws_s3_sync_args
+        )
 
     aws_s3_command = list(map(str, aws_s3_command))
 
@@ -239,7 +244,6 @@ def get_s3_sync_script(aws_env_vars: Dict, aws_s3_sync_args: List,
     :param download_path:
     :return:
     """
-
     if not upload and not download:
         logger.error("Something has gone wrong here, please specify one (and only one) of upload or download")
         raise ValueError

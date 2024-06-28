@@ -184,7 +184,8 @@ class DocOptArg:
             # Check arg type
             if (
                     not isclass(self.arg_type) or
-                    not (issubclass(self.arg_type, Data) and not issubclass(self.arg_type, ProjectData))
+                    not (issubclass(self.arg_type, Data) or issubclass(self.arg_type, ProjectData)) or
+                    not (isinstance(value, str) and value.startswith("/"))
             ):
                 logger.warning("Got a data id or uri but the arg type is not a data object")
 
@@ -464,6 +465,7 @@ class Command:
     def __init__(self, command_argv):
         # Initialise any req vars
         self.cli_args = self._get_args(command_argv)
+        print(self.cli_args)
         if self.cli_args.get("--cli-input-yaml", None) is not None:
             self.yaml_args = self._get_yaml_args(Path(self.cli_args["--cli-input-yaml"]))
         else:
@@ -488,14 +490,14 @@ class Command:
         :return:
         """
         # Get arguments from commandline
-        docopt_args = docopt(self.__doc__, argv=command_argv, options_first=False)
+        return docopt(self.__doc__, argv=command_argv, options_first=False)
 
-        # Clean args as required in https://github.com/docopt/docopt/issues/134
-        return clean_multi_args(
-            args=docopt_args,
-            doc=self.__doc__,
-            use_dual_options=True
-        )
+        # # Clean args as required in https://github.com/docopt/docopt/issues/134
+        # return clean_multi_args(
+        #     args=docopt_args,
+        #     doc=self.__doc__,
+        #     use_dual_options=True
+        # )
 
     def _get_yaml_args(self, yaml_file: Optional[Path]):
         """

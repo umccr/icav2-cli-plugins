@@ -37,8 +37,8 @@ class S3SyncDownload(Command):
     """Usage:
     icav2 projectdata s3-sync-download help
     icav2 projectdata s3-sync-download <data> <download_path>
-                                       [-w=<file_path> | --write-script-path=<file_path> ]
-                                       [-s=<s3_sync_arg> | --s3-sync-arg=<s3_sync_arg>]...
+                                       [-w <file_path> | --write-script-path=<file_path>]
+                                       [--s3-sync-arg=<s3_sync_arg>]...
 
 
 Description:
@@ -51,12 +51,12 @@ Options:
 
     <download_path>                                    Required, the local download directory, parent folder must exist
 
-    -w=<file_path>, --write-script-path=<file_path>    Optional, write out a script instead of invoking aws s3 command
+    -w <file_path>, --write-script-path=<file_path>    Optional, write out a script instead of invoking aws s3 command
                                                        that holds the AWS S3 Sync parameters.
                                                        download path parameter parent folder does not necessarily need to exist if this option
                                                        is set. Parent folder of this parameter must exist.
 
-    -s=<s3_sync_arg>, --s3-sync-arg=<s3_sync_arg>      Other arguments are sent to aws s3 sync, specify multiple times for multiple arguments
+    --s3-sync-arg=<s3_sync_arg>                        Other arguments are sent to aws s3 sync, specify multiple times for multiple arguments
 
 
 Environment variables:
@@ -89,10 +89,10 @@ Examples: icav2 projectdata s3-sync-download /test_data/outputs/ $HOME/outputs/
                 cli_arg_keys=["download_path"],
             ),
             "write_script_path": DocOptArg(
-                cli_arg_keys=["write_script_path"],
+                cli_arg_keys=["--write-script-path"],
             ),
             "s3_sync_args": DocOptArg(
-                cli_arg_keys=["s3_sync_args"],
+                cli_arg_keys=["--s3-sync-arg"],
             ),
         }
 

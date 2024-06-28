@@ -34,8 +34,8 @@ class S3SyncUpload(Command):
     """Usage:
     icav2 projectdata s3-sync-upload help
     icav2 projectdata s3-sync-upload <upload_path> <data>
-                                     [-w=<file_path> | --write-script-path=<file_path> ]
-                                     [-s=<s3_sync_arg> | --s3-sync-arg=<s3_sync_arg>]...
+                                     [-w<file_path> | --write-script-path=<file_path>]
+                                     [--s3-sync-arg=<s3_sync_arg>]...
 
 
 Description:
@@ -47,12 +47,12 @@ Options:
     <data>                                             Required, the data path to icav2 data folder you wish to upload to
                                                        May also specify a folder id or an icav2 uri
 
-    -w=<file_path>, --write-script-path=<file_path>    Optional, write out a script instead of invoking aws s3 command
+    -w<file_path>, --write-script-path=<file_path>     Optional, write out a script instead of invoking aws s3 command
                                                        that holds the AWS S3 Sync parameters.
                                                        upload path parameter folder does not necessarily need to exist if this option
                                                        is set. Parent folder of this parameter must exist.
 
-    -s=<s3_sync_arg>, --s3-sync-arg=<s3_sync_arg>      Other arguments are sent to aws s3 sync, specify multiple times for multiple arguments
+    --s3-sync-arg=<s3_sync_arg>                        Other arguments are sent to aws s3 sync, specify multiple times for multiple arguments
 
 
 Environment variables:
@@ -86,13 +86,13 @@ Examples: icav2 projectdata s3-sync-upload $HOME/test_inputs/ /test_data/inputs/
                 }
             ),
             "upload_path": DocOptArg(
-                cli_arg_keys=["upload_path"],
+                cli_arg_keys=["--upload-path"],
             ),
             "write_script_path": DocOptArg(
-                cli_arg_keys=["write_script_path"],
+                cli_arg_keys=["--write-script-path"],
             ),
             "s3_sync_args": DocOptArg(
-                cli_arg_keys=["s3_sync_arg"],
+                cli_arg_keys=["--s3-sync-arg"],
             )
         }
 
