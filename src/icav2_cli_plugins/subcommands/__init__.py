@@ -465,7 +465,6 @@ class Command:
     def __init__(self, command_argv):
         # Initialise any req vars
         self.cli_args = self._get_args(command_argv)
-        print(self.cli_args)
         if self.cli_args.get("--cli-input-yaml", None) is not None:
             self.yaml_args = self._get_yaml_args(Path(self.cli_args["--cli-input-yaml"]))
         else:
