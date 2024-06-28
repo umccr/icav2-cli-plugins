@@ -423,9 +423,15 @@ class DocOptArg:
             arg_hints = strip_list_type(arg_hints)
 
         # Check if in the types list
-        if Union[arg_hints] in [PipelineType, AnalysisType, AnalysisStorageType]:
-            self.arg_type = Union[arg_hints]
-            return
+        try:
+            # If we can't assign this input as a union, let's just continue
+            _ = Union[arg_hints]
+        except TypeError:
+            pass
+        else:
+            if Union[arg_hints] in [PipelineType, AnalysisType, AnalysisStorageType]:
+                self.arg_type = Union[arg_hints]
+                return
 
         # Check if the arg type is a multi type
         if is_union(arg_hints):

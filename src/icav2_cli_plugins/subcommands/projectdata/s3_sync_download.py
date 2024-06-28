@@ -77,7 +77,7 @@ Examples: icav2 projectdata s3-sync-download /test_data/outputs/ $HOME/outputs/
     project_data_obj: Optional[ProjectData]
     download_path: Optional[Path]
     write_script_path: Optional[Path]
-    s3_sync_args: Optional[List]
+    s3_sync_args: Optional[List[str]]
 
     def __init__(self, command_argv):
         self._docopt_type_args = {

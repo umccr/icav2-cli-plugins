@@ -40,7 +40,7 @@ Example:
     def __init__(self, command_argv):
         self._docopt_type_args = {}
         # The tenant name provided by the user
-        self.tenant_list: Optional[List] = None
+        self.tenant_list: Optional[List[str]] = None
 
         super().__init__(command_argv)
 

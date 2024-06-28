@@ -546,7 +546,7 @@ def generate_markdown_doc(
         workflow_image_page_path: Path,
         workflow_md5sum: str,
         input_json_template: Optional[Dict] = None,
-        overrides_template: Optional[List] = None,
+        overrides_template: Optional[List[Dict]] = None,
 ) -> Path:
     """
     Generate a markdown document (that we will then convert to html)

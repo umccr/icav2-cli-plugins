@@ -171,7 +171,7 @@ def run_s3_sync_command(aws_env_vars: Dict, aws_s3_sync_args: List,
         logger.error("Must specify download path parameter when download is true")
         raise ValueError
 
-    aws_s3_command: List = ["aws", "s3", "sync"]
+    aws_s3_command: List[str] = ["aws", "s3", "sync"]
 
     # Are we uploading or downloading
     # (changes the order of the positional parameters)

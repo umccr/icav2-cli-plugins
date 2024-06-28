@@ -118,7 +118,7 @@ Example:
         self.file_cmp_list_match: Optional[List[Path]] = None
         self.file_cmp_list_edited: Optional[List[Path]] = None
         self.file_cmp_list_missing: Optional[List[Path]] = None
-        self.file_cmp_list_new: Optional[List] = None
+        self.file_cmp_list_new: Optional[List[Path]] = None
 
         # Pipeline file mapping
         self.pipeline_file_mapping: Optional[List[PipelineFile]] = None
