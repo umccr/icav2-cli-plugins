@@ -18,7 +18,7 @@ from ...utils.config_helpers import (
 )
 from ...utils.globals import ICAV2_ACCESS_TOKEN_AUDIENCE
 from ...utils.logger import get_logger
-from ...utils.plugin_helpers import get_tenants_directory
+from ...utils.plugin_helpers import get_tenants_directory, get_default_tenant_file_path
 from ...utils.tenant_helpers import (
     get_session_file_path_from_config_file, get_tenant_id_from_project_list,
     get_tenant_name_from_project_list
@@ -140,6 +140,11 @@ Example:
 
         # Chmod of session file to 600
         self.tenant_session_file.chmod(0o600)
+
+        # Check if default tenant is empty
+        if not get_default_tenant_file_path().is_file() or get_default_tenant_file_path().read_text() == "":
+            # Write the default tenant file
+            get_default_tenant_file_path().write_text(self.tenant_name+"\n")
 
     def write_session_file(self):
         yaml = YAML()

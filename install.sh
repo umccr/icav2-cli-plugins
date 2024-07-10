@@ -404,8 +404,8 @@ fi
 # UPDATE VERSIONS
 ######################
 # Update shell function
-sed -i "s/__PLUGIN_VERSION__/${PLUGIN_VERSION}/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/_icav2"
-sed -i "s/__LIBICA_VERSION__/${LIBICA_VERSION}/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/_icav2"
+sed -i -e "s/__PLUGIN_VERSION__/${PLUGIN_VERSION}/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/_icav2"
+sed -i -e "s/__LIBICA_VERSION__/${LIBICA_VERSION}/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/_icav2"
 
 ######################
 # COPY AUTOCOMPLETIONS

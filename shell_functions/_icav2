@@ -265,6 +265,7 @@ Use 'icav2 [command] --help' for more information about a command.
   if [[ -z "${bottom%_}" ]]; then
     # Hehe - this is a recursive, handle with care!
     icav2 "${top#_}" help
+    return "$?"
   else
     # We're running either a shell function, regular or plugin command
     # First we need to make sure we're in a tenant
@@ -276,22 +277,29 @@ Use 'icav2 [command] --help' for more information about a command.
       tenant_name="$(cat "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt")"
     fi
 
-    # Confirm that if tenant exists, that it has a directory
-    if [[ -n "${tenant_name-}" && ! -d "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}" ]]; then
-      echo "Error - could not find tenant directory for tenant '${tenant_name}'" 1>&2
-      return 1
-    fi
+    # If the tenant name is null, check we're not running a 'tenants-init' command
+    if [[ "${top#_}" == "tenants" && ( "${bottom%_}" == "init" || "${bottom%_}" == "help" ) ]]; then
+      PATH="'${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/:$PATH'" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/icav2-cli-plugins.py" "${top#_}" "${bottom%_}" "${@:3}"
+      return $? # Return the exit code of the function
 
-    if [[ -z "${tenant_name-}" && ! "${top#_}" == "tenants" ]]; then
-      echo "Error - please enter an icav2 tenant before running any other commands via 'icav2 tenants enter <tenant_id>'" 1>&2
-      return 1
-    fi
+    else
+      # Confirm that if tenant exists, that it has a directory
+      if [[ -n "${tenant_name-}" && ! -d "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}" ]]; then
+        echo "Error - could not find tenant directory for tenant '${tenant_name}'" 1>&2
+        return 1
+      fi
 
-    # If we're in a tenant, collect the access token and ensure it's valid
-    # First check the tenant config yaml exists
-    if [[ ! -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/config.yaml" ]]; then
-      echo "Error - could not find tenant config file for tenant '${tenant_name}'" 1>&2
-      return 1
+      if [[ -z "${tenant_name-}" && ! "${top#_}" == "tenants" ]]; then
+        echo "Error - please enter an icav2 tenant before running any other commands via 'icav2 tenants enter <tenant_id>'" 1>&2
+        return 1
+      fi
+
+      # If we're in a tenant, collect the access token and ensure it's valid
+      # First check the tenant config yaml exists
+      if [[ ! -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/config.yaml" ]]; then
+        echo "Error - could not find tenant config file for tenant '${tenant_name}'" 1>&2
+        return 1
+      fi
     fi
 
     # Get the server url prefix from the tenant config yaml
@@ -320,13 +328,13 @@ Use 'icav2 [command] --help' for more information about a command.
     # Run the wrapped python command if were running the tenants up here
     if [[ "${top#_}" == "tenants" ]]; then
       if [[ " ${plugin_subfunctions_array[*]} " =~ ${top}__${bottom} ]]; then
-        eval "_icav2__plugins__cli__${top#_}__${bottom%_}" '"${@:3}"'
+        "_icav2__plugins__cli__${top#_}__${bottom%_}" "${@:3}"
       elif [[ " ${plugin_subcommands_array[*]} " =~ ${top}__${bottom} ]]; then
-        eval PATH="'${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/:$PATH'" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/icav2-cli-plugins.py" "${top#_}" "${bottom%_}" '"${@:3}"'
-      # Dont eval if in a plugin_only subcommand
+        PATH="'${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/:$PATH'" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/icav2-cli-plugins.py" "${top#_}" "${bottom%_}" "${@:3}"
+
       elif [[ "${plugin_only_subcommands_top_only_array[*]} " =~ ${top} ]]; then
-        echo "Unknown subcommand for icav2 ${top#_}"
-        eval PATH="'${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/:$PATH'" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/icav2-cli-plugins.py" "${top#_}" "help"
+        echo "Unknown subcommand for icav2 ${top#_}" 1>&2
+        PATH="'${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/:$PATH'" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/icav2-cli-plugins.py" "${top#_}" "help"
       fi
     else
       # Were running a command that's not a 'tenant' command, we assume we need an icav2 access token
