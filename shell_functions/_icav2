@@ -89,9 +89,8 @@ Use 'icav2 [command] --help' for more information about a command.
 
   __icav2__get_token_tid() {
     local access_token="$1"
-    echo "${access_token}" | \
-      "$(__icav2__get_sed_binary)" -r 's/^(\S+)\.(\S+)\.(\S+)$/\2/' | \
-      ( "$(__icav2__get_base64_binary)" --decode 2>/dev/null || true ) | \
+    "$(__icav2__get_sed_binary)" -r 's/^(\S+)\.(\S+)\.(\S+)$/\2/' <<< "${access_token}" | \
+    ( "$(__icav2__get_base64_binary)" --decode 2>/dev/null || true ) | \
     jq --raw-output \
       '.tid' | \
     (base64 -d 2>/dev/null || true) | \
@@ -100,9 +99,8 @@ Use 'icav2 [command] --help' for more information about a command.
 
   __icav2__get_epoch_expiry() {
     local access_token="$1"
-    echo "${access_token}" | \
-      "$(__icav2__get_sed_binary)" -r 's/^(\S+)\.(\S+)\.(\S+)$/\2/' | \
-      ( "$(__icav2__get_base64_binary)" --decode 2>/dev/null || true ) | \
+    "$(__icav2__get_sed_binary)" -r 's/^(\S+)\.(\S+)\.(\S+)$/\2/' <<< "${access_token}" | \
+    ( "$(__icav2__get_base64_binary)" --decode 2>/dev/null || true ) | \
     jq --raw-output \
       '.exp'
   }
@@ -473,14 +471,14 @@ Use 'icav2 [command] --help' for more information about a command.
           ICAV2_TENANT_NAME="${tenant_name}" ICAV2_SERVER_URL="${server_url}" ICAV2_BASE_URL="${base_url}" ICAV2_ACCESS_TOKEN="${access_token}" "_icav2__plugins__cli__${top#_}__${bottom%_}" "${@:3}"
         else
           # Run the wrapped python command
-          ICAV2_TENANT_NAME="${tenant_name}" ICAV2_SERVER_URL="${server_url}" ICAV2_BASE_URL="${base_url}" ICAV2_PROJECT_ID="${project_id}" ICAV2_ACCESS_TOKEN="${access_token}" eval "_icav2__plugins__cli__${top#_}__${bottom%_}" "${@:3}"
+          ICAV2_TENANT_NAME="${tenant_name}" ICAV2_SERVER_URL="${server_url}" ICAV2_BASE_URL="${base_url}" ICAV2_PROJECT_ID="${project_id}" ICAV2_ACCESS_TOKEN="${access_token}" "_icav2__plugins__cli__${top#_}__${bottom%_}" "${@:3}"
         fi
       # Run the wrapped python command
       elif [[ " ${plugin_subcommands_array[*]} " =~ ${top}__${bottom} ]]; then
         ICAV2_SERVER_URL="${server_url}" ICAV2_BASE_URL="${base_url}" ICAV2_PROJECT_ID="${project_id}" ICAV2_ACCESS_TOKEN="${access_token}" PATH="'${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/:$PATH'" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/icav2-cli-plugins.py" "${top#_}" "${bottom%_}" "${@:3}"
       # Dont eval if in a plugin_only subcommand
       elif [[ "${plugin_only_subcommands_top_only_array[*]} " =~ ${top} ]]; then
-        echo "Unknown subcommand for icav2 ${top#_}"
+        echo "Unknown subcommand for icav2 ${top#_}" 1>&2
         ICAV2_SERVER_URL="${server_url}" ICAV2_BASE_URL="${base_url}" ICAV2_PROJECT_ID="${project_id}" ICAV2_ACCESS_TOKEN="${access_token}" PATH="'${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/:$PATH'" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/icav2-cli-plugins.py" "${top#_}" "help"
       else
         ICAV2_SERVER_URL="${server_url}" ICAV2_BASE_URL="${base_url}" ICAV2_PROJECT_ID="${project_id}" ICAV2_ACCESS_TOKEN="${access_token}" command icav2 "${@}"
