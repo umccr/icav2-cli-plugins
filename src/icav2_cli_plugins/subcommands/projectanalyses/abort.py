@@ -50,7 +50,7 @@ Example:
 
     def __init__(self, command_argv):
         # CLI ARGS
-        self._docop_type_args = {
+        self._docopt_type_args = {
             "analysis_obj": DocOptArg(
                 cli_arg_keys=["analysis_id_or_user_reference"],
             )

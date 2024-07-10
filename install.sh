@@ -322,6 +322,11 @@ if [[ ! -r "${HOME}/.icav2/config.yaml" ]]; then
   touch "${HOME}/.icav2/config.yaml"
 fi
 
+if [[ -s "${HOME}/.icav2/config.yaml" ]]; then
+  echo_stderr "'${HOME}/.icav2/config.yaml' is not empty, please delete this file before continuing"
+  exit 1
+fi
+
 ############################
 # CREATE PYTHON3 VIRTUAL ENV
 ############################
@@ -378,14 +383,14 @@ fi
 # GET VERSIONS
 ################
 if [[ "${PLUGIN_VERSION}" == "__PLUGIN_VERSION__" ]]; then
-  echo "Installing from source" 1>&2
+  echo_stderr "Installing from source"
   latest_tag="$(git describe --abbrev=0 --tags)"
   latest_commit="$(git log --format="%H" -n 1 | cut -c1-7)"
   PLUGIN_VERSION="${latest_tag}--patch-${latest_commit}"
   echo "Setting plugin version as '${PLUGIN_VERSION}'"
 fi
 if [[ "${LIBICA_VERSION}" == "__LIBICA_VERSION__" ]]; then
-  echo "Getting libica version from pyproject.toml" 1>&2
+  echo_stderr "Getting libica version from pyproject.toml"
   LIBICA_VERSION="$( \
     "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python" -m pip show libica | \
     grep Version | \
