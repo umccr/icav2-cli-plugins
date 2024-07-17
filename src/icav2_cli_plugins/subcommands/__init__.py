@@ -23,7 +23,7 @@ from wrapica.pipelines import (
     coerce_pipeline_id_or_code_to_pipeline_obj
 )
 from wrapica.project_data import (
-    coerce_data_id_icav2_uri_or_path_to_project_data_obj, ProjectData
+    coerce_data_id_icav2_uri_or_path_to_project_data_obj, ProjectData, is_folder_id_format
 )
 from wrapica.project import (
     Project,
@@ -50,7 +50,6 @@ from wrapica.user import (
 from ..utils import is_uuid_format
 from ..utils.errors import InvalidArgumentError
 from ..utils.logger import get_logger
-from ..utils.docopt_helpers import clean_multi_args
 from ..utils.typing_helpers import (
     is_optional_type, is_multi_type, split_multi_type,
     is_list_type, strip_optional_type, strip_list_type, is_union, strip_union_type
@@ -183,9 +182,13 @@ class DocOptArg:
         if key in ["data", "data_id_or_uri"]:
             # Check arg type
             if (
-                    not isclass(self.arg_type) or
-                    not (issubclass(self.arg_type, Data) or issubclass(self.arg_type, ProjectData)) or
-                    not (isinstance(value, str) and value.startswith("/"))
+                    not (
+                            isclass(self.arg_type) and
+                            not (issubclass(self.arg_type, Data) or issubclass(self.arg_type, ProjectData))
+                    ) and
+                    not (isinstance(value, str) and value.startswith("/") and value.endswith("/")) and
+                    not (isinstance(value, str) and is_folder_id_format(value)) and
+                    not (isinstance(value, str) and value.startswith("icav2://"))
             ):
                 logger.warning("Got a data id or uri but the arg type is not a data object")
 

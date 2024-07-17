@@ -11,6 +11,7 @@ from wrapica.project_data import find_project_data_recursively
 from wrapica.user import User
 
 # Utils imports
+from ...utils import strip_literal
 from ...utils.errors import InvalidArgumentError
 from ...utils.config_helpers import get_project_id
 from ...utils.logger import get_logger
@@ -138,6 +139,9 @@ Example: icav2 projectdata find /reference_data/
         ):
             logger.error(f"Maximum depth must be greater than or equal to minimum depth but got {self.max_depth} < {self.min_depth}")
             raise InvalidArgumentError
+
+        # If a * has been used for the name arg, it might be double quoted
+        self.name = strip_literal(self.name)
 
     def get_data_items(self) -> List[ProjectData]:
         """

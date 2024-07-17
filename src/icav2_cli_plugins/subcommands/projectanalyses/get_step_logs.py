@@ -117,7 +117,7 @@ Example:
                 logger.error(f"Parent of {self.output_path} does not exist, please create it first")
                 raise NotADirectoryError
         else:
-            self.output_path: int = sys.stdout.fileno()
+            self.output_path: Path | int = sys.stdout.fileno()
 
     def get_analysis_logs(self) -> AnalysisStepLogs:
         # Get workflow steps
@@ -144,14 +144,16 @@ Example:
 
         matching_workflow_step = matching_workflow_steps[0]
 
-        if matching_workflow_step.status in ProjectAnalysisStepStatus.WAITING:
+        if ProjectAnalysisStepStatus(matching_workflow_step.get("status")) == ProjectAnalysisStepStatus.WAITING:
             logger.error(f"Could not get information about {self.step_name} since it is still waiting to run")
             raise ValueError
 
         # Get analysis step log object
         log_obj: AnalysisStepLogs = list(
             filter(
-                lambda x: x.get("name").split("#", 1)[-1] == matching_workflow_step.get("name"),
+                lambda workflow_steps_iter: (
+                    workflow_steps_iter.get("name").split("#", 1)[-1] == matching_workflow_step.get("name")
+                ),
                 workflow_steps
             )
         )[0].logs
@@ -164,11 +166,16 @@ Example:
 
     def print_logs(self, log_obj: AnalysisStepLogs):
         # Write logs to file or stdout
-        if self.output_path is not None or str(self.output_path) == "-":
+        if (
+                self.output_path is not None and
+                not str(self.output_path) == "-" and
+                not isinstance(self.output_path, int)
+        ):
             output_path = self.output_path
+        # Stdout, we download first and then print
         else:
             tmp_obj = tempfile.NamedTemporaryFile()
-            output_path = tmp_obj.name
+            output_path: Path = Path(tmp_obj.name)
 
         # Write logs
         write_analysis_step_logs(
@@ -180,10 +187,9 @@ Example:
         )
 
         # Print logs
-        if self.output_path is None:
-            try:
-                with open(output_path, 'r') as f_h:
-                    print(f_h.read())
-            except BrokenPipeError:
-                # Chances are we were piped into head command
-                pass
+        try:
+            with open(output_path, 'r') as f_h:
+                print(f_h.read())
+        except BrokenPipeError:
+            # Chances are we were piped into head command
+            pass

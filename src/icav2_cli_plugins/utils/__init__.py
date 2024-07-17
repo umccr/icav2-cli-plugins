@@ -3,6 +3,8 @@ from typing import Dict, Any
 import sys
 from urllib.parse import urlparse
 from uuid import UUID
+from ast import literal_eval
+
 
 version = "2.10.0"
 
@@ -55,3 +57,10 @@ def is_uri_format(uri_str: str) -> bool:
 
 def is_interactive() -> bool:
     return sys.stdin.isatty()
+
+
+def strip_literal(input_str: str) -> str:
+    try:
+        return str(literal_eval(input_str))
+    except ValueError:
+        return input_str
