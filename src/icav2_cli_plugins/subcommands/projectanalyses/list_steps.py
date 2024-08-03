@@ -18,7 +18,7 @@ from wrapica.project_analysis import (
 
 # Import from utils
 from ...utils.config_helpers import get_project_id
-from ...utils.projectanalysis_helpers import filter_analysis_steps
+from ...utils.projectanalysis_helpers import filter_analysis_steps, sort_analysis_steps
 from ...utils.logger import get_logger
 
 # locals
@@ -78,9 +78,12 @@ Example:
 
     def get_analysis_steps(self) -> List[Dict]:
         # Get workflow steps
-        workflow_steps = get_analysis_steps(
-            project_id=self.project_id,
-            analysis_id=self.analysis_obj.id
+        workflow_steps = sort_analysis_steps(
+            get_analysis_steps(
+                project_id=self.project_id,
+                analysis_id=self.analysis_obj.id,
+                include_technical_steps=self.is_show_technical_steps
+            )
         )
 
         return filter_analysis_steps(workflow_steps, self.is_show_technical_steps)

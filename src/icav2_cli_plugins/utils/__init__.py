@@ -62,5 +62,5 @@ def is_interactive() -> bool:
 def strip_literal(input_str: str) -> str:
     try:
         return str(literal_eval(input_str))
-    except ValueError:
+    except (ValueError, SyntaxError):
         return input_str

@@ -5,7 +5,7 @@ Helpers for the projectanalysis workflow steps
 """
 
 # External imports
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Dict
 
 # Wrapica imports
@@ -41,3 +41,23 @@ def filter_analysis_steps(workflow_steps: List[AnalysisStep], show_technical_ste
         )
 
     return workflow_steps_filtered
+
+
+def sort_analysis_steps(workflow_steps):
+    """
+    Sort analysis steps by queue date
+    :param workflow_steps:
+    :return:
+    """
+
+    return sorted(
+        workflow_steps,
+        key=lambda workflow_step_iter: (
+            workflow_step_iter.queue_date
+            if (
+                    hasattr(workflow_step_iter, 'queue_date') and
+                    workflow_step_iter.queue_date is not None
+            )
+            else datetime.now(timezone.utc)
+        )
+    )

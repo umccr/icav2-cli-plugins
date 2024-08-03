@@ -427,27 +427,29 @@ fi
 ########################
 # GENERATE SOURCE SCRIPT
 ########################
-echo "#!/usr/bin/env bash" > "${ICAV2_CLI_PLUGINS_HOME}/source.sh"
-echo "export ICAV2_CLI_PLUGINS_HOME=\"\${HOME}/.icav2-cli-plugins\"" >> "${ICAV2_CLI_PLUGINS_HOME}/source.sh"
-echo "# Source functions" >> "${ICAV2_CLI_PLUGINS_HOME}/source.sh"
-echo "for file_name in \"\${ICAV2_CLI_PLUGINS_HOME}/shell_functions/\"*; do" >> "${ICAV2_CLI_PLUGINS_HOME}/source.sh"
-echo "    . \${file_name}; " >> "${ICAV2_CLI_PLUGINS_HOME}/source.sh"
-echo "done" >> "${ICAV2_CLI_PLUGINS_HOME}/source.sh"
+{
+  echo "#!/usr/bin/env bash"
+  echo "# ICAV2 CLI PLUGINS"
+  echo "export ICAV2_CLI_PLUGINS_HOME=\"\${HOME}/.icav2-cli-plugins\""
+  echo "# Source functions"
+  echo "for file_name in \"\${ICAV2_CLI_PLUGINS_HOME}/shell_functions/\"*; do"
+  echo "    . \${file_name}; "
+  echo "done"
+  echo "# Add autocompletions"
+  echo "if [[ \"\$(basename \"\${SHELL}\")\" == \"bash\" ]]; then"
+  echo "  for f in \"\$ICAV2_CLI_PLUGINS_HOME/autocompletion/\$(basename \"\${SHELL}\")/\"*\".bash\"; do"
+  echo "    . \"\$f\""
+  echo "  done"
+  echo "elif [[ \"\$(basename \"\${SHELL}\")\" == \"zsh\" ]]; then"
+  echo "  fpath=(\"\${ICAV2_CLI_PLUGINS_HOME}/autocompletion/\$(basename \"\${SHELL}\")\" \$fpath)"
+  echo "  if [[ \"${OSTYPE}\" == \"darwin\"* ]]; then"
+  echo "    # Mac Users need to run 'autoload' before running compinit"
+  echo "    autoload -Uz compinit"
+  echo "  fi"
+  echo "  compinit"
+  echo "fi"
+} > "${ICAV2_CLI_PLUGINS_HOME}/source.sh"
 
-# Autocompletion differs between shells
-echo "# Source autocompletions" >> "${ICAV2_CLI_PLUGINS_HOME}/source.sh"
-if [[ "${user_shell}" == "bash" ]]; then
-  echo "for f in \"\$ICAV2_CLI_PLUGINS_HOME/autocompletion/${user_shell}/\"*\".bash\"; do" >> "${ICAV2_CLI_PLUGINS_HOME}/source.sh"
-  echo "    . \"\$f\"" >> "${ICAV2_CLI_PLUGINS_HOME}/source.sh"
-  echo "done" >> "${ICAV2_CLI_PLUGINS_HOME}/source.sh"
-elif [[ "${user_shell}" == "zsh" ]]; then
-  echo "fpath=(\"\$ICAV2_CLI_PLUGINS_HOME/autocompletion/${user_shell}/\" \$fpath)" >> "${ICAV2_CLI_PLUGINS_HOME}/source.sh"
-  if [[ "${OSTYPE}" == "darwin"* ]]; then
-    # Mac Users need to run 'autoload' before running compinit
-    echo "autoload -Uz compinit" >> "${ICAV2_CLI_PLUGINS_HOME}/source.sh"
-  fi
-  echo "compinit" >> "${ICAV2_CLI_PLUGINS_HOME}/source.sh"
-fi
 
 ############################
 # SHOW BASHRC LINE TO ADD

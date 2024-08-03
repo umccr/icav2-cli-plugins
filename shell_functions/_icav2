@@ -187,6 +187,7 @@ Use 'icav2 [command] --help' for more information about a command.
     "_bundles__-h_" \
     "_bundles__--help_" \
     "_projectdata__ls_" \
+    "_projectdata__mv_" \
     "_projectdata__view_" \
     "_projectdata__find_" \
     "_projectdata__s3-sync-download_" \

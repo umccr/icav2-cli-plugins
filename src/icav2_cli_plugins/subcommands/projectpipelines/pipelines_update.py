@@ -318,12 +318,13 @@ Example:
         try:
             file_id = next(
                 filter(
-                    lambda file_: file_.name == file_name,
+                    lambda file_iter: str(file_iter.name) == str(file_name),
                     self.pipeline_file_mapping
                 )
             ).id
         except StopIteration:
             logger.error(f"Could not get file id for file name '{file_name}'")
+            logger.error(f"Available files are {', '.join(map(lambda x: x.name, self.pipeline_file_mapping))}")
             raise StopIteration
         return file_id
 
@@ -360,7 +361,7 @@ Example:
 
         # Check user
         if not self.project_pipeline_obj.pipeline.owner_id == self.user_obj.id:
-            logger.error(f"Pipeline '{self.project_pipeline_obj.id}' is not owned by user '{self.user_obj.id}'")
+            logger.error(f"Pipeline '{self.project_pipeline_obj.pipeline.id}' is not owned by user '{self.user_obj.id}'")
             sys.exit(1)
 
-        logger.info(f"Pipeline '{self.project_pipeline_obj.id}' is editable")
+        logger.info(f"Pipeline '{self.project_pipeline_obj.pipeline.id}' is editable")

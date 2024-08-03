@@ -23,7 +23,7 @@ from wrapica.pipelines import (
     coerce_pipeline_id_or_code_to_pipeline_obj
 )
 from wrapica.project_data import (
-    coerce_data_id_icav2_uri_or_path_to_project_data_obj, ProjectData, is_folder_id_format
+    coerce_data_id_uri_or_path_to_project_data_obj, ProjectData, is_folder_id_format
 )
 from wrapica.project import (
     Project,
@@ -186,7 +186,7 @@ class DocOptArg:
                             isclass(self.arg_type) and
                             not (issubclass(self.arg_type, Data) or issubclass(self.arg_type, ProjectData))
                     ) and
-                    not (isinstance(value, str) and value.startswith("/") and value.endswith("/")) and
+                    not (isinstance(value, str) and value.startswith("/")) and
                     not (isinstance(value, str) and is_folder_id_format(value)) and
                     not (isinstance(value, str) and value.startswith("icav2://"))
             ):
@@ -208,7 +208,7 @@ class DocOptArg:
             try:
                 logger.setLevel(logging.CRITICAL + 1)
                 if issubclass(self.arg_type, ProjectData):
-                    value: ProjectData = coerce_data_id_icav2_uri_or_path_to_project_data_obj(
+                    value: ProjectData = coerce_data_id_uri_or_path_to_project_data_obj(
                         value,
                         create_data_if_not_found=create_data_if_not_found
                     )
@@ -266,14 +266,15 @@ class DocOptArg:
 
         if key in ["analysis_storage", "analysis_storage_id_or_size"]:
             if (
-                    not self.arg_type == AnalysisStorageType or
-                    (isclass(self.arg_type) and not issubclass(self.arg_type, AnalysisStorageType)) or
-                    (not isinstance(value, str) or (value not in AnalysisStorageSize or not is_uuid_format(value)))
+                    not self.arg_type == AnalysisStorageType and
+                    (isclass(self.arg_type) and not issubclass(self.arg_type, AnalysisStorageType)) and
+                    (isinstance(value, str) and (value not in AnalysisStorageSize or not is_uuid_format(value)))
             ):
                 logger.warning("Got a analysis storage id or size but the arg type is not an AnalysisStorage type")
         if (
                 self.arg_type == AnalysisStorageType or
-                (isclass(self.arg_type) and issubclass(self.arg_type, AnalysisStorageType))
+                (isclass(self.arg_type) and issubclass(self.arg_type, AnalysisStorageType)) or
+                (isinstance(value, str) and (value in AnalysisStorageSize or is_uuid_format(value)))
         ):
             value: AnalysisStorageType = coerce_analysis_storage_id_or_size_to_analysis_storage(
                 AnalysisStorageSize(value)

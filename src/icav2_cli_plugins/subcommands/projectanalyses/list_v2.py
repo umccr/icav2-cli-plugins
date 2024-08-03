@@ -214,7 +214,10 @@ Example:
                     lambda dt: dt.strftime("%Y%m%dT%H%M%SZ"))
 
         # Print to stdout
-        analysis_df.to_markdown(sys.stdout, index=False)
+        try:
+            analysis_df.to_markdown(sys.stdout, index=False)
 
-        # Add an extra line to stdout
-        print()
+            # Add an extra line to stdout
+            print()
+        except BrokenPipeError:
+            pass

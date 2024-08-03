@@ -95,7 +95,8 @@ Example:
         # Get analysis workflow steps
         self.workflow_steps = get_analysis_steps(
             project_id=self.project_id,
-            analysis_id=self.analysis_obj.id
+            analysis_id=self.analysis_obj.id,
+            include_technical_steps=True
         )
 
     def __call__(self):

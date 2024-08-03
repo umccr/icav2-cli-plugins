@@ -136,7 +136,7 @@ Example:
         matching_workflow_steps = list(filter(lambda x: x.get("name") == self.step_name, workflow_steps_as_dict))
         if len(matching_workflow_steps) == 0:
             logger.error(f"Could not find step-name {self.step_name} in analysis id {self.analysis_obj.id}")
-            logger.error("Please try running cwl-ica icav2-list-analysis-steps to view list of available step names")
+            logger.error("Please try running icav2 projectanalyses list-analysis-steps to view list of available step names")
             raise ValueError
         if len(matching_workflow_steps) > 1:
             logger.error(f"Got multiple matches for step-name {self.step_name}")

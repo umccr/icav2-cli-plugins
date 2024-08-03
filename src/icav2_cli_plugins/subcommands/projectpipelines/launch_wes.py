@@ -26,8 +26,8 @@ from wrapica.project_pipelines import (
     get_default_analysis_storage_obj_from_project_pipeline,
     ICAv2NextflowAnalysisInput
 )
-from wrapica.project_data import ProjectData, coerce_data_id_icav2_uri_or_path_to_project_data_obj, \
-    convert_project_data_obj_to_icav2_uri, write_icav2_file_contents
+from wrapica.project_data import ProjectData, coerce_data_id_uri_or_path_to_project_data_obj, \
+    convert_project_data_obj_to_uri, write_icav2_file_contents
 from wrapica.utils.nextflow_helpers import generate_samplesheet_file_from_input_dict, \
     download_nextflow_schema_input_json_from_pipeline_id
 
@@ -51,7 +51,7 @@ class ProjectPipelinesStartWES(Command):
                                      [--pipeline=<pipeline_id_or_code>]
                                      [--analysis-output=<analysis_output_uri_or_path>]
                                      [--ica-logs=<ica_logs_uri_or_path>]
-                                     [--analysis-storage=<analysis_storage_size_or_path>]
+                                     [--analysis-storage=<analysis_storage_id_or_size>]
                                      [--activation-id=<activation_id>]
                                      [--user-tag=<user_tag>]...
                                      [--reference-tag=<reference_tag>]...
@@ -217,7 +217,7 @@ Example:
 
         # Read launch yaml
         if not self.launch_yaml_path.is_file():
-            logger.error("Could not get file {self.launch_yaml}")
+            logger.error(f"Could not get file {self.launch_yaml_path}")
             raise InvalidArgumentError
 
         # Import yaml object
@@ -257,7 +257,7 @@ Example:
                 logger.error("Analysis Output not specified on cli or in the launch yaml")
                 raise InvalidArgumentError
 
-            self.analysis_output_obj = coerce_data_id_icav2_uri_or_path_to_project_data_obj(
+            self.analysis_output_obj = coerce_data_id_uri_or_path_to_project_data_obj(
                 analysis_output_yaml,
                 create_data_if_not_found=True
             )
@@ -270,7 +270,7 @@ Example:
                 logger.error("ICA Logs not specified on cli or in the launch yaml")
                 raise InvalidArgumentError
 
-            self.ica_logs_obj = coerce_data_id_icav2_uri_or_path_to_project_data_obj(
+            self.ica_logs_obj = coerce_data_id_uri_or_path_to_project_data_obj(
                 ica_logs_yaml,
                 create_data_if_not_found=True
             )
@@ -282,7 +282,7 @@ Example:
                 logger.error("Cache not specified on cli or in the launch yaml")
                 raise InvalidArgumentError
 
-            self.cache_obj = coerce_data_id_icav2_uri_or_path_to_project_data_obj(
+            self.cache_obj = coerce_data_id_uri_or_path_to_project_data_obj(
                 cache_yaml,
                 create_data_if_not_found=True
             )
@@ -389,7 +389,7 @@ Example:
                 # Now pop the samplesheet_input and instead set 'input' as a file id, set to the samplesheet file
                 _ = inputs_dict.pop("samplesheet_input")
                 # Coerce file id into icav2 uri
-                inputs_dict["input"] = convert_project_data_obj_to_icav2_uri(
+                inputs_dict["input"] = convert_project_data_obj_to_uri(
                     get_project_data_obj_from_data_id(
                         samplesheet_input_file_id
                     )
@@ -407,8 +407,9 @@ Example:
             project_id=self.project_id,
             pipeline_id=self.pipeline_obj.pipeline.id,
             analysis_input=self.analysis_input_obj.create_analysis_input(),
-            analysis_output_uri=convert_project_data_obj_to_icav2_uri(self.analysis_output_obj),
-            ica_logs_uri=convert_project_data_obj_to_icav2_uri(self.ica_logs_obj),
+            analysis_output_uri=convert_project_data_obj_to_uri(self.analysis_output_obj),
+            analysis_storage_id=self.analysis_storage_obj.id,
+            ica_logs_uri=convert_project_data_obj_to_uri(self.ica_logs_obj),
             tags=ICAv2PipelineAnalysisTags(
                 user_tags=self.user_tags,
                 technical_tags=self.technical_tags,
