@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 
 """
-Release a bundle
+Deprecate a bundle
 """
-
+import sys
 # Standard imports
 from typing import Optional
 
 # Wrapica imports
-from wrapica.bundle import release_bundle, get_bundle_obj_from_bundle_id, Bundle
+from wrapica.bundle import release_bundle, get_bundle_obj_from_bundle_id, Bundle, deprecate_bundle
 from wrapica.enums import BundleStatus
 from wrapica.libica_exceptions import ApiException
 
@@ -24,22 +24,22 @@ from .. import Command, DocOptArg
 logger = get_logger()
 
 
-class BundlesRelease(Command):
+class BundlesDeprecate(Command):
     """Usage:
-    icav2 bundles release help
-    icav2 bundles release <bundle_id_or_name>
+    icav2 bundles deprecate help
+    icav2 bundles deprecate <bundle_id_or_name>
 
 Description:
     Release a bundle
 
 Options:
-    bundle_id_or_name        Required - The ID or name of the bundle to release
+    bundle_id_or_name        Required - The ID or name of the bundle to deprecate
 
 Environment variables:
     ICAV2_BASE_URL           Optional, default set as https://ica.illumina.com/ica/rest
 
 Example:
-    icav2 bundles release abcdefg.12345
+    icav2 bundles deprecate abcdefg.12345
     """
 
     bundle_obj: Optional[Bundle]
@@ -55,8 +55,8 @@ Example:
         super().__init__(command_argv)
 
     def __call__(self):
-        logger.info(f"Releasing bundle {self.bundle_obj.id}")
-        release_bundle(self.bundle_obj.id)
+        logger.info(f"Deprecating bundle {self.bundle_obj.id}")
+        deprecate_bundle(self.bundle_obj.id)
 
     def check_args(self):
         # Check bundle ID is valid
@@ -67,6 +67,6 @@ Example:
             raise InvalidArgumentError
 
         # Confirm bundle status is in 'DRAFT' state
-        if not BundleStatus[bundle_obj.status] == BundleStatus.DRAFT:
-            logger.error(f"Bundle {self.bundle_obj.id} is not in 'DRAFT' state, cannot release bundle")
-            raise InvalidArgumentError
+        if BundleStatus(bundle_obj.status) == BundleStatus.DEPRECATED:
+            logger.info(f"Bundle {self.bundle_obj.id} is already DEPRECATED")
+            sys.exit(0)

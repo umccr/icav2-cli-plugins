@@ -1,0 +1,488 @@
+icav2() {
+  : '
+  Run the ICAv2 CLI
+  '
+
+  # Binary checks
+  __icav2__get_base64_binary(){
+    if [[ "${OSTYPE}" == "darwin"* ]]; then
+      echo "gbase64"
+    else
+      echo "base64"
+    fi
+  }
+
+  __icav2__get_sed_binary(){
+    if [[ "${OSTYPE}" == "darwin"* ]]; then
+      echo "gsed"
+    else
+      echo "sed"
+    fi
+  }
+
+  __icav2__get_date_binary(){
+    if [[ "${OSTYPE}" == "darwin"* ]]; then
+      echo "gdate"
+    else
+      echo "date"
+    fi
+  }
+
+  __icav2__print_help() {
+    echo "
+Command line interface for the Illumina Connected Analytics, a genomics platform-as-a-service
+With the ICAv2-CLI-Plugins you can access many more commands and features via the CLI!!
+
+Usage:
+  icav2 [command]
+
+Available Commands:
+  analysisstorages      Analysis storages commands
+  bundles               Bundle commands**
+  completion            generate the autocompletion script for the specified shell
+  config                Config actions
+  dataformats           Data format commands
+  help                  Help about any command
+  jobs                  Job commands
+  metadatamodels        Metadata model commands
+  pipelines             Pipeline commands*
+  projectanalyses       Project analyses commands*
+  projectdata           Project Data commands*
+  projectpipelines      Project pipeline commands*
+  projects              Project commands*
+  projectsamples        Project samples commands
+  regions               Region commands
+  storagebundles        Storage bundle commands
+  storageconfigurations Storage configurations commands
+  tenants               Tenant commands**
+  tokens                Tokens commands
+  version               The version of this application
+
+Flags:
+  -t, --access-token string    JWT used to call rest service
+  -h, --help                   help for icav2
+  -o, --output-format string   output format (default 'table')
+  -s, --server-url string      server url to direct commands
+  -k, --x-api-key string       api key used to call rest service
+
+* Contains a mix of regular and plugin commands.
+** These commands are part of the ICAv2-CLI-Plugins.
+
+Use 'icav2 [command] --help' for more information about a command.
+"
+  }
+
+  __icav2__create_token_from_api_key() {
+    local icav2_base_url="$1"
+    local x_api_key="$2"
+
+    set -o pipefail
+    curl --fail --silent --location --show-error \
+      --request 'POST' \
+      --url "${icav2_base_url}/api/tokens" \
+      --header "Accept: application/vnd.illumina.v3+json" \
+      --header "X-API-Key: ${x_api_key}" \
+      -d '' |
+    jq --raw-output \
+      '.token'
+  }
+
+  __icav2__get_token_tid() {
+    local access_token="$1"
+    "$(__icav2__get_sed_binary)" -r 's/^(\S+)\.(\S+)\.(\S+)$/\2/' <<< "${access_token}" | \
+    ( "$(__icav2__get_base64_binary)" --decode 2>/dev/null || true ) | \
+    jq --raw-output \
+      '.tid | @base64d | split(":")[-1]'
+  }
+
+  __icav2__get_epoch_expiry() {
+    local access_token="$1"
+    "$(__icav2__get_sed_binary)" -r 's/^(\S+)\.(\S+)\.(\S+)$/\2/' <<< "${access_token}" | \
+    ( "$(__icav2__get_base64_binary)" --decode 2>/dev/null || true ) | \
+    jq --raw-output \
+      '.exp'
+  }
+
+  __icav2__get_seconds_to_expiry() {
+    local expiry_epoch="$1"
+    bc <<< "${expiry_epoch} - $("$(__icav2__get_date_binary)" +%s)"
+  }
+
+  __icav2__check_token_expiry() {
+      # Inputs
+      local access_token="$1"
+      local SECONDS_PER_HOUR=3600
+
+      # local vars
+      local epoch_expiry
+      local seconds_to_expiry
+
+      # Get the JWT token expiry time
+      epoch_expiry="$(__icav2__get_epoch_expiry "${access_token}")"
+
+      # Compare expiry to current time
+      seconds_to_expiry="$(__icav2__get_seconds_to_expiry "${epoch_expiry}")"
+
+      # Check token expiry
+      if [[ "${seconds_to_expiry}" -le 0 || "${seconds_to_expiry}" -le "${SECONDS_PER_HOUR}" ]]; then
+        # Token has expired OR is about to expire
+        return 1
+      fi
+  }
+
+  local plugin_subcommands_array
+  local plugin_subfunctions_array
+  local plugin_version="__PLUGIN_VERSION__"
+  local libica_version="__LIBICA_VERSION__"
+  local top
+  local bottom
+  local tenant_name
+  local server_url_prefix
+  local x_api_key
+  local base_url
+  local access_token
+  local project_id
+  local reset_token
+  local reset_token_envvar
+
+  plugin_subfunctions_array=( \
+    "_projects__enter_"
+    "_tenants__enter_"
+  )
+
+  # subcommands that are entirely plugins
+  plugin_only_subcommands_top_only_array=( \
+    "_bundles"
+  )
+
+  # Contain both plugins and non plugin subcommands
+  plugin_subcommands_top_only_array=( \
+    "_bundles_" \
+    "_pipelines_" \
+    "_projectanalyses_" \
+    "_projectdata_" \
+    "_projectpipelines_" \
+    "_tenants_" \
+  )
+
+  project_subcommands_top_only_array=( \
+    "_projectanalyses_" \
+    "_projectdata_" \
+    "_projectpipelines_" \
+    "_projectsamples_"
+  )
+
+  # List of plugin commands
+  plugin_subcommands_array=( \
+    "_bundles__init_" \
+    "_bundles__get_"
+    "_bundles__release_" \
+    "_bundles__list_" \
+    "_bundles__add-data_" \
+    "_bundles__add-pipeline_" \
+    "_bundles__add-bundle-to-project_" \
+    "_bundles__remove-bundle-from-project_" \
+    "_bundles__deprecate_" \
+    "_bundles__help_" \
+    "_bundles__-h_" \
+    "_bundles__--help_" \
+    "_projectdata__ls_" \
+    "_projectdata__mv_" \
+    "_projectdata__view_" \
+    "_projectdata__find_" \
+    "_projectdata__s3-sync-download_" \
+    "_projectdata__s3-sync-upload_" \
+    "_projectdata__create-download-script_"
+    "_projectdata__help_" \
+    "_projectdata__-h_" \
+    "_projectdata__--help_" \
+    "_projectanalyses__list-v2_" \
+    "_projectanalyses__list-analysis-steps_" \
+    "_projectanalyses__get-cwl-analysis-input-json_" \
+    "_projectanalyses__get-cwl-analysis-output-json_" \
+    "_projectanalyses__get-analysis-step-logs_" \
+    "_projectanalyses__gantt-plot_" \
+    "_projectanalyses__abort_" \
+    "_projectanalyses__help_" \
+    "_projectanalyses__-h_" \
+    "_projectanalyses__--help_" \
+    "_pipelines__status-check_" \
+    "_pipelines__list-projects_" \
+    "_pipelines__help_" \
+    "_pipelines__-h_" \
+    "_pipelines__--help_" \
+    "_projectpipelines__create-cwl-pipeline-from-zip_" \
+    "_projectpipelines__create-cwl-pipeline-from-github-release_" \
+    "_projectpipelines__create-nextflow-pipeline-from-nfcore_" \
+    "_projectpipelines__create-wes-input-template_" \
+    "_projectpipelines__start-wes_" \
+    "_projectpipelines__update_" \
+    "_projectpipelines__release_" \
+    "_projectpipelines__help_"
+    "_projectpipelines__-h_" \
+    "_projectpipelines__--help_" \
+    "_tenants__help_" \
+    "_tenants__-h_" \
+    "_tenants__--help_" \
+    "_tenants__init_" \
+    "_tenants__list_" \
+    "_tenants__set-default-project_" \
+    "_tenants__set-default-tenant_" \
+  )
+
+  # Check env var is set
+  if [[ -z "${ICAV2_CLI_PLUGINS_HOME-}" ]]; then
+    echo "Could not find env var 'ICAV2_CLI_PLUGINS_HOME'." 1>&2
+    echo "Please ensure all these values are set first" 1>&2
+    return 1
+  fi
+
+  # Get first two args if they exist
+  top="_${1-}"
+  bottom="${2-}_"
+
+  # If both blank or not matching, we just run the OG.
+  if [[ ( -z "${top#_}" || "${top#_}" == "help" || "${top#_}" == "--help" ) && -z "${bottom_}" ]]; then
+    __icav2__print_help
+    return 0
+  # Otherwise if the first is matching top array and the bottom is empty, extend command with 'help'
+  elif [[ -n "${top#_}" && -z "${bottom%_}" && " ${plugin_subcommands_top_only_array[*]} " =~ ${top}_ ]]; then
+    # Just the first subcommand, like icav2 projectdata help
+    # Extend arg to include help
+    bottom="help"
+  # Or print version
+  elif [[ "${top#_}" == "version" || "${top#_}" == "--version" || "${top#_}" == "-v" ]]; then
+    echo "icav2-cli-plugins-version: ${plugin_version}"
+    echo "libica module version: ${libica_version}"
+    command icav2 --version
+    return 0
+  fi
+
+  # Now if still one is empty print command
+  if [[ -z "${bottom%_}" ]]; then
+    # Hehe - this is a recursive, handle with care!
+    icav2 "${top#_}" help
+    return "$?"
+  else
+    # We're running either a shell function, regular or plugin command
+    # First we need to make sure we're in a tenant
+    if [[ -n "${ICAV2_TENANT_NAME-}" ]]; then
+      tenant_name="${ICAV2_TENANT_NAME}"
+    elif [[ -n "${ICAV2_DEFAULT_TENANT_NAME-}" ]]; then
+      tenant_name="${ICAV2_DEFAULT_TENANT_NAME}"
+    elif [[ -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt" ]]; then
+      tenant_name="$(cat "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt")"
+    fi
+
+    # If the tenant name is null, check we're not running a 'tenants-init' command
+    if [[ "${top#_}" == "tenants" && ( "${bottom%_}" == "init" || "${bottom%_}" == "help" ) ]]; then
+      PATH="'${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/:$PATH'" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/icav2-cli-plugins.py" "${top#_}" "${bottom%_}" "${@:3}"
+      return $? # Return the exit code of the function
+
+    else
+      # Confirm that if tenant exists, that it has a directory
+      if [[ -n "${tenant_name-}" && ! -d "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}" ]]; then
+        echo "Error - could not find tenant directory for tenant '${tenant_name}'" 1>&2
+        return 1
+      fi
+
+      if [[ -z "${tenant_name-}" && ! "${top#_}" == "tenants" ]]; then
+        echo "Error - please enter an icav2 tenant before running any other commands via 'icav2 tenants enter <tenant_id>'" 1>&2
+        return 1
+      fi
+
+      # If we're in a tenant, collect the access token and ensure it's valid
+      # First check the tenant config yaml exists
+      if [[ ! -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/config.yaml" ]]; then
+        echo "Error - could not find tenant config file for tenant '${tenant_name}'" 1>&2
+        return 1
+      fi
+    fi
+
+    # Get the server url prefix from the tenant config yaml
+    if [[ -n "${ICAV2_SERVER_URL-}" ]]; then
+      server_url="${ICAV2_SERVER_URL}"
+    else
+      server_url="$(
+        yq \
+          --unwrapScalar \
+          '
+            .server-url
+          ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/config.yaml"
+      )"
+    fi
+
+    # Check the server url is not empty
+    if [[ -z "${server_url}" || "${server_url}" == "null" ]]; then
+      echo "Could not get the server url from '${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/config.yaml'" 1>&2
+      return 1
+    fi
+
+    server_url_prefix="$( \
+      cut -d'.' -f1 <<< "${server_url}"
+    )"
+
+    # Run the wrapped python command if were running the tenants up here
+    if [[ "${top#_}" == "tenants" ]]; then
+      if [[ " ${plugin_subfunctions_array[*]} " =~ ${top}__${bottom} ]]; then
+        "_icav2__plugins__cli__${top#_}__${bottom%_}" "${@:3}"
+      elif [[ " ${plugin_subcommands_array[*]} " =~ ${top}__${bottom} ]]; then
+        PATH="'${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/:$PATH'" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/icav2-cli-plugins.py" "${top#_}" "${bottom%_}" "${@:3}"
+
+      elif [[ "${plugin_only_subcommands_top_only_array[*]} " =~ ${top} ]]; then
+        echo "Unknown subcommand for icav2 ${top#_}" 1>&2
+        PATH="'${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/:$PATH'" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/icav2-cli-plugins.py" "${top#_}" "help"
+      fi
+    else
+      # Were running a command that's not a 'tenant' command, we assume we need an icav2 access token
+      # Along with a few other env vars
+      # Ensure that ICAV2_BASE_URL is also set
+      if [[ -n "${ICAV2_BASE_URL-}" ]]; then
+        base_url="${ICAV2_BASE_URL}"
+      else
+        base_url="https://${server_url}/ica/rest"
+      fi
+
+      # If the env var ICAV2_ACCESS_TOKEN is set and it doesn't match the tenant's tid
+      # Then we throw an error since we're trying to use a token from another tenant
+      tenant_token_tid="$( \
+        yq \
+          --unwrapScalar \
+        '
+          .token-tid
+        ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/config.yaml"
+      )"
+      if [[ -n "${ICAV2_ACCESS_TOKEN-}" && ! "$(__icav2__get_token_tid "${ICAV2_ACCESS_TOKEN}")" == "${tenant_token_tid}" ]]; then
+        echo "Error - ICAV2_ACCESS_TOKEN env-var provided does not match the tenant '${ICAV2_TENANT_NAME}'" 1>&2
+        echo "Please either switch tenants or unset the ICAV2_ACCESS_TOKEN env-var" 1>&2
+        return 1
+      fi
+
+      # And the env var ICAV2_ACCESS_TOKEN is not expired, then we just use that
+      if [[ -n "${ICAV2_ACCESS_TOKEN-}" ]]; then
+        access_token="${ICAV2_ACCESS_TOKEN}"
+        if ! __icav2__check_token_expiry "${ICAV2_ACCESS_TOKEN}"; then
+          echo "ICAV2_ACCESS_TOKEN env var has expired, generating a new token and reexporting to the environment" 1>&2
+          reset_token="true"
+          reset_token_envvar="true"
+        fi
+      elif [[ -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml" ]]; then
+        if ! access_token="$( \
+          yq '.access-token' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml"
+        )"; then
+          access_token=""
+        elif [[ "${access_token}" == "null" ]]; then
+          access_token=""
+        else
+          # Check the tenant config yaml expiry
+          if ! __icav2__check_token_expiry "${access_token}"; then
+            echo "Tenant session yaml env var has expired, generating a new token" 1>&2
+            reset_token="true"
+            reset_token_envvar="false"
+          fi
+        fi
+      else
+        access_token=""
+      fi
+
+      if [[ "${reset_token-}" == "true" ]]; then
+        # Get the API key from the tenant config
+        x_api_key="$( \
+          yq \
+            --unwrapScalar \
+            '.x-api-key' \
+            < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/config.yaml" \
+        )"
+
+        # Checking the API Key is not empty
+        if [[ -z "${x_api_key}" || "${x_api_key}" == "null" ]]; then
+          echo "Could not get the api key from '${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/config.yaml'" 1>&2
+          return 1
+        fi
+
+        # Checking the server url prefix is not empty
+        if [[ -z "${server_url_prefix}" || "${server_url_prefix}" == "null" ]]; then
+          echo "Could not get the server url prefix from '${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/config.yaml'" 1>&2
+          return 1
+        fi
+
+        # Create a new token from the API key
+        if ! access_token="$( \
+          __icav2__create_token_from_api_key "${base_url}" "${x_api_key}"
+        )"; then
+          echo "Failed to create access token from api-key in '${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/config.yaml'" 1>&2
+          return 1
+        fi
+
+        # Exporting new access token env var
+        if [[ "${reset_token_envvar-}" == "true" ]]; then
+          export ICAV2_ACCESS_TOKEN="${access_token}"
+        fi
+
+        # And saving to tenant yaml
+        echo "Successfully created new access token" 1>&2
+        if [[ -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml" ]]; then
+          access_token="${access_token}" \
+          yq --unwrapScalar \
+            '.access-token=env(access_token)' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml" \
+            > "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml.tmp"
+            mv "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml.tmp" \
+              "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml"
+        else
+          access_token="${access_token}" \
+          yq --null-input --unwrapScalar \
+            '.access-token=env(access_token)' > "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml.tmp"
+          mv "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml.tmp" \
+             "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml"
+        fi
+      fi
+
+      # Check if we're running projectx subcommand and if so, we need to ensure that either
+      # 1. The ICAV2_PROJECT_ID is set or
+      # 2. The project-id can be found from the session yaml for the tenant
+      if [[ " ${project_subcommands_top_only_array[*]} " =~ ${top}_ && -z "${ICAV2_PROJECT_ID-}" ]]; then
+        # projectx command without project id present
+        if [[ -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml" ]]; then
+          if ! project_id="$( \
+            yq '.project-id' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${tenant_name}/.session.${server_url_prefix}.yaml"
+          )"; then
+            echo "Error! Trying to run a '${top#_}' command without either the ICAV2_PROJECT_ID env var set or a default project-id set in the session yaml for tenant '${tenant_name}'" 1>&2
+            return 1
+          elif [[ "${project_id}" == "null" ]]; then
+            echo "Error! Trying to run a '${top#_}' command without either the ICAV2_PROJECT_ID env var set or a default project-id set in the session yaml for tenant '${tenant_name}'" 1>&2
+            echo "Please run 'icav2 projects enter <project_name> or icav2 tenants set-default-project" 1>&2
+            return 1
+          fi
+        else
+          echo "Error! Trying to run a '${top#_}' command without either the ICAV2_PROJECT_ID env var set nor could a session yaml be found for tenant '${tenant_name}'" 1>&2
+          echo "Error! Trying to run a '${top#_}' command without either the ICAV2_PROJECT_ID env var set nor could a session yaml be found for tenant '${tenant_name}'" 1>&2
+          return 1
+        fi
+      else
+        # Either the project id is set or we don't need one since we're not running a project specific subcommand
+        project_id="${ICAV2_PROJECT_ID-}"
+      fi
+
+      # We might be running a shell function
+      if [[ " ${plugin_subfunctions_array[*]} " =~ ${top}__${bottom} ]]; then
+        if [[ "${top#_}" == "projects" && "${bottom%_}" == "enter" ]]; then
+          # Projects enter, if we set the project id and its blank, then it wont export to the env var properly
+          ICAV2_TENANT_NAME="${tenant_name}" ICAV2_SERVER_URL="${server_url}" ICAV2_BASE_URL="${base_url}" ICAV2_ACCESS_TOKEN="${access_token}" "_icav2__plugins__cli__${top#_}__${bottom%_}" "${@:3}"
+        else
+          # Run the wrapped python command
+          ICAV2_TENANT_NAME="${tenant_name}" ICAV2_SERVER_URL="${server_url}" ICAV2_BASE_URL="${base_url}" ICAV2_PROJECT_ID="${project_id}" ICAV2_ACCESS_TOKEN="${access_token}" "_icav2__plugins__cli__${top#_}__${bottom%_}" "${@:3}"
+        fi
+      # Run the wrapped python command
+      elif [[ " ${plugin_subcommands_array[*]} " =~ ${top}__${bottom} ]]; then
+        ICAV2_SERVER_URL="${server_url}" ICAV2_BASE_URL="${base_url}" ICAV2_PROJECT_ID="${project_id}" ICAV2_ACCESS_TOKEN="${access_token}" PATH="'${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/:$PATH'" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/icav2-cli-plugins.py" "${top#_}" "${bottom%_}" "${@:3}"
+      # Dont eval if in a plugin_only subcommand
+      elif [[ "${plugin_only_subcommands_top_only_array[*]} " =~ ${top} ]]; then
+        echo "Unknown subcommand for icav2 ${top#_}" 1>&2
+        ICAV2_SERVER_URL="${server_url}" ICAV2_BASE_URL="${base_url}" ICAV2_PROJECT_ID="${project_id}" ICAV2_ACCESS_TOKEN="${access_token}" PATH="'${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/:$PATH'" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/icav2-cli-plugins.py" "${top#_}" "help"
+      else
+        ICAV2_SERVER_URL="${server_url}" ICAV2_BASE_URL="${base_url}" ICAV2_PROJECT_ID="${project_id}" ICAV2_ACCESS_TOKEN="${access_token}" command icav2 "${@}"
+      fi
+    fi
+  fi
+}
+

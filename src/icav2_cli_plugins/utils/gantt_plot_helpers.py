@@ -19,11 +19,8 @@ from matplotlib.dates import DateFormatter, date2num
 from matplotlib.patches import Patch
 from datetime import datetime
 
-# Libica imports
-from libica.openapi.v2.model.analysis_step import AnalysisStep
-
-# Local imports
-from .projectanalysis_helpers import get_analysis
+# Wrapica imports
+from wrapica.project_analysis import get_analysis_obj_from_analysis_id, AnalysisStep
 
 STATUS_TO_COLOUR_MAP = {
     "FAILED": "#E71414",  # Bright Red
@@ -51,7 +48,7 @@ def time_delta_to_human_readable(total_seconds: int) -> str:
     return '%02d:%02d' % (hours, minutes)
 
 
-def analysis_list_to_df(workflow_steps: List[AnalysisStep]) -> pd.DataFrame:
+def analysis_steps_list_to_df(workflow_steps: List[AnalysisStep]) -> pd.DataFrame:
     # Map the list of workflow steps to a dataframe
     """
     Given a list of workflows, map and convert to a dataframe
@@ -119,9 +116,12 @@ def filter_workflow_steps_df(workflow_steps_df: pd.DataFrame) -> pd.DataFrame:
     """
     # Check if a technical intermediate step that needs to be dropped
     workflow_steps_df["drop_step"] = workflow_steps_df.copy().apply(
-        lambda x:
-        ( re.match(r"(setup_environment|prepare_input_data|finalize_output_data|pipeline_runner)\.\d+", x["task_name"]) is not None
-           or x["task_name"].startswith("Workflow_pre-run")
+        lambda x: (
+            re.match(
+                r"(setup_environment|prepare_input_data|finalize_output_data|pipeline_runner)\.\d+",
+                x["task_name"]
+            ) is not None
+            or x["task_name"].startswith("Workflow_pre-run")
         ) and x["task_is_technical"],
         axis="columns"
     )
@@ -132,7 +132,7 @@ def filter_workflow_steps_df(workflow_steps_df: pd.DataFrame) -> pd.DataFrame:
 
     # Rename workflow_monitor-0 to Workflow Monitor
     workflow_steps_df["task_name"] = workflow_steps_df["task_name"].apply(
-        lambda x: re.sub("^Workflow_monitor\-\d+$", "Workflow Monitor", x)
+        lambda x: re.sub(r"^Workflow_monitor-\d+$", "Workflow Monitor", x)
     )
 
     # Rename technical Steps to Tch. <name>
@@ -259,7 +259,7 @@ def plot_workflow_steps_df(workflow_steps_df: pd.DataFrame, output_path: Path, p
         sort_values(by="task_queue_date", ascending=False).reset_index()
 
     # Use timeCreated as the start of the analysis
-    analysis_creation_time = get_analysis(project_id, analysis_id).time_created
+    analysis_creation_time = get_analysis_obj_from_analysis_id(project_id, analysis_id).time_created
     # Add in queue date td and start date td for date time
     # task queue date is the first one to start up
     workflow_steps_df["task_queue_td"] = workflow_steps_df["task_queue_date"] - analysis_creation_time

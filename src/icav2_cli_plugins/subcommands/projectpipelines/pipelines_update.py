@@ -9,8 +9,9 @@ Update a project pipeline by
 4. Compare each with filecmp report, and confirm with user that they would like to update the pipeline
 5. Each file in the pipeline is updated
 """
-import sys
+
 # External imports
+import sys
 from filecmp import cmpfiles
 from pathlib import Path
 from pprint import pprint
@@ -18,26 +19,32 @@ from tempfile import TemporaryDirectory
 from typing import Optional, List
 from zipfile import ZipFile
 from deepdiff import DeepDiff
-from libica.openapi.v2.model.pipeline_file import PipelineFile
+
+# Wrapica imports
+from wrapica.enums import PipelineStatus
+from wrapica.pipelines import (
+    PipelineFile,
+    list_pipeline_files, download_pipeline_to_directory
+)
+from wrapica.project_pipelines import (
+    ProjectPipeline,
+    update_pipeline_file, add_pipeline_file, delete_pipeline_file
+)
+from wrapica.user import (
+    User,
+    get_user_obj_from_user_id,
+    get_user_id_from_configuration
+)
 
 # Utils
-from ...utils import is_uuid_format
 from ...utils.config_helpers import get_project_id
 from ...utils.errors import InvalidArgumentError
 from ...utils.logger import get_logger
-from ...utils.projectpipeline_helpers import (
-    download_pipeline_to_directory, update_pipeline_file,
-    add_pipeline_file, delete_pipeline_file, list_pipeline_files
-)
-from ...utils.pipeline_helpers import (
-    compare_yaml_files,
-    get_pipeline_id_from_pipeline_code,
-    get_pipeline_from_pipeline_id
-)
+from ...utils.pipeline_helpers import compare_yaml_files
 from ...utils.subprocess_handler import run_subprocess_proc
 
 # Locals
-from .. import Command
+from .. import Command, DocOptArg
 
 # Get logger
 logger = get_logger()
@@ -53,10 +60,15 @@ def confirm_pipeline_update():
 class ProjectPipelinesUpdate(Command):
     """Usage:
     icav2 projectpipelines update help
-    icav2 projectpipelines update <zipped_pipeline_path> <pipeline_id> [--force]
+    icav2 projectpipelines update <zipped_pipeline_path> <pipeline> [--force]
 
 Description:
-    Update a pipeline on ICAv2. The zipped workflow can be created with cwl-ica icav2-zip-workflow
+    Update a pipeline on ICAv2. The zipped workflow can be created with either
+    1. cwl-ica icav2-zip-workflow
+    2. nf-core download <pipeline_name> --revision <pipeline_revision> --outdir <pipeline_dir> --compress zip
+
+    It is expected for CWL workflows, that the workflow.cwl file is in the top directory of the zip file.
+    For Nextflow workflows, the main.nf file is expected in the top directory of the zip file, along with nextflow.config.
 
 Options:
     <zipped_pipeline_path>   Required, the path to the zip file containing the pipeline.
@@ -71,11 +83,27 @@ Example:
     icav2 projectpipelines update my_pipeline.zip uuid-1234-5678-9101
     """
 
+    zipped_pipeline_path: Path
+    project_pipeline_obj: ProjectPipeline
+    force: bool
+
     def __init__(self, command_argv):
+        self._docopt_type_args = {
+            "zipped_pipeline_path": DocOptArg(
+                cli_arg_keys=["<zipped_pipeline_path>"]
+            ),
+            "project_pipeline_obj": DocOptArg(
+                cli_arg_keys=["<pipeline>"]
+            ),
+            "force": DocOptArg(
+                cli_arg_keys=["--force"]
+            )
+        }
+
         # Initialise parameters
         self.project_id: Optional[str] = None
         self.pipeline_id: Optional[str] = None
-        self.zipped_pipeline_path: Optional[Path] = None
+        self.pipeline_status: Optional[PipelineStatus] = None
 
         # Local dirs
         self.tmp_local_unzipped_pipeline_directory_obj: Optional[TemporaryDirectory] = None
@@ -90,15 +118,17 @@ Example:
         self.file_cmp_list_match: Optional[List[Path]] = None
         self.file_cmp_list_edited: Optional[List[Path]] = None
         self.file_cmp_list_missing: Optional[List[Path]] = None
-        self.file_cmp_list_new: Optional[List] = None
+        self.file_cmp_list_new: Optional[List[Path]] = None
 
         # Pipeline file mapping
         self.pipeline_file_mapping: Optional[List[PipelineFile]] = None
 
+        # Get the user obj
+        self.user_obj: Optional[User]
+
         super().__init__(command_argv)
 
     def __call__(self):
-        logger.warning("Pipeline files API does NOT collect main file, 'workflow.cwl', hence any changes to workflow.cwl are ignored.")
         # Compare files
         self.compare_pipeline_files()
 
@@ -121,56 +151,21 @@ Example:
         # End script
         logger.info(f"Pipeline {self.pipeline_id} has been successfully updated!")
 
-    def get_pipeline_id(self):
-        pipeline_id_arg = self.args.get("<pipeline_id>", None)
-        if pipeline_id_arg is None:
-            logger.error("Please specify a pipeline id or code")
-            raise InvalidArgumentError
-
-        # Get pipeline id (if in code format)
-        if is_uuid_format(pipeline_id_arg):
-            pipeline_id = pipeline_id_arg
-        else:
-            pipeline_id = get_pipeline_id_from_pipeline_code(pipeline_id_arg)
-
-        return pipeline_id
-
-    def is_valid_pipeline(self) -> bool:
-        """
-        Confirm the pipeline id exists, and is not released
-        Returns: bool
-        """
-        ## Check status (is released?)
-        ## Get pipeline id
-        # FIXME - see the following for more info
-        # https://github.com/umccr-illumina/ica_v2/issues/135
-        # Still run regardless to confirm pipeline exists
-        pipeline_id_obj = get_pipeline_from_pipeline_id(self.pipeline_id)
-
-        return True
-
     def check_args(self):
         # Get the pipeline id
         self.project_id = get_project_id()
-        self.pipeline_id = self.get_pipeline_id()
 
-        # Check pipeline id exists and is not released
-        if not self.is_valid_pipeline():
-            logger.error(
-                f"Pipeline id '{self.pipeline_id}' is either not a valid pipeline or pipeline has already been released"
-            )
+        # Set the pipeline id, referred to in a few sections
+        self.pipeline_id = self.project_pipeline_obj.pipeline.id
 
-        # Check pipeline_path
-        zipped_pipeline_path_arg = self.args.get("<zipped_pipeline_path>", None)
-        if zipped_pipeline_path_arg is None:
-            logger.error("Please specify the path to the zipped pipeline")
-            raise InvalidArgumentError
+        # Check the pipeline is an editable pipeline
+        self.pipeline_status = PipelineStatus(self.project_pipeline_obj.pipeline.status)
 
-        # Assign pipeline path
-        self.zipped_pipeline_path = Path(zipped_pipeline_path_arg)
+        # Get the user object
+        self.user_obj: User = get_user_obj_from_user_id(get_user_id_from_configuration())
 
-        # Check force parameter
-        self.force = self.args.get("--force", False)
+        # Check the pipeline is editable on ICAv2
+        self.check_is_editable()
 
         # Check file exists
         if not self.zipped_pipeline_path.is_file():
@@ -189,7 +184,7 @@ Example:
         self.pull_pipeline_from_icav2()
 
         # Set pipeline file mapping
-        self.pipeline_file_mapping = list_pipeline_files(self.project_id, self.pipeline_id)
+        self.pipeline_file_mapping = list_pipeline_files(self.pipeline_id)
 
     def unzip_pipeline(self):
         # Create a temporary directory
@@ -212,7 +207,7 @@ Example:
 
         # Get the pipeline
         logger.info(f"Downloading pipeline {self.pipeline_id} to {self.tmp_icav2_pipeline_directory}")
-        download_pipeline_to_directory(self.project_id, self.pipeline_id, self.tmp_icav2_pipeline_directory)
+        download_pipeline_to_directory(self.pipeline_id, self.tmp_icav2_pipeline_directory)
 
     def compare_pipeline_files(self):
         """
@@ -226,10 +221,7 @@ Example:
                 lambda sub_path: sub_path.relative_to(self.tmp_local_unzipped_pipeline_directory),
                 filter(
                     lambda file_: (
-                        file_.is_file() and
-                        # FIXME - waiting on https://github.com/umccr-illumina/ica_v2/issues/162 and then can remove the
-                        # and not == workflow.cwl clause
-                        not file_.absolute() == Path(self.tmp_local_unzipped_pipeline_directory) / 'workflow.cwl'
+                        file_.is_file()
                     ),
                     Path(self.tmp_local_unzipped_pipeline_directory).rglob("*")
                 )
@@ -326,12 +318,13 @@ Example:
         try:
             file_id = next(
                 filter(
-                    lambda file_: file_.name == file_name,
+                    lambda file_iter: str(file_iter.name) == str(file_name),
                     self.pipeline_file_mapping
                 )
             ).id
         except StopIteration:
             logger.error(f"Could not get file id for file name '{file_name}'")
+            logger.error(f"Available files are {', '.join(map(lambda x: x.name, self.pipeline_file_mapping))}")
             raise StopIteration
         return file_id
 
@@ -345,16 +338,30 @@ Example:
             logger.info(f"Updating file {file_name}")
             local_file_path = self.tmp_local_unzipped_pipeline_directory / file_name
             file_id = self.get_file_id_from_file_name(file_name)
-            update_pipeline_file(self.project_id, self.pipeline_id, file_id, file_name, local_file_path)
+            update_pipeline_file(self.project_id, self.pipeline_id, file_id, local_file_path)
 
         # Add new files
         for file_name in self.file_cmp_list_new:
             logger.info(f"Adding file {file_name}")
             file_path = self.tmp_local_unzipped_pipeline_directory / file_name
-            add_pipeline_file(self.project_id, self.pipeline_id, file_name, file_path)
+            add_pipeline_file(self.project_id, self.pipeline_id, file_path)
 
         # Delete missing files
         for file_name in self.file_cmp_list_missing:
             logger.info(f"Deleting file {file_name}")
             file_id = self.get_file_id_from_file_name(file_name)
             delete_pipeline_file(self.project_id, self.pipeline_id, file_id)
+
+    def check_is_editable(self):
+        # Check pipeline status
+        if not self.pipeline_status == PipelineStatus.DRAFT:
+            logger.error(f"Pipeline '{self.project_pipeline_obj.pipeline.id}' is not in DRAFT status")
+            logger.error(f"Cannot edit pipeline in '{self.pipeline_status.value}' status")
+            sys.exit(1)
+
+        # Check user
+        if not self.project_pipeline_obj.pipeline.owner_id == self.user_obj.id:
+            logger.error(f"Pipeline '{self.project_pipeline_obj.pipeline.id}' is not owned by user '{self.user_obj.id}'")
+            sys.exit(1)
+
+        logger.info(f"Pipeline '{self.project_pipeline_obj.pipeline.id}' is editable")

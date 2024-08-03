@@ -34,7 +34,7 @@ PLUGIN_VERSION="__PLUGIN_VERSION__"
 LIBICA_VERSION="__LIBICA_VERSION__"
 YQ_VERSION="4.18.1"
 CURL_VERSION="7.76.0"
-PYTHON_VERSION="3.11"
+PYTHON_VERSION="3.12"
 
 ###########
 # Functions
@@ -260,8 +260,6 @@ fi
 
 
 # Steps get configuration / icav2 plugins home directory
-# TODO - hardcode as $HOME/.icav2-cli-plugins/ for now
-
 user_shell="$(get_user_shell)"
 
 if [[ -z "${user_shell}" ]]; then
@@ -316,6 +314,19 @@ fi
 mkdir -p "${ICAV2_CLI_PLUGINS_HOME}"
 
 
+#############################
+# TOUCH DEFAULT CONFIGURATION
+#############################
+if [[ ! -r "${HOME}/.icav2/config.yaml" ]]; then
+  mkdir -p "${HOME}/.icav2/"
+  touch "${HOME}/.icav2/config.yaml"
+fi
+
+if [[ -s "${HOME}/.icav2/config.yaml" ]]; then
+  echo_stderr "'${HOME}/.icav2/config.yaml' is not empty, please delete this file before continuing"
+  exit 1
+fi
+
 ############################
 # CREATE PYTHON3 VIRTUAL ENV
 ############################
@@ -332,7 +343,10 @@ else
 fi
 
 "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" -m pip install --upgrade pip --quiet
-"${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" -m pip install "$(get_this_path)/." --quiet
+# Install dev version of wrapica from test pypi
+"${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python3" -m pip install \
+  --extra-index-url https://test.pypi.org/simple \
+  "$(get_this_path)/." --quiet
 
 SITE_PACKAGES_DIR="$(
   find "${ICAV2_CLI_PLUGINS_HOME}/pyenv/lib/" \
@@ -369,14 +383,14 @@ fi
 # GET VERSIONS
 ################
 if [[ "${PLUGIN_VERSION}" == "__PLUGIN_VERSION__" ]]; then
-  echo "Installing from source" 1>&2
+  echo_stderr "Installing from source"
   latest_tag="$(git describe --abbrev=0 --tags)"
   latest_commit="$(git log --format="%H" -n 1 | cut -c1-7)"
   PLUGIN_VERSION="${latest_tag}--patch-${latest_commit}"
   echo "Setting plugin version as '${PLUGIN_VERSION}'"
 fi
 if [[ "${LIBICA_VERSION}" == "__LIBICA_VERSION__" ]]; then
-  echo "Getting libica version from pyproject.toml" 1>&2
+  echo_stderr "Getting libica version from pyproject.toml"
   LIBICA_VERSION="$( \
     "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python" -m pip show libica | \
     grep Version | \
@@ -390,8 +404,8 @@ fi
 # UPDATE VERSIONS
 ######################
 # Update shell function
-sed -i "s/__PLUGIN_VERSION__/${PLUGIN_VERSION}/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/icav2.sh"
-sed -i "s/__LIBICA_VERSION__/${LIBICA_VERSION}/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/icav2.sh"
+sed -i -e "s/__PLUGIN_VERSION__/${PLUGIN_VERSION}/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/_icav2"
+sed -i -e "s/__LIBICA_VERSION__/${LIBICA_VERSION}/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/_icav2"
 
 ######################
 # COPY AUTOCOMPLETIONS
@@ -410,28 +424,38 @@ else
   rc_profile="${HOME}/.${user_shell}rc"
 fi
 
-echo_stderr "INSTALLATION COMPLETE!"
-echo_stderr "To start using the plugins, add the following lines to ${rc_profile}"
-echo_stderr "######ICAV2-CLI-PLUGINS######"
-echo_stderr "export ICAV2_CLI_PLUGINS_HOME=\"\${HOME}/.icav2-cli-plugins\""
-echo_stderr "# Source functions"
-echo_stderr "for file_name in \"\${ICAV2_CLI_PLUGINS_HOME}/shell_functions/\"*; do"
-echo_stderr "    . \${file_name}; "
-echo_stderr "done"
+########################
+# GENERATE SOURCE SCRIPT
+########################
+{
+  echo "#!/usr/bin/env bash"
+  echo "# ICAV2 CLI PLUGINS"
+  echo "export ICAV2_CLI_PLUGINS_HOME=\"\${HOME}/.icav2-cli-plugins\""
+  echo "# Source functions"
+  echo "for file_name in \"\${ICAV2_CLI_PLUGINS_HOME}/shell_functions/\"*; do"
+  echo "    . \${file_name}; "
+  echo "done"
+  echo "# Add autocompletions"
+  echo "if [[ \"\$(basename \"\${SHELL}\")\" == \"bash\" ]]; then"
+  echo "  for f in \"\$ICAV2_CLI_PLUGINS_HOME/autocompletion/\$(basename \"\${SHELL}\")/\"*\".bash\"; do"
+  echo "    . \"\$f\""
+  echo "  done"
+  echo "elif [[ \"\$(basename \"\${SHELL}\")\" == \"zsh\" ]]; then"
+  echo "  fpath=(\"\${ICAV2_CLI_PLUGINS_HOME}/autocompletion/\$(basename \"\${SHELL}\")\" \$fpath)"
+  echo "  if [[ \"${OSTYPE}\" == \"darwin\"* ]]; then"
+  echo "    # Mac Users need to run 'autoload' before running compinit"
+  echo "    autoload -Uz compinit"
+  echo "  fi"
+  echo "  compinit"
+  echo "fi"
+} > "${ICAV2_CLI_PLUGINS_HOME}/source.sh"
 
-# Autocompletion differs between shells
-echo_stderr "# Source autocompletions"
-if [[ "${user_shell}" == "bash" ]]; then
-  echo_stderr "for f in \"\$ICAV2_CLI_PLUGINS_HOME/autocompletion/${user_shell}/\"*\".bash\"; do"
-  echo_stderr "    . \"\$f\""
-  echo_stderr "done"
-elif [[ "${user_shell}" == "zsh" ]]; then
-  echo_stderr "fpath=(\"\$ICAV2_CLI_PLUGINS_HOME/autocompletion/${user_shell}/\" \$fpath)"
-  if [[ "${OSTYPE}" == "darwin"* ]]; then
-    # Mac Users need to run 'autoload' before running compinit
-    echo_stderr "autoload -Uz compinit"
-  fi
-  echo_stderr "compinit"
-fi
 
-echo_stderr "########################"
+############################
+# SHOW BASHRC LINE TO ADD
+#############################
+
+echo_stderr "Add the following line(s) to your ${rc_profile} file"
+echo_stderr "############# ICAV2 CLI PLUGINS #############"
+echo_stderr ". \"\${HOME}/.icav2-cli-plugins/source.sh\""
+echo_stderr "#############################################"

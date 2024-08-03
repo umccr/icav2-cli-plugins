@@ -4,18 +4,19 @@
 List registered tenants for the plugin
 """
 
-# External data
-from typing import Optional, List, Dict
+# Standard imports
+from typing import Optional, List
 import pandas as pd
-from ruamel.yaml import YAML
 
-# Set utils
+# Utils
+from ...utils.config_helpers import read_config_file
 from ...utils.logger import get_logger
 from ...utils.plugin_helpers import get_tenants_directory
 
 # Locals
 from .. import Command
 
+# Set logger
 logger = get_logger()
 
 
@@ -37,8 +38,9 @@ Example:
     """
 
     def __init__(self, command_argv):
+        self._docopt_type_args = {}
         # The tenant name provided by the user
-        self.tenant_list: Optional[List] = None
+        self.tenant_list: Optional[List[str]] = None
 
         super().__init__(command_argv)
 
@@ -58,15 +60,15 @@ Example:
             if not (tenant_dir / "config.yaml").is_file():
                 continue
 
-            tenant_config_dict = self.read_config_file(tenant_dir / "config.yaml")
+            tenant_config_dict = read_config_file(tenant_name=tenant_dir.name)
 
             self.tenant_list.append(
                 {
+                    "name": tenant_dir.name,
                     "token_tid": tenant_config_dict.get("token-tid"),
                     "token_tns": tenant_config_dict.get("token-tns"),
                     "api_tid": tenant_config_dict.get("api-tid"),
                     "api_tns": tenant_config_dict.get("api-tns"),
-                    "name": tenant_dir.name
                 }
             )
 
@@ -74,17 +76,11 @@ Example:
             logger.error("No tenants available, please initialise a tenant with 'icav2 tenants list'")
             raise ValueError
 
-    def read_config_file(self, config_file) -> Dict:
-        yaml = YAML()
-
-        with open(config_file, "r") as file_h:
-            return yaml.load(file_h)
-
     def print_columns(self):
         pd.set_option('expand_frame_repr', False)
         pd.set_option('display.max_columns', 999)
 
-        print(pd.DataFrame(self.tenant_list).set_index("name"))
+        print(pd.DataFrame(self.tenant_list).to_markdown(index=False))
 
     def check_args(self):
         pass

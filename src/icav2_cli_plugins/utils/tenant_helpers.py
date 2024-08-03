@@ -11,14 +11,8 @@ from typing import Optional, List, Dict
 from urllib.parse import urlparse
 from ruamel.yaml import YAML
 
-# Libica imports
-from libica.openapi.v2 import ApiClient, ApiException
-from libica.openapi.v2.api.project_api import ProjectApi
-from libica.openapi.v2.model.project import Project
-from libica.openapi.v2.model.project_paged_list import ProjectPagedList
-
 # Local imports
-from .config_helpers import get_icav2_base_url, get_libicav2_configuration
+from .config_helpers import get_icav2_base_url
 from .logger import get_logger
 from .subprocess_handler import run_subprocess_proc
 
@@ -47,7 +41,10 @@ def get_server_url_from_config_file(tenant_config_file: Path) -> str:
     yaml = YAML()
 
     with open(tenant_config_file, "r") as file_h:
-        return yaml.load(file_h).get("server-url", urlparse(get_icav2_base_url()).netloc)
+        return yaml.load(file_h).get(
+            "server-url",
+            urlparse(get_icav2_base_url(tenant_name=tenant_config_file.parent.name)).netloc
+        )
 
 
 def get_session_file_path_from_config_file(tenant_config_file: Path) -> Path:

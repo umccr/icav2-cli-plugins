@@ -20,7 +20,7 @@ Available Commands:
   list              List pipelines
 
 Plugin Commands:
-  check-ownership   Check ownership of a pipeline
+  status-check      Check pipeline state
   list-projects     List projects a pipeline can be found in
 
 Flags:
@@ -39,8 +39,8 @@ Use "icav2 pipelines [command] --help" for more information about a command.
         super().__init__(command_argv)
 
     def get_subcommand_obj(self, cmd, command_argv):
-        if cmd == "check-ownership":
-            from .check_ownership import CheckOwnership as subcommand
+        if cmd == "status-check":
+            from .status_check import StatusCheck as subcommand
         elif cmd == "list-projects":
             from .list_projects import ListProjects as subcommand
         else:

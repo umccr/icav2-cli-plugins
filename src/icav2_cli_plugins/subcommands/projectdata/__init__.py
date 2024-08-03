@@ -25,6 +25,7 @@ CLI Commands:
   link                 Link data to a project
   list                 List data
   mount                Mount project data
+  move                 Move data to a project
   temporarycredentials fetch temporal credentials for data
   unarchive            unarchive data
   unlink               Unlink data to a project
@@ -34,6 +35,7 @@ CLI Commands:
 
 Plugin Commands:
   ls                       List data with standard posix ls options
+  mv                       Move data to a new location (like move but can use icav2 uris)
   view                     View a file and parse into stdout
   find                     Find a file / directory based on depth, regex and type (like unix find)
   s3-sync-upload           Upload a directory to a project folder, calling aws s3 sync underneath
@@ -58,6 +60,8 @@ Use "icav2 projectdata [command] --help" for more information about a command.
     def get_subcommand_obj(self, cmd, command_argv):
         if cmd == "ls":
             from .ls import ProjectDataLs as subcommand
+        elif cmd == "mv":
+            from .mv import ProjectDataMv as subcommand
         elif cmd == "view":
             from .view import ProjectDataView as subcommand
         elif cmd == "find":

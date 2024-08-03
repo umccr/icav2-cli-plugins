@@ -26,3 +26,7 @@ def get_plugins_directory():
 
 def get_tenants_directory():
     return get_icav2_plugins_home_dir() / "tenants"
+
+
+def get_default_tenant_file_path():
+    return get_tenants_directory() / "default_tenant.txt"

@@ -220,6 +220,8 @@ def clean_multi_arg(arg_vals: List, num_usages, use_dual_options) -> List:
     # Drop repetitions caused by multiple usages
     args_split = chunk_into_n(arg_vals[1:], int(num_usages))
 
+    if len(args_split) == 1:
+        return arg_vals
     assert all(
         args_split[0] == list_iter
         for list_iter in args_split[1:]

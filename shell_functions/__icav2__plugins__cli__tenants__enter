@@ -1,8 +1,3 @@
-#!/usr/bin/env bash
-
-# This file is to be sourced
-# The function below changes the ICAV2_ACCESS_TOKEN environment variable... maybe
-
 _icav2__plugins__cli__tenants__enter(){
   : '
   Given a tenant name, collect the api key from ~/.icav2-plugins/tenants/<tenant_name>/config.yaml.
@@ -41,7 +36,8 @@ the ICAV2_ACCESS_TOKEN env var.
 
 If you wish to set this as the default tenant globally, please
 use the --global parameter. This will recreate the config.yaml inside ~/.icav2/ directory by
-running icav2 config set
+running icav2 config set.  This will also generate the .session.ica.yaml in the tenant directory and
+softlink this to ~/.icav2/.session.ica.yaml
 
 Example:
   icav2 tenants enter umccr-beta
@@ -190,8 +186,10 @@ Parameters:
     cut -d'.' -f1
   )"
 
-
   # Read config
+  # FIXME - instead we get this from config.plugins.yaml
+  # FIXME - so we have both config.yaml and config.plugins.yaml
+  # FIXME - config.yaml is for icav2 cli commands, and is softlinks to ~/.icav2/config.yaml
   x_api_key="$( \
     yq \
       --unwrapScalar \
@@ -244,12 +242,15 @@ Parameters:
     fi
   fi
 
-  # Export access token
+  # Export access token and tenant name
+  echo "Setting env var 'ICAV2_TENANT_NAME' to '${tenant_name}'" 1>&2
+  export ICAV2_TENANT_NAME="${tenant_name}"
+  echo "Setting env var 'ICAV2_ACCESS_TOKEN' to access token present inside tenant's .session.${server_url_prefix}.yaml file" 1>&2
   export ICAV2_ACCESS_TOKEN="${access_token}"
 
   # Check if global is specified
   if [[ "${global}" == "true" ]]; then
-    echo "--global specified Setting '${tenant_name}' as tenant globally" 1>&2
+    echo "--global specified setting '${tenant_name}' as tenant globally" 1>&2
     echo "${HOME}/.icav2/config.yaml will be updated with api key for tenant name" 1>&2
     "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/python" "${ICAV2_CLI_PLUGINS_HOME}/plugins/bin/icav2-cli-plugins.py" \
       "tenants" "set-default-tenant" "${tenant_name}"

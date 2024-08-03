@@ -17,13 +17,15 @@ Usage:
   icav2 bundles <command> <args...>
 
 Plugin Commands:
-    init                   Initialise a bundle
-    get                    Get a bundle
-    list                   List bundles
-    add-data               Add data to a bundle
-    add-pipeline           Add pipeline to a bundle
-    release                Release a bundle
-    add-bundle-to-project  Add a released bundle to a project
+    init                        Initialise a bundle
+    get                         Get a bundle
+    list                        List bundles
+    add-data                    Add data to a bundle
+    add-pipeline                Add pipeline to a bundle
+    release                     Release a bundle
+    add-bundle-to-project       Add a released bundle to a project
+    remove-bundle-from-project  Remove a bundle from a project
+    deprecate                   Deprecate a bundle
 
 
 Flags:
@@ -57,6 +59,10 @@ Use "icav2 bundles [command] --help" for more information about a command.
             from .bundles_add_pipeline import BundlesAddPipeline as subcommand
         elif cmd == "add-bundle-to-project":
             from .bundles_add_to_project import BundlesAddToProject as subcommand
+        elif cmd == "remove-bundle-from-project":
+            from .bundles_remove_from_project import BundlesRemoveFromProject as subcommand
+        elif cmd == "deprecate":
+            from .bundles_deprecate import BundlesDeprecate as subcommand
         else:
             print(self.__doc__)
             print(f"Could not find cmd \"{cmd}\". Please refer to usage above")

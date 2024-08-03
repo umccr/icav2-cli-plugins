@@ -128,7 +128,7 @@ _icav2() {
 
         1)
             __comp_current_options || return
-            __icav2_dynamic_comp 'commands' 'add-bundle-to-project'$'\t''Add a bundle to a project'$'\n''add-data'$'\t''Add data to a bundle'$'\n''add-pipeline'$'\t''Add pipeline to a bundle'$'\n''init'$'\t''Initialise a bundle'$'\n''list'$'\t''List bundles'$'\n''release'$'\t''Release a bundle'
+            __icav2_dynamic_comp 'commands' 'add-bundle-to-project'$'\t''Add a bundle to a project'$'\n''add-data'$'\t''Add data to a bundle'$'\n''add-pipeline'$'\t''Add pipeline to a bundle'$'\n''get'$'\t''Initialise a bundle'$'\n''init'$'\t''Initialise a bundle'$'\n''list'$'\t''List bundles'$'\n''release'$'\t''Release a bundle'
 
         ;;
         *)
@@ -188,6 +188,27 @@ _icav2() {
               --pipeline-id)
               ;;
               --pipeline-code)
+              ;;
+
+            esac
+            case $INDEX in
+              2)
+                  __comp_current_options || return
+              ;;
+
+
+            *)
+                __comp_current_options || return
+            ;;
+            esac
+          ;;
+          get)
+            OPTIONS+=('--output-yaml' 'Path to output yaml' '--json' 'Return bundle as json object to stdout')
+            __icav2_handle_options_flags
+            case ${MYWORDS[$INDEX-1]} in
+              --output-yaml)
+              ;;
+              --json)
               ;;
 
             esac
@@ -334,7 +355,7 @@ _icav2() {
 
         1)
             __comp_current_options || return
-            __icav2_dynamic_comp 'commands' 'get'$'\t''Get details of a pipeline'$'\n''list'$'\t''List pipelines'
+            __icav2_dynamic_comp 'commands' 'get'$'\t''Get details of a pipeline'$'\n''list'$'\t''List pipelines'$'\n''list-projects'$'\t''List projects a pipeline resides in'$'\n''status-check'$'\t''Check pipeline ownership'
 
         ;;
         *)
@@ -347,6 +368,50 @@ _icav2() {
           list)
             __icav2_handle_options_flags
             __comp_current_options true || return # no subcmds, no params/opts
+          ;;
+          list-projects)
+            OPTIONS+=('----json' 'Output in json' '----include-bundle-linked' 'Include projects where the pipeline is linked via a bundle' '----include-hidden-projects' 'Include hidden projects')
+            __icav2_handle_options_flags
+            case ${MYWORDS[$INDEX-1]} in
+              ----json)
+              ;;
+              ----include-bundle-linked)
+              ;;
+              ----include-hidden-projects)
+              ;;
+
+            esac
+            case $INDEX in
+              2)
+                  __comp_current_options || return
+              ;;
+
+
+            *)
+                __comp_current_options || return
+            ;;
+            esac
+          ;;
+          status-check)
+            OPTIONS+=('----confirm-user-ownership' 'Confirm pipeline is owned by user' '----confirm-tenant-ownership' 'Confirm pipeline is owned by tenant')
+            __icav2_handle_options_flags
+            case ${MYWORDS[$INDEX-1]} in
+              ----confirm-user-ownership)
+              ;;
+              ----confirm-tenant-ownership)
+              ;;
+
+            esac
+            case $INDEX in
+              2)
+                  __comp_current_options || return
+              ;;
+
+
+            *)
+                __comp_current_options || return
+            ;;
+            esac
           ;;
         esac
 
@@ -747,7 +812,7 @@ _icav2() {
 
         1)
             __comp_current_options || return
-            __icav2_dynamic_comp 'commands' 'create'$'\t''Create a pipeline'$'\n''create-cwl-wes-input-template'$'\t''Create a WES input template for a CWL workflow ready for launch'$'\n''create-cwl-workflow-from-github-release'$'\t''From a github release, deploy a workflow to icav2'$'\n''create-cwl-workflow-from-zip'$'\t''From a zip file, deploy a workflow to icav2'$'\n''input'$'\t''Retrieve input parameters of pipeline'$'\n''link'$'\t''Link pipeline to a project'$'\n''list'$'\t''List of pipelines for a project'$'\n''start'$'\t''Start a pipeline'$'\n''start-cwl-wes'$'\t''Launch an analysis on icav2'$'\n''unlink'$'\t''Unlink pipeline from a project'
+            __icav2_dynamic_comp 'commands' 'create'$'\t''Create a pipeline'$'\n''create-cwl-wes-input-template'$'\t''Create a WES input template for a CWL workflow ready for launch'$'\n''create-cwl-pipeline-from-github-release'$'\t''From a github release, deploy a workflow to icav2'$'\n''create-cwl-pipeline-from-zip'$'\t''From a zip file, deploy a workflow to icav2'$'\n''input'$'\t''Retrieve input parameters of pipeline'$'\n''link'$'\t''Link pipeline to a project'$'\n''list'$'\t''List of pipelines for a project'$'\n''start'$'\t''Start a pipeline'$'\n''start-cwl-wes'$'\t''Launch an analysis on icav2'$'\n''unlink'$'\t''Unlink pipeline from a project'$'\n''update'
 
         ;;
         *)
@@ -803,7 +868,7 @@ _icav2() {
             ;;
             esac
           ;;
-          create-cwl-workflow-from-github-release)
+          create-cwl-pipeline-from-github-release)
             OPTIONS+=('--analysis-storage-id' 'analysis storage id' '--analysis-storage-size' 'analysis storage size')
             __icav2_handle_options_flags
             case ${MYWORDS[$INDEX-1]} in
@@ -826,7 +891,7 @@ _icav2() {
             ;;
             esac
           ;;
-          create-cwl-workflow-from-zip)
+          create-cwl-pipeline-from-zip)
             OPTIONS+=('--analysis-storage-id' 'analysis storage id' '--analysis-storage-size' 'analysis storage size')
             __icav2_handle_options_flags
             case ${MYWORDS[$INDEX-1]} in
@@ -907,6 +972,29 @@ _icav2() {
           unlink)
             __icav2_handle_options_flags
             __comp_current_options true || return # no subcmds, no params/opts
+          ;;
+          update)
+            OPTIONS+=('--force' 'Dont confirm with user')
+            __icav2_handle_options_flags
+            case ${MYWORDS[$INDEX-1]} in
+              --force)
+              ;;
+
+            esac
+            case $INDEX in
+              2)
+                  __comp_current_options || return
+                    compopt -o filenames
+              ;;
+              3)
+                  __comp_current_options || return
+              ;;
+
+
+            *)
+                __comp_current_options || return
+            ;;
+            esac
           ;;
         esac
 
@@ -1237,20 +1325,43 @@ _icav2_projectanalyses_gantt-plot_param_analysis_id_completion() {
     local param_analysis_id="$(
 ## CONFIG SETUP ##
 
-  __icav2_server_url_prefix="$( yq \
+# Check tenant
+if [[ -n "${ICAV2_TENANT_NAME-}" ]]; then
+  :
+elif [[ -n "${ICAV2_DEFAULT_TENANT_NAME-}" ]]; then
+  ICAV2_TENANT_NAME="${ICAV2_DEFAULT_TENANT_NAME}"
+else
+  # Get tenant name from cli plugins home
+  if [[ -z "${ICAV2_CLI_PLUGINS_HOME}" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  if [[ ! -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  # Read from text file
+  ICAV2_TENANT_NAME="$(cat "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt")"
+fi
+
+__icav2_server_url="$( \
+  yq \
     --unwrapScalar \
     '
       .server-url
-    ' < "${HOME}/.icav2/config.yaml" | \
-    cut -d'.' -f1
-  )"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+)"
+
+__icav2_server_url_prefix="$( \
+  cut -d'.' -f1 <<< "${__icav2_server_url}"
+)"
 
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1260,7 +1371,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1281,7 +1392,21 @@ if [[ \
       ) | \
     jq --raw-output '.exp' \
   )" < "$(date +%s)" ]]; then
- ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+  ICAV2_ACCESS_TOKEN="$(
+    api_key="$( \
+      yq \
+      --unwrapScalar \
+      '
+        .x-api-key
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+    )"
+    curl --fail --show-error --silent --location \
+      --request "POST" \
+      --header "Accept: application/vnd.illumina.v3+json" \
+      --header "X-API-Key: ${api_key}" \
+      --url "https://${__icav2_server_url}/ica/rest/api/tokens" \
+      --data ''
+  )"
 
  # Replace token
  ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
@@ -1292,7 +1417,9 @@ if [[ \
    mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
+if [[ -z "${ICAV2_BASE_URL-}" ]]; then
+  ICAV2_BASE_URL="https://${__icav2_server_url}/ica/rest"
+fi
 
 ## END CONFIG SETUP ##
 
@@ -1353,20 +1480,43 @@ _icav2_projectanalyses_get-analysis-step-logs_param_analysis_id_completion() {
     local param_analysis_id="$(
 ## CONFIG SETUP ##
 
-  __icav2_server_url_prefix="$( yq \
+# Check tenant
+if [[ -n "${ICAV2_TENANT_NAME-}" ]]; then
+  :
+elif [[ -n "${ICAV2_DEFAULT_TENANT_NAME-}" ]]; then
+  ICAV2_TENANT_NAME="${ICAV2_DEFAULT_TENANT_NAME}"
+else
+  # Get tenant name from cli plugins home
+  if [[ -z "${ICAV2_CLI_PLUGINS_HOME}" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  if [[ ! -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  # Read from text file
+  ICAV2_TENANT_NAME="$(cat "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt")"
+fi
+
+__icav2_server_url="$( \
+  yq \
     --unwrapScalar \
     '
       .server-url
-    ' < "${HOME}/.icav2/config.yaml" | \
-    cut -d'.' -f1
-  )"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+)"
+
+__icav2_server_url_prefix="$( \
+  cut -d'.' -f1 <<< "${__icav2_server_url}"
+)"
 
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1376,7 +1526,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1397,7 +1547,21 @@ if [[ \
       ) | \
     jq --raw-output '.exp' \
   )" < "$(date +%s)" ]]; then
- ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+  ICAV2_ACCESS_TOKEN="$(
+    api_key="$( \
+      yq \
+      --unwrapScalar \
+      '
+        .x-api-key
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+    )"
+    curl --fail --show-error --silent --location \
+      --request "POST" \
+      --header "Accept: application/vnd.illumina.v3+json" \
+      --header "X-API-Key: ${api_key}" \
+      --url "https://${__icav2_server_url}/ica/rest/api/tokens" \
+      --data ''
+  )"
 
  # Replace token
  ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
@@ -1408,7 +1572,9 @@ if [[ \
    mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
+if [[ -z "${ICAV2_BASE_URL-}" ]]; then
+  ICAV2_BASE_URL="https://${__icav2_server_url}/ica/rest"
+fi
 
 ## END CONFIG SETUP ##
 
@@ -1469,20 +1635,43 @@ _icav2_projectanalyses_get-cwl-analysis-input-json_param_analysis_id_completion(
     local param_analysis_id="$(
 ## CONFIG SETUP ##
 
-  __icav2_server_url_prefix="$( yq \
+# Check tenant
+if [[ -n "${ICAV2_TENANT_NAME-}" ]]; then
+  :
+elif [[ -n "${ICAV2_DEFAULT_TENANT_NAME-}" ]]; then
+  ICAV2_TENANT_NAME="${ICAV2_DEFAULT_TENANT_NAME}"
+else
+  # Get tenant name from cli plugins home
+  if [[ -z "${ICAV2_CLI_PLUGINS_HOME}" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  if [[ ! -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  # Read from text file
+  ICAV2_TENANT_NAME="$(cat "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt")"
+fi
+
+__icav2_server_url="$( \
+  yq \
     --unwrapScalar \
     '
       .server-url
-    ' < "${HOME}/.icav2/config.yaml" | \
-    cut -d'.' -f1
-  )"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+)"
+
+__icav2_server_url_prefix="$( \
+  cut -d'.' -f1 <<< "${__icav2_server_url}"
+)"
 
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1492,7 +1681,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1513,7 +1702,21 @@ if [[ \
       ) | \
     jq --raw-output '.exp' \
   )" < "$(date +%s)" ]]; then
- ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+  ICAV2_ACCESS_TOKEN="$(
+    api_key="$( \
+      yq \
+      --unwrapScalar \
+      '
+        .x-api-key
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+    )"
+    curl --fail --show-error --silent --location \
+      --request "POST" \
+      --header "Accept: application/vnd.illumina.v3+json" \
+      --header "X-API-Key: ${api_key}" \
+      --url "https://${__icav2_server_url}/ica/rest/api/tokens" \
+      --data ''
+  )"
 
  # Replace token
  ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
@@ -1524,7 +1727,9 @@ if [[ \
    mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
+if [[ -z "${ICAV2_BASE_URL-}" ]]; then
+  ICAV2_BASE_URL="https://${__icav2_server_url}/ica/rest"
+fi
 
 ## END CONFIG SETUP ##
 
@@ -1585,20 +1790,43 @@ _icav2_projectanalyses_get-cwl-analysis-output-json_param_analysis_id_completion
     local param_analysis_id="$(
 ## CONFIG SETUP ##
 
-  __icav2_server_url_prefix="$( yq \
+# Check tenant
+if [[ -n "${ICAV2_TENANT_NAME-}" ]]; then
+  :
+elif [[ -n "${ICAV2_DEFAULT_TENANT_NAME-}" ]]; then
+  ICAV2_TENANT_NAME="${ICAV2_DEFAULT_TENANT_NAME}"
+else
+  # Get tenant name from cli plugins home
+  if [[ -z "${ICAV2_CLI_PLUGINS_HOME}" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  if [[ ! -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  # Read from text file
+  ICAV2_TENANT_NAME="$(cat "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt")"
+fi
+
+__icav2_server_url="$( \
+  yq \
     --unwrapScalar \
     '
       .server-url
-    ' < "${HOME}/.icav2/config.yaml" | \
-    cut -d'.' -f1
-  )"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+)"
+
+__icav2_server_url_prefix="$( \
+  cut -d'.' -f1 <<< "${__icav2_server_url}"
+)"
 
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1608,7 +1836,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1629,7 +1857,21 @@ if [[ \
       ) | \
     jq --raw-output '.exp' \
   )" < "$(date +%s)" ]]; then
- ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+  ICAV2_ACCESS_TOKEN="$(
+    api_key="$( \
+      yq \
+      --unwrapScalar \
+      '
+        .x-api-key
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+    )"
+    curl --fail --show-error --silent --location \
+      --request "POST" \
+      --header "Accept: application/vnd.illumina.v3+json" \
+      --header "X-API-Key: ${api_key}" \
+      --url "https://${__icav2_server_url}/ica/rest/api/tokens" \
+      --data ''
+  )"
 
  # Replace token
  ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
@@ -1640,7 +1882,9 @@ if [[ \
    mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
+if [[ -z "${ICAV2_BASE_URL-}" ]]; then
+  ICAV2_BASE_URL="https://${__icav2_server_url}/ica/rest"
+fi
 
 ## END CONFIG SETUP ##
 
@@ -1701,20 +1945,43 @@ _icav2_projectanalyses_list-analysis-steps_param_analysis_id_completion() {
     local param_analysis_id="$(
 ## CONFIG SETUP ##
 
-  __icav2_server_url_prefix="$( yq \
+# Check tenant
+if [[ -n "${ICAV2_TENANT_NAME-}" ]]; then
+  :
+elif [[ -n "${ICAV2_DEFAULT_TENANT_NAME-}" ]]; then
+  ICAV2_TENANT_NAME="${ICAV2_DEFAULT_TENANT_NAME}"
+else
+  # Get tenant name from cli plugins home
+  if [[ -z "${ICAV2_CLI_PLUGINS_HOME}" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  if [[ ! -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  # Read from text file
+  ICAV2_TENANT_NAME="$(cat "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt")"
+fi
+
+__icav2_server_url="$( \
+  yq \
     --unwrapScalar \
     '
       .server-url
-    ' < "${HOME}/.icav2/config.yaml" | \
-    cut -d'.' -f1
-  )"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+)"
+
+__icav2_server_url_prefix="$( \
+  cut -d'.' -f1 <<< "${__icav2_server_url}"
+)"
 
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1724,7 +1991,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1745,7 +2012,21 @@ if [[ \
       ) | \
     jq --raw-output '.exp' \
   )" < "$(date +%s)" ]]; then
- ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+  ICAV2_ACCESS_TOKEN="$(
+    api_key="$( \
+      yq \
+      --unwrapScalar \
+      '
+        .x-api-key
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+    )"
+    curl --fail --show-error --silent --location \
+      --request "POST" \
+      --header "Accept: application/vnd.illumina.v3+json" \
+      --header "X-API-Key: ${api_key}" \
+      --url "https://${__icav2_server_url}/ica/rest/api/tokens" \
+      --data ''
+  )"
 
  # Replace token
  ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
@@ -1756,7 +2037,9 @@ if [[ \
    mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
+if [[ -z "${ICAV2_BASE_URL-}" ]]; then
+  ICAV2_BASE_URL="https://${__icav2_server_url}/ica/rest"
+fi
 
 ## END CONFIG SETUP ##
 
@@ -1817,20 +2100,43 @@ _icav2_projectdata_create-download-script_param_data_path_completion() {
     local param_data_path="$(
 ## CONFIG SETUP ##
 
-  __icav2_server_url_prefix="$( yq \
+# Check tenant
+if [[ -n "${ICAV2_TENANT_NAME-}" ]]; then
+  :
+elif [[ -n "${ICAV2_DEFAULT_TENANT_NAME-}" ]]; then
+  ICAV2_TENANT_NAME="${ICAV2_DEFAULT_TENANT_NAME}"
+else
+  # Get tenant name from cli plugins home
+  if [[ -z "${ICAV2_CLI_PLUGINS_HOME}" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  if [[ ! -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  # Read from text file
+  ICAV2_TENANT_NAME="$(cat "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt")"
+fi
+
+__icav2_server_url="$( \
+  yq \
     --unwrapScalar \
     '
       .server-url
-    ' < "${HOME}/.icav2/config.yaml" | \
-    cut -d'.' -f1
-  )"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+)"
+
+__icav2_server_url_prefix="$( \
+  cut -d'.' -f1 <<< "${__icav2_server_url}"
+)"
 
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1840,7 +2146,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1861,7 +2167,21 @@ if [[ \
       ) | \
     jq --raw-output '.exp' \
   )" < "$(date +%s)" ]]; then
- ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+  ICAV2_ACCESS_TOKEN="$(
+    api_key="$( \
+      yq \
+      --unwrapScalar \
+      '
+        .x-api-key
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+    )"
+    curl --fail --show-error --silent --location \
+      --request "POST" \
+      --header "Accept: application/vnd.illumina.v3+json" \
+      --header "X-API-Key: ${api_key}" \
+      --url "https://${__icav2_server_url}/ica/rest/api/tokens" \
+      --data ''
+  )"
 
  # Replace token
  ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
@@ -1872,7 +2192,9 @@ if [[ \
    mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
+if [[ -z "${ICAV2_BASE_URL-}" ]]; then
+  ICAV2_BASE_URL="https://${__icav2_server_url}/ica/rest"
+fi
 
 ## END CONFIG SETUP ##
 
@@ -1952,20 +2274,43 @@ _icav2_projectdata_find_param_data_path_completion() {
     local param_data_path="$(
 ## CONFIG SETUP ##
 
-  __icav2_server_url_prefix="$( yq \
+# Check tenant
+if [[ -n "${ICAV2_TENANT_NAME-}" ]]; then
+  :
+elif [[ -n "${ICAV2_DEFAULT_TENANT_NAME-}" ]]; then
+  ICAV2_TENANT_NAME="${ICAV2_DEFAULT_TENANT_NAME}"
+else
+  # Get tenant name from cli plugins home
+  if [[ -z "${ICAV2_CLI_PLUGINS_HOME}" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  if [[ ! -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  # Read from text file
+  ICAV2_TENANT_NAME="$(cat "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt")"
+fi
+
+__icav2_server_url="$( \
+  yq \
     --unwrapScalar \
     '
       .server-url
-    ' < "${HOME}/.icav2/config.yaml" | \
-    cut -d'.' -f1
-  )"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+)"
+
+__icav2_server_url_prefix="$( \
+  cut -d'.' -f1 <<< "${__icav2_server_url}"
+)"
 
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1975,7 +2320,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -1996,7 +2341,21 @@ if [[ \
       ) | \
     jq --raw-output '.exp' \
   )" < "$(date +%s)" ]]; then
- ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+  ICAV2_ACCESS_TOKEN="$(
+    api_key="$( \
+      yq \
+      --unwrapScalar \
+      '
+        .x-api-key
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+    )"
+    curl --fail --show-error --silent --location \
+      --request "POST" \
+      --header "Accept: application/vnd.illumina.v3+json" \
+      --header "X-API-Key: ${api_key}" \
+      --url "https://${__icav2_server_url}/ica/rest/api/tokens" \
+      --data ''
+  )"
 
  # Replace token
  ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
@@ -2007,7 +2366,9 @@ if [[ \
    mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
+if [[ -z "${ICAV2_BASE_URL-}" ]]; then
+  ICAV2_BASE_URL="https://${__icav2_server_url}/ica/rest"
+fi
 
 ## END CONFIG SETUP ##
 
@@ -2087,20 +2448,43 @@ _icav2_projectdata_ls_param_data_path_completion() {
     local param_data_path="$(
 ## CONFIG SETUP ##
 
-  __icav2_server_url_prefix="$( yq \
+# Check tenant
+if [[ -n "${ICAV2_TENANT_NAME-}" ]]; then
+  :
+elif [[ -n "${ICAV2_DEFAULT_TENANT_NAME-}" ]]; then
+  ICAV2_TENANT_NAME="${ICAV2_DEFAULT_TENANT_NAME}"
+else
+  # Get tenant name from cli plugins home
+  if [[ -z "${ICAV2_CLI_PLUGINS_HOME}" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  if [[ ! -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  # Read from text file
+  ICAV2_TENANT_NAME="$(cat "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt")"
+fi
+
+__icav2_server_url="$( \
+  yq \
     --unwrapScalar \
     '
       .server-url
-    ' < "${HOME}/.icav2/config.yaml" | \
-    cut -d'.' -f1
-  )"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+)"
+
+__icav2_server_url_prefix="$( \
+  cut -d'.' -f1 <<< "${__icav2_server_url}"
+)"
 
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -2110,7 +2494,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -2131,7 +2515,21 @@ if [[ \
       ) | \
     jq --raw-output '.exp' \
   )" < "$(date +%s)" ]]; then
- ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+  ICAV2_ACCESS_TOKEN="$(
+    api_key="$( \
+      yq \
+      --unwrapScalar \
+      '
+        .x-api-key
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+    )"
+    curl --fail --show-error --silent --location \
+      --request "POST" \
+      --header "Accept: application/vnd.illumina.v3+json" \
+      --header "X-API-Key: ${api_key}" \
+      --url "https://${__icav2_server_url}/ica/rest/api/tokens" \
+      --data ''
+  )"
 
  # Replace token
  ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
@@ -2142,7 +2540,9 @@ if [[ \
    mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
+if [[ -z "${ICAV2_BASE_URL-}" ]]; then
+  ICAV2_BASE_URL="https://${__icav2_server_url}/ica/rest"
+fi
 
 ## END CONFIG SETUP ##
 
@@ -2222,20 +2622,43 @@ _icav2_projectdata_s3-sync-download_param_data_path_completion() {
     local param_data_path="$(
 ## CONFIG SETUP ##
 
-  __icav2_server_url_prefix="$( yq \
+# Check tenant
+if [[ -n "${ICAV2_TENANT_NAME-}" ]]; then
+  :
+elif [[ -n "${ICAV2_DEFAULT_TENANT_NAME-}" ]]; then
+  ICAV2_TENANT_NAME="${ICAV2_DEFAULT_TENANT_NAME}"
+else
+  # Get tenant name from cli plugins home
+  if [[ -z "${ICAV2_CLI_PLUGINS_HOME}" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  if [[ ! -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  # Read from text file
+  ICAV2_TENANT_NAME="$(cat "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt")"
+fi
+
+__icav2_server_url="$( \
+  yq \
     --unwrapScalar \
     '
       .server-url
-    ' < "${HOME}/.icav2/config.yaml" | \
-    cut -d'.' -f1
-  )"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+)"
+
+__icav2_server_url_prefix="$( \
+  cut -d'.' -f1 <<< "${__icav2_server_url}"
+)"
 
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -2245,7 +2668,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -2266,7 +2689,21 @@ if [[ \
       ) | \
     jq --raw-output '.exp' \
   )" < "$(date +%s)" ]]; then
- ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+  ICAV2_ACCESS_TOKEN="$(
+    api_key="$( \
+      yq \
+      --unwrapScalar \
+      '
+        .x-api-key
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+    )"
+    curl --fail --show-error --silent --location \
+      --request "POST" \
+      --header "Accept: application/vnd.illumina.v3+json" \
+      --header "X-API-Key: ${api_key}" \
+      --url "https://${__icav2_server_url}/ica/rest/api/tokens" \
+      --data ''
+  )"
 
  # Replace token
  ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
@@ -2277,7 +2714,9 @@ if [[ \
    mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
+if [[ -z "${ICAV2_BASE_URL-}" ]]; then
+  ICAV2_BASE_URL="https://${__icav2_server_url}/ica/rest"
+fi
 
 ## END CONFIG SETUP ##
 
@@ -2357,20 +2796,43 @@ _icav2_projectdata_s3-sync-upload_param_data_path_completion() {
     local param_data_path="$(
 ## CONFIG SETUP ##
 
-  __icav2_server_url_prefix="$( yq \
+# Check tenant
+if [[ -n "${ICAV2_TENANT_NAME-}" ]]; then
+  :
+elif [[ -n "${ICAV2_DEFAULT_TENANT_NAME-}" ]]; then
+  ICAV2_TENANT_NAME="${ICAV2_DEFAULT_TENANT_NAME}"
+else
+  # Get tenant name from cli plugins home
+  if [[ -z "${ICAV2_CLI_PLUGINS_HOME}" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  if [[ ! -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  # Read from text file
+  ICAV2_TENANT_NAME="$(cat "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt")"
+fi
+
+__icav2_server_url="$( \
+  yq \
     --unwrapScalar \
     '
       .server-url
-    ' < "${HOME}/.icav2/config.yaml" | \
-    cut -d'.' -f1
-  )"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+)"
+
+__icav2_server_url_prefix="$( \
+  cut -d'.' -f1 <<< "${__icav2_server_url}"
+)"
 
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -2380,7 +2842,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -2401,7 +2863,21 @@ if [[ \
       ) | \
     jq --raw-output '.exp' \
   )" < "$(date +%s)" ]]; then
- ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+  ICAV2_ACCESS_TOKEN="$(
+    api_key="$( \
+      yq \
+      --unwrapScalar \
+      '
+        .x-api-key
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+    )"
+    curl --fail --show-error --silent --location \
+      --request "POST" \
+      --header "Accept: application/vnd.illumina.v3+json" \
+      --header "X-API-Key: ${api_key}" \
+      --url "https://${__icav2_server_url}/ica/rest/api/tokens" \
+      --data ''
+  )"
 
  # Replace token
  ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
@@ -2412,7 +2888,9 @@ if [[ \
    mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
+if [[ -z "${ICAV2_BASE_URL-}" ]]; then
+  ICAV2_BASE_URL="https://${__icav2_server_url}/ica/rest"
+fi
 
 ## END CONFIG SETUP ##
 
@@ -2492,20 +2970,43 @@ _icav2_projectdata_view_param_data_path_completion() {
     local param_data_path="$(
 ## CONFIG SETUP ##
 
-  __icav2_server_url_prefix="$( yq \
+# Check tenant
+if [[ -n "${ICAV2_TENANT_NAME-}" ]]; then
+  :
+elif [[ -n "${ICAV2_DEFAULT_TENANT_NAME-}" ]]; then
+  ICAV2_TENANT_NAME="${ICAV2_DEFAULT_TENANT_NAME}"
+else
+  # Get tenant name from cli plugins home
+  if [[ -z "${ICAV2_CLI_PLUGINS_HOME}" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  if [[ ! -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  # Read from text file
+  ICAV2_TENANT_NAME="$(cat "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt")"
+fi
+
+__icav2_server_url="$( \
+  yq \
     --unwrapScalar \
     '
       .server-url
-    ' < "${HOME}/.icav2/config.yaml" | \
-    cut -d'.' -f1
-  )"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+)"
+
+__icav2_server_url_prefix="$( \
+  cut -d'.' -f1 <<< "${__icav2_server_url}"
+)"
 
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -2515,7 +3016,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -2536,7 +3037,21 @@ if [[ \
       ) | \
     jq --raw-output '.exp' \
   )" < "$(date +%s)" ]]; then
- ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+  ICAV2_ACCESS_TOKEN="$(
+    api_key="$( \
+      yq \
+      --unwrapScalar \
+      '
+        .x-api-key
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+    )"
+    curl --fail --show-error --silent --location \
+      --request "POST" \
+      --header "Accept: application/vnd.illumina.v3+json" \
+      --header "X-API-Key: ${api_key}" \
+      --url "https://${__icav2_server_url}/ica/rest/api/tokens" \
+      --data ''
+  )"
 
  # Replace token
  ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
@@ -2547,7 +3062,9 @@ if [[ \
    mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
+if [[ -z "${ICAV2_BASE_URL-}" ]]; then
+  ICAV2_BASE_URL="https://${__icav2_server_url}/ica/rest"
+fi
 
 ## END CONFIG SETUP ##
 
@@ -2627,20 +3144,43 @@ _icav2_projectpipelines_create-cwl-wes-input-template_option_pipeline_id_complet
     local param_pipeline_id="$(
 ## CONFIG SETUP ##
 
-  __icav2_server_url_prefix="$( yq \
+# Check tenant
+if [[ -n "${ICAV2_TENANT_NAME-}" ]]; then
+  :
+elif [[ -n "${ICAV2_DEFAULT_TENANT_NAME-}" ]]; then
+  ICAV2_TENANT_NAME="${ICAV2_DEFAULT_TENANT_NAME}"
+else
+  # Get tenant name from cli plugins home
+  if [[ -z "${ICAV2_CLI_PLUGINS_HOME}" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  if [[ ! -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  # Read from text file
+  ICAV2_TENANT_NAME="$(cat "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt")"
+fi
+
+__icav2_server_url="$( \
+  yq \
     --unwrapScalar \
     '
       .server-url
-    ' < "${HOME}/.icav2/config.yaml" | \
-    cut -d'.' -f1
-  )"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+)"
+
+__icav2_server_url_prefix="$( \
+  cut -d'.' -f1 <<< "${__icav2_server_url}"
+)"
 
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -2650,7 +3190,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -2671,7 +3211,21 @@ if [[ \
       ) | \
     jq --raw-output '.exp' \
   )" < "$(date +%s)" ]]; then
- ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+  ICAV2_ACCESS_TOKEN="$(
+    api_key="$( \
+      yq \
+      --unwrapScalar \
+      '
+        .x-api-key
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+    )"
+    curl --fail --show-error --silent --location \
+      --request "POST" \
+      --header "Accept: application/vnd.illumina.v3+json" \
+      --header "X-API-Key: ${api_key}" \
+      --url "https://${__icav2_server_url}/ica/rest/api/tokens" \
+      --data ''
+  )"
 
  # Replace token
  ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
@@ -2682,7 +3236,9 @@ if [[ \
    mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
+if [[ -z "${ICAV2_BASE_URL-}" ]]; then
+  ICAV2_BASE_URL="https://${__icav2_server_url}/ica/rest"
+fi
 
 ## END CONFIG SETUP ##
 eval "$(\
@@ -2722,20 +3278,43 @@ _icav2_projectpipelines_create-cwl-wes-input-template_option_pipeline_code_compl
     local param_pipeline_code="$(
 ## CONFIG SETUP ##
 
-  __icav2_server_url_prefix="$( yq \
+# Check tenant
+if [[ -n "${ICAV2_TENANT_NAME-}" ]]; then
+  :
+elif [[ -n "${ICAV2_DEFAULT_TENANT_NAME-}" ]]; then
+  ICAV2_TENANT_NAME="${ICAV2_DEFAULT_TENANT_NAME}"
+else
+  # Get tenant name from cli plugins home
+  if [[ -z "${ICAV2_CLI_PLUGINS_HOME}" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  if [[ ! -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  # Read from text file
+  ICAV2_TENANT_NAME="$(cat "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt")"
+fi
+
+__icav2_server_url="$( \
+  yq \
     --unwrapScalar \
     '
       .server-url
-    ' < "${HOME}/.icav2/config.yaml" | \
-    cut -d'.' -f1
-  )"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+)"
+
+__icav2_server_url_prefix="$( \
+  cut -d'.' -f1 <<< "${__icav2_server_url}"
+)"
 
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -2745,7 +3324,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -2766,7 +3345,21 @@ if [[ \
       ) | \
     jq --raw-output '.exp' \
   )" < "$(date +%s)" ]]; then
- ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+  ICAV2_ACCESS_TOKEN="$(
+    api_key="$( \
+      yq \
+      --unwrapScalar \
+      '
+        .x-api-key
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+    )"
+    curl --fail --show-error --silent --location \
+      --request "POST" \
+      --header "Accept: application/vnd.illumina.v3+json" \
+      --header "X-API-Key: ${api_key}" \
+      --url "https://${__icav2_server_url}/ica/rest/api/tokens" \
+      --data ''
+  )"
 
  # Replace token
  ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
@@ -2777,7 +3370,9 @@ if [[ \
    mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
+if [[ -z "${ICAV2_BASE_URL-}" ]]; then
+  ICAV2_BASE_URL="https://${__icav2_server_url}/ica/rest"
+fi
 
 ## END CONFIG SETUP ##
 
@@ -2821,20 +3416,43 @@ _icav2_projectpipelines_create-cwl-wes-input-template_option_output_parent_folde
     local param_output_parent_folder_path="$(
 ## CONFIG SETUP ##
 
-  __icav2_server_url_prefix="$( yq \
+# Check tenant
+if [[ -n "${ICAV2_TENANT_NAME-}" ]]; then
+  :
+elif [[ -n "${ICAV2_DEFAULT_TENANT_NAME-}" ]]; then
+  ICAV2_TENANT_NAME="${ICAV2_DEFAULT_TENANT_NAME}"
+else
+  # Get tenant name from cli plugins home
+  if [[ -z "${ICAV2_CLI_PLUGINS_HOME}" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  if [[ ! -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  # Read from text file
+  ICAV2_TENANT_NAME="$(cat "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt")"
+fi
+
+__icav2_server_url="$( \
+  yq \
     --unwrapScalar \
     '
       .server-url
-    ' < "${HOME}/.icav2/config.yaml" | \
-    cut -d'.' -f1
-  )"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+)"
+
+__icav2_server_url_prefix="$( \
+  cut -d'.' -f1 <<< "${__icav2_server_url}"
+)"
 
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -2844,7 +3462,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -2865,7 +3483,21 @@ if [[ \
       ) | \
     jq --raw-output '.exp' \
   )" < "$(date +%s)" ]]; then
- ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+  ICAV2_ACCESS_TOKEN="$(
+    api_key="$( \
+      yq \
+      --unwrapScalar \
+      '
+        .x-api-key
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+    )"
+    curl --fail --show-error --silent --location \
+      --request "POST" \
+      --header "Accept: application/vnd.illumina.v3+json" \
+      --header "X-API-Key: ${api_key}" \
+      --url "https://${__icav2_server_url}/ica/rest/api/tokens" \
+      --data ''
+  )"
 
  # Replace token
  ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
@@ -2876,7 +3508,9 @@ if [[ \
    mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
+if [[ -z "${ICAV2_BASE_URL-}" ]]; then
+  ICAV2_BASE_URL="https://${__icav2_server_url}/ica/rest"
+fi
 
 ## END CONFIG SETUP ##
 
@@ -2956,20 +3590,43 @@ _icav2_projectpipelines_start-cwl-wes_option_pipeline_id_completion() {
     local param_pipeline_id="$(
 ## CONFIG SETUP ##
 
-  __icav2_server_url_prefix="$( yq \
+# Check tenant
+if [[ -n "${ICAV2_TENANT_NAME-}" ]]; then
+  :
+elif [[ -n "${ICAV2_DEFAULT_TENANT_NAME-}" ]]; then
+  ICAV2_TENANT_NAME="${ICAV2_DEFAULT_TENANT_NAME}"
+else
+  # Get tenant name from cli plugins home
+  if [[ -z "${ICAV2_CLI_PLUGINS_HOME}" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  if [[ ! -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  # Read from text file
+  ICAV2_TENANT_NAME="$(cat "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt")"
+fi
+
+__icav2_server_url="$( \
+  yq \
     --unwrapScalar \
     '
       .server-url
-    ' < "${HOME}/.icav2/config.yaml" | \
-    cut -d'.' -f1
-  )"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+)"
+
+__icav2_server_url_prefix="$( \
+  cut -d'.' -f1 <<< "${__icav2_server_url}"
+)"
 
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -2979,7 +3636,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -3000,7 +3657,21 @@ if [[ \
       ) | \
     jq --raw-output '.exp' \
   )" < "$(date +%s)" ]]; then
- ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+  ICAV2_ACCESS_TOKEN="$(
+    api_key="$( \
+      yq \
+      --unwrapScalar \
+      '
+        .x-api-key
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+    )"
+    curl --fail --show-error --silent --location \
+      --request "POST" \
+      --header "Accept: application/vnd.illumina.v3+json" \
+      --header "X-API-Key: ${api_key}" \
+      --url "https://${__icav2_server_url}/ica/rest/api/tokens" \
+      --data ''
+  )"
 
  # Replace token
  ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
@@ -3011,7 +3682,9 @@ if [[ \
    mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
+if [[ -z "${ICAV2_BASE_URL-}" ]]; then
+  ICAV2_BASE_URL="https://${__icav2_server_url}/ica/rest"
+fi
 
 ## END CONFIG SETUP ##
 eval "$(\
@@ -3051,20 +3724,43 @@ _icav2_projectpipelines_start-cwl-wes_option_pipeline_code_completion() {
     local param_pipeline_code="$(
 ## CONFIG SETUP ##
 
-  __icav2_server_url_prefix="$( yq \
+# Check tenant
+if [[ -n "${ICAV2_TENANT_NAME-}" ]]; then
+  :
+elif [[ -n "${ICAV2_DEFAULT_TENANT_NAME-}" ]]; then
+  ICAV2_TENANT_NAME="${ICAV2_DEFAULT_TENANT_NAME}"
+else
+  # Get tenant name from cli plugins home
+  if [[ -z "${ICAV2_CLI_PLUGINS_HOME}" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  if [[ ! -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  # Read from text file
+  ICAV2_TENANT_NAME="$(cat "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt")"
+fi
+
+__icav2_server_url="$( \
+  yq \
     --unwrapScalar \
     '
       .server-url
-    ' < "${HOME}/.icav2/config.yaml" | \
-    cut -d'.' -f1
-  )"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+)"
+
+__icav2_server_url_prefix="$( \
+  cut -d'.' -f1 <<< "${__icav2_server_url}"
+)"
 
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -3074,7 +3770,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -3095,7 +3791,21 @@ if [[ \
       ) | \
     jq --raw-output '.exp' \
   )" < "$(date +%s)" ]]; then
- ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+  ICAV2_ACCESS_TOKEN="$(
+    api_key="$( \
+      yq \
+      --unwrapScalar \
+      '
+        .x-api-key
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+    )"
+    curl --fail --show-error --silent --location \
+      --request "POST" \
+      --header "Accept: application/vnd.illumina.v3+json" \
+      --header "X-API-Key: ${api_key}" \
+      --url "https://${__icav2_server_url}/ica/rest/api/tokens" \
+      --data ''
+  )"
 
  # Replace token
  ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
@@ -3106,7 +3816,9 @@ if [[ \
    mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
+if [[ -z "${ICAV2_BASE_URL-}" ]]; then
+  ICAV2_BASE_URL="https://${__icav2_server_url}/ica/rest"
+fi
 
 ## END CONFIG SETUP ##
 
@@ -3150,20 +3862,43 @@ _icav2_projectpipelines_start-cwl-wes_option_output_parent_folder_path_completio
     local param_output_parent_folder_path="$(
 ## CONFIG SETUP ##
 
-  __icav2_server_url_prefix="$( yq \
+# Check tenant
+if [[ -n "${ICAV2_TENANT_NAME-}" ]]; then
+  :
+elif [[ -n "${ICAV2_DEFAULT_TENANT_NAME-}" ]]; then
+  ICAV2_TENANT_NAME="${ICAV2_DEFAULT_TENANT_NAME}"
+else
+  # Get tenant name from cli plugins home
+  if [[ -z "${ICAV2_CLI_PLUGINS_HOME}" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  if [[ ! -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  # Read from text file
+  ICAV2_TENANT_NAME="$(cat "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt")"
+fi
+
+__icav2_server_url="$( \
+  yq \
     --unwrapScalar \
     '
       .server-url
-    ' < "${HOME}/.icav2/config.yaml" | \
-    cut -d'.' -f1
-  )"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+)"
+
+__icav2_server_url_prefix="$( \
+  cut -d'.' -f1 <<< "${__icav2_server_url}"
+)"
 
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -3173,7 +3908,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -3194,7 +3929,21 @@ if [[ \
       ) | \
     jq --raw-output '.exp' \
   )" < "$(date +%s)" ]]; then
- ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+  ICAV2_ACCESS_TOKEN="$(
+    api_key="$( \
+      yq \
+      --unwrapScalar \
+      '
+        .x-api-key
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+    )"
+    curl --fail --show-error --silent --location \
+      --request "POST" \
+      --header "Accept: application/vnd.illumina.v3+json" \
+      --header "X-API-Key: ${api_key}" \
+      --url "https://${__icav2_server_url}/ica/rest/api/tokens" \
+      --data ''
+  )"
 
  # Replace token
  ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
@@ -3205,7 +3954,9 @@ if [[ \
    mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
+if [[ -z "${ICAV2_BASE_URL-}" ]]; then
+  ICAV2_BASE_URL="https://${__icav2_server_url}/ica/rest"
+fi
 
 ## END CONFIG SETUP ##
 
@@ -3285,20 +4036,43 @@ _icav2_projects_enter_param_project_name_completion() {
     local param_project_name="$(
 ## CONFIG SETUP ##
 
-  __icav2_server_url_prefix="$( yq \
+# Check tenant
+if [[ -n "${ICAV2_TENANT_NAME-}" ]]; then
+  :
+elif [[ -n "${ICAV2_DEFAULT_TENANT_NAME-}" ]]; then
+  ICAV2_TENANT_NAME="${ICAV2_DEFAULT_TENANT_NAME}"
+else
+  # Get tenant name from cli plugins home
+  if [[ -z "${ICAV2_CLI_PLUGINS_HOME}" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  if [[ ! -r "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt" ]]; then
+    # Cannot go any further
+    exit
+  fi
+  # Read from text file
+  ICAV2_TENANT_NAME="$(cat "${ICAV2_CLI_PLUGINS_HOME}/tenants/default_tenant.txt")"
+fi
+
+__icav2_server_url="$( \
+  yq \
     --unwrapScalar \
     '
       .server-url
-    ' < "${HOME}/.icav2/config.yaml" | \
-    cut -d'.' -f1
-  )"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+)"
+
+__icav2_server_url_prefix="$( \
+  cut -d'.' -f1 <<< "${__icav2_server_url}"
+)"
 
 if [[ -z "${ICAV2_ACCESS_TOKEN-}" ]]; then
   ICAV2_ACCESS_TOKEN="$(yq \
     --unwrapScalar \
     '
       .access-token
-    ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+    ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -3308,7 +4082,7 @@ if [[ -z "${ICAV2_PROJECT_ID-}" ]]; then
     --unwrapScalar \
       '
         .project-id
-      ' < "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/.session.${__icav2_server_url_prefix}.yaml"
   )"
 fi
 
@@ -3329,7 +4103,21 @@ if [[ \
       ) | \
     jq --raw-output '.exp' \
   )" < "$(date +%s)" ]]; then
- ICAV2_ACCESS_TOKEN="$(icav2 tokens create)"
+  ICAV2_ACCESS_TOKEN="$(
+    api_key="$( \
+      yq \
+      --unwrapScalar \
+      '
+        .x-api-key
+      ' < "${ICAV2_CLI_PLUGINS_HOME}/tenants/${ICAV2_TENANT_NAME}/config.yaml"
+    )"
+    curl --fail --show-error --silent --location \
+      --request "POST" \
+      --header "Accept: application/vnd.illumina.v3+json" \
+      --header "X-API-Key: ${api_key}" \
+      --url "https://${__icav2_server_url}/ica/rest/api/tokens" \
+      --data ''
+  )"
 
  # Replace token
  ICAV2_ACCESS_TOKEN="${ICAV2_ACCESS_TOKEN}" \
@@ -3340,7 +4128,9 @@ if [[ \
    mv "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml.tmp" "${HOME}/.icav2/.session.${__icav2_server_url_prefix}.yaml"
 fi
 
-ICAV2_BASE_URL="${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}"
+if [[ -z "${ICAV2_BASE_URL-}" ]]; then
+  ICAV2_BASE_URL="https://${__icav2_server_url}/ica/rest"
+fi
 
 ## END CONFIG SETUP ##
 
@@ -3351,7 +4141,7 @@ ATTRIBUTE_NAME="name"
 curl \
   --fail --silent --location \
   --request "GET" \
-  --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects/" \
+  --url "${ICAV2_BASE_URL-https://ica.illumina.com/ica/rest}/api/projects?includeHiddenProjects=false&pageSize=100" \
   --header "Accept: application/vnd.illumina.v3+json" \
   --header "Authorization: Bearer ${ICAV2_ACCESS_TOKEN}" | \
 jq \

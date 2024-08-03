@@ -7,17 +7,24 @@ Use AWS sync command to upload data to ICAv2
 # External imports
 from pathlib import Path
 from typing import List, Optional, Dict
+from urllib.parse import urlunparse
+
+# Wrapica imports
+from wrapica.project_data import (
+    get_aws_credentials_access_for_project_folder, ProjectData
+)
 
 # Utils
 from ...utils.errors import InvalidArgumentError
 from ...utils.config_helpers import get_project_id
-from ...utils.projectdata_helpers import \
-    get_data_obj_from_project_id_and_path, \
-    get_s3_sync_script, get_aws_credentials_access, run_s3_sync_command, check_is_directory, create_data_in_project
+from ...utils.projectdata_helpers import (
+    get_s3_sync_script, run_s3_sync_command
+)
 from ...utils.logger import get_logger
+from ...utils.subprocess_handler import run_subprocess_proc
 
 # Local imports
-from .. import Command
+from .. import Command, DocOptArg
 
 # Get logger
 logger = get_logger()
@@ -26,9 +33,9 @@ logger = get_logger()
 class S3SyncUpload(Command):
     """Usage:
     icav2 projectdata s3-sync-upload help
-    icav2 projectdata s3-sync-upload <upload_path> <data_path>
-                                     [-w=<file_path> | --write-script-path=<file_path> ]
-                                     [-s=<s3_sync_arg> | --s3-sync-arg=<s3_sync_arg>]...
+    icav2 projectdata s3-sync-upload <upload_path> <data>
+                                     [-w<file_path> | --write-script-path=<file_path>]
+                                     [--s3-sync-arg=<s3_sync_arg>]...
 
 
 Description:
@@ -37,14 +44,15 @@ Description:
 
 Options:
     <upload_path>                                      Required, the source directory, directory must exist
-    <data_path>                                        Required, path to icav2 data folder you wish to upload to
+    <data>                                             Required, the data path to icav2 data folder you wish to upload to
+                                                       May also specify a folder id or an icav2 uri
 
-    -w=<file_path>, --write-script-path=<file_path>    Optional, write out a script instead of invoking aws s3 command
+    -w<file_path>, --write-script-path=<file_path>     Optional, write out a script instead of invoking aws s3 command
                                                        that holds the AWS S3 Sync parameters.
                                                        upload path parameter folder does not necessarily need to exist if this option
                                                        is set. Parent folder of this parameter must exist.
 
-    -s=<s3_sync_arg>, --s3-sync-arg=<s3_sync_arg>      Other arguments are sent to aws s3 sync, specify multiple times for multiple arguments
+    --s3-sync-arg=<s3_sync_arg>                        Other arguments are sent to aws s3 sync, specify multiple times for multiple arguments
 
 
 Environment variables:
@@ -63,48 +71,53 @@ Examples: icav2 projectdata s3-sync-upload $HOME/test_inputs/ /test_data/inputs/
     icav2 projectdata s3-sync-upload $HOME/test_inputs/ /test_data/inputs/ --s3-sync-arg --exclude='*' --s3-sync-arg --include='*.bam'
     """
 
+    project_data_obj: Optional[ProjectData]
+    upload_path: Optional[Path]
+    write_script_path: Optional[Path]
+    s3_sync_args: Optional[List[str]]
+
     def __init__(self, command_argv):
-        # Initialise parameters
-        self.data_path: Optional[str] = None
-        self.data_id: Optional[str] = None
-        self.upload_path: Optional[Path] = None
-        self.project_id: Optional[str] = None
-        self.write_script_path: Optional[Path] = None
-        self.s3_sync_args: Optional[List] = None
+        # CLI ARGS
+        self._docopt_type_args = {
+            "project_data_obj": DocOptArg(
+                cli_arg_keys=["data"],
+                config={
+                    "create_data_if_not_found": True
+                }
+            ),
+            "upload_path": DocOptArg(
+                cli_arg_keys=["--upload-path"],
+            ),
+            "write_script_path": DocOptArg(
+                cli_arg_keys=["--write-script-path"],
+            ),
+            "s3_sync_args": DocOptArg(
+                cli_arg_keys=["--s3-sync-arg"],
+            )
+        }
+
+        # Additional args
         self.s3_env_vars: Optional[Dict] = None
         self.s3_path: Optional[str] = None
+        self.project_id: Optional[str] = None
 
         super().__init__(command_argv)
 
-    def check_args(self):
-        # Get data path
-        self.data_path = self.args.get("<data_path>", None)
-
-        # Check data path ends with a '/'
-        if not self.data_path.endswith("/"):
-            logger.error("data path parameter should end in a '/'")
-            raise InvalidArgumentError
-
-        self.project_id = get_project_id()
-
-        # Get upload path
-        self.upload_path = self.args.get("<upload_path>", None)
-        self.upload_path = Path(self.upload_path)
-
-        self.write_script_path = self.args.get("--write-script-path", None)
+    def __call__(self):
+        # Run command
         if self.write_script_path is not None:
-            self.write_script_path = Path(self.write_script_path)
+            self.create_sync_script()
+        else:
+            self.run_aws_s3_sync_upload_command()
 
-        # Check upload path exists (if write-script-path not set)
-        if not self.upload_path.is_dir() and \
-                self.write_script_path is None:
-            logger.error(f"Please ensure upload path parameter '{self.upload_path}' exists")
-            raise InvalidArgumentError
+    def check_args(self):
+        # Set project id
+        self.project_id = get_project_id()
 
         # Check upload path is not a file
         if self.upload_path.is_file() and \
                 self.write_script_path is not None:
-            logger.error(f"Cannot upload data to {self.data_path}, expected upload path to be a directory, not a file")
+            logger.error(f"Cannot upload data to {self.upload_path}, expected upload path to be a directory, not a file")
             raise InvalidArgumentError
 
         # Check write script path is not a folder
@@ -115,44 +128,37 @@ Examples: icav2 projectdata s3-sync-upload $HOME/test_inputs/ /test_data/inputs/
         # Check if parent script path exists
         if self.write_script_path is not None and \
                 not self.write_script_path.parent.is_dir():
-            logger.error(f"Please ensure parent folder of the write-script-path parameter '{self.write_script_path}' exists")
+            logger.error(
+                f"Please ensure parent folder of the write-script-path parameter"
+                f" '{self.write_script_path}' exists"
+            )
             raise InvalidArgumentError
 
         # Check awsv2 is installed if write script path is not set
         if self.write_script_path is None:
             # Check awsv2 is installed
-            # TODO
-            pass
-
-        # Get s3 sync args
-        # FIXME - something not right here
-        self.s3_sync_args = []
-        for s3_sync_arg in self.args.get("--s3-sync-arg"):
-            self.s3_sync_args.append(s3_sync_arg)
-
-        # Get the data id now we know all the arguments are working
-        if not check_is_directory(
-            project_id=self.project_id,
-            folder_path=self.data_path
-        ):
-            self.data_id = create_data_in_project(
-                project_id=self.project_id,
-                data_path=self.data_path
-            ).data.id
-        else:
-            self.data_id = get_data_obj_from_project_id_and_path(
-                project_id=self.project_id,
-                data_path=self.data_path
-            ).data.id
+            aws_v2_returncode, aws_v2_stdout, aws_v2_stderr = run_subprocess_proc(
+                [
+                    "aws", "--version"
+                ]
+            )
+            if not aws_v2_returncode == 0:
+                logger.error("AWS CLI V2 not installed")
+                raise InvalidArgumentError
 
         # Get s3 env vars
-        self.s3_env_vars = get_aws_credentials_access(
+        self.s3_env_vars = get_aws_credentials_access_for_project_folder(
             project_id=self.project_id,
-            data_id=self.data_id
+            folder_id=self.project_data_obj.data.id
         )
 
         # Trailing slash already part of object prefix
-        self.s3_path = f"s3://{self.s3_env_vars.get('bucket')}/{self.s3_env_vars.get('object_prefix')}"
+        self.s3_path = urlunparse(
+            (
+                "s3", self.s3_env_vars.get('bucket'), self.s3_env_vars.get('object_prefix'),
+                None, None, None
+            )
+        )
 
     def create_sync_script(self):
         with open(self.write_script_path, "w") as file_h:
@@ -177,9 +183,3 @@ Examples: icav2 projectdata s3-sync-upload $HOME/test_inputs/ /test_data/inputs/
             upload_path=self.upload_path
         )
 
-    def __call__(self):
-        # Run command
-        if self.write_script_path is not None:
-            self.create_sync_script()
-        else:
-            self.run_aws_s3_sync_upload_command()

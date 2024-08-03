@@ -3,21 +3,20 @@
 """
 List projects a pipeline resides in
 """
+# Standard imports
 import json
-# External imports
 from typing import Optional, List, Dict
-from libica.openapi.v2.model.project import Project
+
+# Wrapica imports
+from wrapica.project import list_projects, Project
+from wrapica.pipelines import PipelineType
+from wrapica.project_pipelines import list_project_pipelines
 
 # Utils
-from ...utils import is_uuid_format
-from ...utils.errors import InvalidArgumentError
 from ...utils.logger import get_logger
-from ...utils.pipeline_helpers import get_pipeline_id_from_pipeline_code
-from ...utils.project_helpers import list_projects
-from ...utils.projectpipeline_helpers import list_project_pipelines
 
 # Locals
-from .. import Command
+from .. import Command, DocOptArg
 
 # Get logger
 logger = get_logger()
@@ -26,7 +25,7 @@ logger = get_logger()
 class ListProjects(Command):
     """Usage:
     icav2 pipelines list-projects help
-    icav2 pipelines list-projects <pipeline_id>  
+    icav2 pipelines list-projects <pipeline_id_or_code>
                                   [--json] 
                                   [--include-bundle-linked]
                                   [--include-hidden-projects]
@@ -47,7 +46,7 @@ Description:
     Finding out which projects a pipeline is linked to.
 
 Options:
-    <pipeline_id>                Required, the id (or code) of the pipeline to update
+    <pipeline_id_or_code>        Required, the id (or code) of the pipeline to update
     --include-hidden-projects    Optional, search hidden projects
     --json                       Optional, output in json format
     --include-bundle-linked      Optional, include projects that have the pipeline linked via a bundle
@@ -60,13 +59,30 @@ Example:
     icav2 pipelines list-projects abcd-efgh-ijkl-mnop
     """
 
+    pipeline_obj: Optional[PipelineType]
+    include_hidden_projects: Optional[bool]
+    is_json: Optional[bool]
+    include_bundle_linked: Optional[bool]
+
     def __init__(self, command_argv):
+        # CLI Args
+        self._docopt_type_args = {
+            "pipeline_obj": DocOptArg(
+                cli_arg_keys=["pipeline_id_or_code"]
+            ),
+            "include_hidden_projects": DocOptArg(
+                cli_arg_keys=["--include-hidden-projects"],
+            ),
+            "is_json": DocOptArg(
+                cli_arg_keys=["--json"],
+            ),
+            "include_bundle_linked": DocOptArg(
+                cli_arg_keys=["--include-bundle-linked"],
+            )
+        }
+
         # Initialise parameters
         self.projects: Optional[List[Project]] = None
-        self.pipeline_id: Optional[str] = None
-        self.include_hidden_projects: Optional[bool] = None
-        self.json: Optional[bool] = None
-        self.bundle_linked: Optional[bool] = False
 
         super().__init__(command_argv)
 
@@ -76,15 +92,18 @@ Example:
 
         # End script
         if len(self.projects) == 0:
-            logger.error(f"Could not find a single project that contains the pipeline id '{self.pipeline_id}'")
+            logger.error(f"Could not find a single project that contains the pipeline id '{self.pipeline_obj.id}'")
             raise ValueError
 
-        if self.json:
+        if self.is_json:
             print(
                 json.dumps(
                     list(
                         map(
-                            lambda project_: {"project_id": project_.id, "project_name": project_.name},
+                            lambda project_: {
+                                "project_id": project_.id,
+                                "project_name": project_.name
+                            },
                             self.projects
                         )
                     ),
@@ -92,33 +111,11 @@ Example:
                 )
             )
         else:
-            print(f"The following projects contain the pipeline id: '{self.pipeline_id}'")
+            print(f"The following projects contain the pipeline id: '{self.pipeline_obj.id}'")
             for project in self.projects:
                 print(f"* Project ID: {project.id} / Project Name: {project.name}")
 
-    def get_pipeline_id(self):
-        pipeline_id_arg = self.args.get("<pipeline_id>", None)
-        if pipeline_id_arg is None:
-            logger.error("Please specify a pipeline id or code")
-            raise InvalidArgumentError
-
-        # Get pipeline id (if in code format)
-        if is_uuid_format(pipeline_id_arg):
-            pipeline_id = pipeline_id_arg
-        else:
-            pipeline_id = get_pipeline_id_from_pipeline_code(pipeline_id_arg)
-
-        return pipeline_id
-
     def check_args(self):
-        # Get the pipeline id
-        self.pipeline_id = self.get_pipeline_id()
-
-        # Check parameters
-        self.include_hidden_projects = self.args.get("--include-hidden-projects", False)
-        self.json = self.args.get("--json", False)
-        self.bundle_linked = self.args.get("--include-bundle-linked", False)
-
         # Get projects
         self.projects = list_projects(include_hidden_projects=self.include_hidden_projects)
 
@@ -127,7 +124,7 @@ Example:
         Select linked pipeline
         :return:
         """
-        if self.bundle_linked:
+        if self.include_bundle_linked:
             return True
         else:
             return len(project_pipeline_dict.get("bundleLinks").get("items")) == 0
@@ -138,8 +135,10 @@ Example:
             try:
                 next(
                     filter(
-                        lambda project_pipeline: project_pipeline.get("pipeline").get("id") == self.pipeline_id and
-                                                 self.select_linked_pipeline(project_pipeline),
+                        lambda project_pipeline: (
+                            project_pipeline.pipeline.id == self.pipeline_obj.id and
+                            self.select_linked_pipeline(project_pipeline)
+                        ),
                         list_project_pipelines(project_id=project.id)
                     )
                 )

@@ -3,28 +3,23 @@
 """
 CWL Handlers
 """
+
+# Standard imports
 import hashlib
-import os
 import re
 import subprocess
 from copy import deepcopy
-from datetime import datetime
 from pathlib import Path
 from typing import Optional, List, Dict, Union, Tuple
 import json
 import sys
-
 from zipfile import ZipFile
-
 from mdutils import MdUtils
-
+from urllib.parse import urlparse
 from ruamel import yaml
-from .config_helpers import get_libicav2_configuration
-from .cwl_typing_helpers import InputEnumSchemaType, InputRecordSchemaType, InputArraySchemaType
-from .logger import get_logger
+from tempfile import TemporaryDirectory, NamedTemporaryFile
 
-from .subprocess_handler import run_subprocess_proc
-
+# CWL Utils
 from cwl_utils.parser import load_document_by_uri, \
     Workflow, \
     WorkflowStep, \
@@ -36,11 +31,13 @@ from cwl_utils.parser.latest import \
     shortname, \
     RecordSchema
 
-from cwl_utils.pack import pack
+# Local imports
+from .cwl_typing_helpers import InputEnumSchemaType, InputRecordSchemaType, InputArraySchemaType
+from .logger import get_logger
 
-from urllib.parse import urlparse
+from .subprocess_handler import run_subprocess_proc
+from .config_helpers import get_libicav2_configuration
 
-from tempfile import TemporaryDirectory, NamedTemporaryFile
 
 logger = get_logger()
 
@@ -286,60 +283,7 @@ class ZippedCWLWorkflow:
 
     def get_md5sum_from_packed_dict(self) -> str:
         return hashlib.md5(json.dumps(self.cwl_pack, indent=4).encode()).hexdigest()
-
     # FIXME - this should be its own function outside of this class
-    def create_icav2_workflow_from_zip(
-        self,
-        project_id: str,
-        analysis_storage_id: str,
-        workflow_description: str,
-        params_xml_file: Path,
-        html_documentation_path: Optional[Path],
-    ) -> Tuple[str, str]:
-
-        configuration = get_libicav2_configuration()
-
-        workflow_code = self.zipped_cwl_file_path.stem.replace(".", "_")
-        
-        curl_command_list = [
-            "curl",
-            "--fail", "--silent", "--location", "--show-error",
-            "--request", "POST",
-            "--header", "Accept: application/vnd.illumina.v3+json",
-            "--header", f"Authorization: Bearer {configuration.access_token}",
-            "--header", "Content-Type: multipart/form-data",
-            "--url", f"{configuration.host}/api/projects/{project_id}/pipelines:createCwlPipeline",
-            "--form", f"code={workflow_code}",
-            "--form", f"description={workflow_description}",
-            "--form", f"workflowCwlFile=@{self.cwl_file_path};filename=workflow.cwl",
-            "--form", f"parametersXmlFile=@{params_xml_file};filename=params.xml;type=text/xml",
-            "--form", f"analysisStorageId={analysis_storage_id}"
-        ]
-
-        if html_documentation_path is not None:
-            curl_command_list.extend(
-                [
-                    "--form", f"htmlDocumentation=@{html_documentation_path};type=text/html"
-                ]
-            )
-
-        for tool_file in self.cwl_tool_files:
-            curl_command_list.extend([
-                "--form",
-                f"toolCwlFiles=@{tool_file};filename={tool_file.relative_to(Path(self.unzipped_temp_dir.name) / Path(self.zipped_cwl_file_path.stem))}"
-            ])
-
-        command_returncode, command_stdout, command_stderr = run_subprocess_proc(curl_command_list, capture_output=True)
-
-        if not command_returncode == 0:
-            logger.error(f"Got returncode {command_returncode} for creation of icav2 cli workflow")
-            logger.error(f"Stdout was {command_stdout}, stderr was {command_stderr}")
-            raise ValueError
-
-        pipeline_id = json.loads(command_stdout).get("pipeline").get("id")
-
-        return pipeline_id, workflow_code
-
 
 def get_workflow_input_type(workflow_input: WorkflowInputParameter):
     if isinstance(workflow_input.type_, str):
@@ -588,6 +532,10 @@ def generate_standalone_html_through_pandoc(markdown_file_path: Path) -> Path:
     return output_html_file.absolute().resolve()
 
 
+# FIXME - this should be part of the cwl-ica-cli
+# FIXME - cwl-ica-cli should generate this markdown file as part of the release assets
+# FIXME - icav2 projectpipelines cwl-from-github-release should then retrieve this markdown file from the release assets
+# FIXME - then render it as a html
 def generate_markdown_doc(
         title: str,
         description: str,
@@ -598,7 +546,7 @@ def generate_markdown_doc(
         workflow_image_page_path: Path,
         workflow_md5sum: str,
         input_json_template: Optional[Dict] = None,
-        overrides_template: Optional[List] = None,
+        overrides_template: Optional[List[Dict]] = None,
 ) -> Path:
     """
     Generate a markdown document (that we will then convert to html)

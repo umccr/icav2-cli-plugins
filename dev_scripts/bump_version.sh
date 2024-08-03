@@ -19,7 +19,7 @@ REGEX="v[[:digit:]]+\.[[:digit:]]+\.[[:digit:]]+"
 DATE_STR="$(date "+%Y%m%d%H%M%S")"
 PROD_BRANCH="main"
 PYPROJECT_TOML_NAME="pyproject.toml"
-PYTHON_VERSION="3.11.0"
+PYTHON_VERSION="3.12.0"
 
 # Functions
 print_help(){
