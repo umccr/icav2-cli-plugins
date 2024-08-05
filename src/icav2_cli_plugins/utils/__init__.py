@@ -49,8 +49,11 @@ def is_uri_format(uri_str: str) -> bool:
     :return:
     """
     try:
-        _ = urlparse(uri_str)
-        return True
+        url_obj = urlparse(uri_str)
+        if url_obj.scheme and url_obj.netloc:
+            return True
+        else:
+            return False
     except ValueError:
         return False
 
