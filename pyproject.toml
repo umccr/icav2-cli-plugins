@@ -39,7 +39,7 @@ dependencies = [
     "invoke >= 2.0.0, < 3",
     "fabric >= 3.0.0, < 4",
     "deepdiff >= 6.7.1, < 7",
-    "wrapica >= 2.27.1, <2.28.0",
+    "wrapica >= 2.27.1.post20240805190749, <2.28.0",
     "nf-core >= 2.14",
 ]
 
