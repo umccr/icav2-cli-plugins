@@ -79,6 +79,6 @@ Example:
         # Check pipeline id belongs to owner
         self.user_obj = get_user_obj_from_user_id(get_user_id_from_configuration())
 
-        if not self.user_obj.id == self.project_pipeline_obj.pipeline.owner_id:
+        if not str(self.user_obj.id) == str(self.project_pipeline_obj.pipeline.owner_id):
             logger.error("This pipeline does not belong to you, you cannot release it. Soz.")
             raise InvalidArgumentError

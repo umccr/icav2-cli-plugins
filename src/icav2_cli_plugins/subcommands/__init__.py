@@ -7,7 +7,7 @@ from os import environ
 import sys
 from copy import deepcopy
 from pathlib import Path
-from typing import Union, List, Optional, Type, Dict, get_type_hints, Tuple, get_origin
+from typing import Union, List, Optional, Type, Dict, get_type_hints, Tuple, get_origin, Generic
 from docopt import docopt
 from ruamel.yaml import YAML
 import pandas as pd
@@ -35,8 +35,9 @@ from wrapica.project_analysis import (
     coerce_analysis_id_or_user_reference_to_analysis_obj
 )
 from wrapica.project_pipelines import (
-    coerce_analysis_storage_id_or_size_to_analysis_storage, ProjectPipeline,
-    coerce_pipeline_id_or_code_to_project_pipeline_obj
+    ProjectPipelineType,
+    coerce_analysis_storage_id_or_size_to_analysis_storage,
+    coerce_pipeline_id_or_code_to_project_pipeline_obj,
 )
 from wrapica.region import (
     Region,
@@ -153,31 +154,54 @@ class DocOptArg:
 
         if key in ["pipeline", "pipelines", "pipeline_id_or_code"]:
             if (
-                    (not self.arg_type == PipelineType) and
-                    not (isclass(self.arg_type) and issubclass(self.arg_type, ProjectPipeline))
+                (
+                    not self.arg_type == PipelineType and
+                    not (
+                        isclass(self.arg_type) and
+                        issubclass(self.arg_type, PipelineType)
+                    )
+                ) and (
+                    not self.arg_type == ProjectPipelineType and
+                    not (
+                        isclass(self.arg_type) and
+                        issubclass(self.arg_type, ProjectPipelineType)
+                    )
+                )
             ):
                 logger.warning("Got a pipeline id or code but the arg type is not a pipeline")
 
-        if self.arg_type == PipelineType or (isclass(self.arg_type) and issubclass(self.arg_type, ProjectPipeline)):
+        if (
+            self.arg_type == PipelineType or
+            (
+                isclass(self.arg_type) and
+                issubclass(self.arg_type, PipelineType)
+            )
+        ):
             # Set value as the pipeline id
-            if self.arg_type == PipelineType:
-                value: PipelineType = coerce_pipeline_id_or_code_to_pipeline_obj(value)
-            elif isclass(self.arg_type) and issubclass(self.arg_type, ProjectPipeline):
+            value: PipelineType = coerce_pipeline_id_or_code_to_pipeline_obj(value)
+
+        if (
+            self.arg_type == ProjectPipelineType or
+            (
+                isclass(self.arg_type) and
+                issubclass(self.arg_type, ProjectPipelineType)
+            )
+        ):
+            # Suppress logging
+            og_log_level = logger.level
+            try:
+                logger.setLevel(logging.CRITICAL + 1)
+                value: ProjectPipelineType = coerce_pipeline_id_or_code_to_project_pipeline_obj(value)
+            except ValueError:
+                # Set logging back to original level
+                logger.setLevel(og_log_level)
+                logger.error(
+                    f"Tried to get the pipeline object for {value} but failed because could not get the project id")
+                logger.error("Could not get the project id from either the env var OR the icav2 session file")
+                raise InvalidArgumentError
+            finally:
                 # Suppress logging
-                og_log_level = logger.level
-                try:
-                    logger.setLevel(logging.CRITICAL + 1)
-                    value: ProjectPipeline = coerce_pipeline_id_or_code_to_project_pipeline_obj(value)
-                except ValueError:
-                    # Set logging back to original level
-                    logger.setLevel(og_log_level)
-                    logger.error(
-                        f"Tried to get the pipeline object for {value} but failed because could not get the project id")
-                    logger.error("Could not get the project id from either the env var OR the icav2 session file")
-                    raise InvalidArgumentError
-                finally:
-                    # Suppress logging
-                    logger.setLevel(og_log_level)
+                logger.setLevel(og_log_level)
 
         if key in ["data", "data_id_or_uri"]:
             # Check arg type
@@ -255,6 +279,7 @@ class DocOptArg:
                     not (isclass(self.arg_type) and not issubclass(self.arg_type, AnalysisType))
             ):
                 logger.warning("Got an analysis id or user reference but the arg type is not an Analysis type")
+
         if (
                 self.arg_type == AnalysisType or
                 (isclass(self.arg_type) and issubclass(self.arg_type, AnalysisType))
@@ -263,6 +288,7 @@ class DocOptArg:
                 project_id=get_project_id(),
                 analysis_id_or_user_reference=value
             )
+            return value
 
         if key in ["analysis_storage", "analysis_storage_id_or_size"]:
             if (
@@ -271,15 +297,15 @@ class DocOptArg:
                     (isinstance(value, str) and (value not in AnalysisStorageSize or not is_uuid_format(value)))
             ):
                 logger.warning("Got a analysis storage id or size but the arg type is not an AnalysisStorage type")
+
         if (
                 self.arg_type == AnalysisStorageType or
                 (isclass(self.arg_type) and issubclass(self.arg_type, AnalysisStorageType)) or
                 (isinstance(value, str) and (value in AnalysisStorageSize or is_uuid_format(value)))
         ):
             value: AnalysisStorageType = coerce_analysis_storage_id_or_size_to_analysis_storage(
-                AnalysisStorageSize(value)
-                if value in AnalysisStorageSize
-                else value
+                project_id=get_project_id(),
+                analysis_storage_id_or_size=value
             )
 
         return value
@@ -434,7 +460,7 @@ class DocOptArg:
         except TypeError:
             pass
         else:
-            if Union[arg_hints] in [PipelineType, AnalysisType, AnalysisStorageType]:
+            if Union[arg_hints] in [ProjectPipelineType, PipelineType, AnalysisType, AnalysisStorageType]:
                 self.arg_type = Union[arg_hints]
                 return
 
@@ -494,13 +520,6 @@ class Command:
         """
         # Get arguments from commandline
         return docopt(self.__doc__, argv=command_argv, options_first=False)
-
-        # # Clean args as required in https://github.com/docopt/docopt/issues/134
-        # return clean_multi_args(
-        #     args=docopt_args,
-        #     doc=self.__doc__,
-        #     use_dual_options=True
-        # )
 
     def _get_yaml_args(self, yaml_file: Optional[Path]):
         """
