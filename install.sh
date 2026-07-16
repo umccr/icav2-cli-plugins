@@ -32,9 +32,11 @@ Options:
 ICAV2_CLI_PLUGINS_HOME="$HOME/.icav2-cli-plugins"
 PLUGIN_VERSION="__PLUGIN_VERSION__"
 LIBICA_VERSION="__LIBICA_VERSION__"
+JQ_VERSION="1.6"
 YQ_VERSION="4.18.1"
 CURL_VERSION="7.76.0"
 PYTHON_VERSION="3.12"
+ICAV2_COMMAND_VERSION="2.30.0"
 
 ###########
 # Functions
@@ -56,7 +58,6 @@ print_help() {
   echo_stderr "${help_message}"
 }
 
-
 check_readlink_program() {
   if [[ "${OSTYPE}" == "darwin"* ]]; then
     readlink_program="greadlink"
@@ -75,7 +76,6 @@ check_readlink_program() {
   fi
 }
 
-
 binaries_check(){
   : '
   Check each of the required binaries are available
@@ -93,6 +93,19 @@ verlt() {
     [ "$1" = "$2" ] && return 1 || verlte "$1" "$2"
 }
 
+get_jq_version(){
+  # Input jq-1.7
+  # Output: 1.7
+  jq --version | cut -d'-' -f2
+}
+
+check_jq_version(){
+  if ! verlte "${JQ_VERSION}" "$(get_jq_version)"; then
+    echo_stderr "Your jq version is too old"
+    return 1
+  fi
+}
+
 get_yq_version(){
   # Input: yq (https://github.com/mikefarah/yq/) version 4.27.3
   # Output: 4.27.3
@@ -107,6 +120,20 @@ check_yq_version() {
   '
   if ! verlte "${YQ_VERSION}" "$(get_yq_version)"; then
     echo_stderr "Your yq version is too old"
+    return 1
+  fi
+}
+
+get_icav2_command_version(){
+  # Input:
+  # icav2 version 2.30.0
+  # Output: 2.30.0
+  command icav2 version 2>/dev/null | cut -d' ' -f3
+}
+
+check_icav2_command_version(){
+    if ! verlte "${ICAV2_COMMAND_VERSION}" "$(get_icav2_command_version)"; then
+    echo_stderr "Your icav2 command version is too old"
     return 1
   fi
 }
@@ -238,11 +265,24 @@ if ! binaries_check; then
   exit 1
 fi
 
+if ! check_jq_version; then
+  echo_stderr "Please update your version of jq and then rerun the installation"
+  print_help
+  exit 1
+fi
+
 if ! check_yq_version; then
   echo_stderr "Please update your version of yq and then rerun the installation"
   print_help
   exit 1
 fi
+
+if ! check_icav2_command_version; then
+  echo_stderr "Please update your version of the icav2 CLI and then rerun the installation"
+  print_help
+  exit 1
+fi
+
 
 if ! check_curl_version; then
   echo_stderr "Please update your version of curl to ${CURL_VERSION} or later and then rerun the installation"
@@ -429,32 +469,58 @@ fi
 ########################
 {
   echo "#!/usr/bin/env bash"
+  echo "if [[ \"${OSTYPE}\" == \"darwin\"* ]]; then"
+  echo "  __icav2_source_script_readlink_program=\"greadlink\""
+  echo "else"
+  echo "  __icav2_source_script_readlink_program=\"readlink\""
+  echo "fi"
+  echo ""
+  echo "if ! type \"\${__icav2_source_script_readlink_program}\" 1>/dev/null; then"
+  echo "  if [[ \"\${__icav2_source_script_readlink_program}\" == \"greadlink\" ]]; then"
+  echo "    echo \"On a mac but 'greadlink' not found\" 1>&2"
+  echo "    echo \"Please run 'brew install coreutils' and then re-run this script\" 1>&2"
+  echo "    return 1"
+  echo "  else"
+  echo "    echo \"readlink not installed. Please install before continuing\" 1>&2"
+  echo "    return 1"
+  echo "  fi"
+  echo "fi"
+  echo ""
   echo "# ICAV2 CLI PLUGINS"
   echo "export ICAV2_CLI_PLUGINS_HOME=\"\${HOME}/.icav2-cli-plugins\""
+  echo ""
+  echo "__icav2_shell_exe=\"\$(\"\${__icav2_source_script_readlink_program}\" -f /proc/\$$/exe)\""
   echo "# Source functions"
-  echo "for file_name in \"\${ICAV2_CLI_PLUGINS_HOME}/shell_functions/\"*; do"
-  echo "    . \${file_name}; "
+  echo "for __icav2_shell_function_file_name in \"\${ICAV2_CLI_PLUGINS_HOME}/shell_functions/\"*; do"
+  echo "    . \${__icav2_shell_function_file_name}; "
   echo "done"
+  echo ""
   echo "# Add autocompletions"
-  echo "if [[ \"\$(basename \"\${SHELL}\")\" == \"bash\" ]]; then"
-  echo "  for f in \"\$ICAV2_CLI_PLUGINS_HOME/autocompletion/\$(basename \"\${SHELL}\")/\"*\".bash\"; do"
-  echo "    . \"\$f\""
+  echo "if [[ \"\$(basename \"\${__icav2_shell_exe}\")\" == \"bash\" ]]; then"
+  echo "  for __icav2_autocompletion_file_path in \"\$ICAV2_CLI_PLUGINS_HOME/autocompletion/\$(basename \"\${__icav2_shell_exe}\")/\"*\".bash\"; do"
+  echo "    . \"\$__icav2_autocompletion_file_path\""
   echo "  done"
-  echo "elif [[ \"\$(basename \"\${SHELL}\")\" == \"zsh\" ]]; then"
-  echo "  fpath=(\"\${ICAV2_CLI_PLUGINS_HOME}/autocompletion/\$(basename \"\${SHELL}\")\" \$fpath)"
+  echo "elif [[ \"\$(basename \"\${__icav2_shell_exe}\")\" == \"zsh\" ]]; then"
+  echo "  fpath=(\"\${ICAV2_CLI_PLUGINS_HOME}/autocompletion/\$(basename \"\${__icav2_shell_exe}\")\" \$fpath)"
   echo "  if [[ \"${OSTYPE}\" == \"darwin\"* ]]; then"
   echo "    # Mac Users need to run 'autoload' before running compinit"
   echo "    autoload -Uz compinit"
   echo "  fi"
   echo "  compinit"
   echo "fi"
+  echo ""
+  echo "# Unset local values"
+  echo "unset __icav2_source_script_readlink_program"
+  echo "unset __icav2_shell_exe"
+  echo "unset __icav2_shell_function_file_name"
+  echo "unset __icav2_autocompletion_file_path"
+
 } > "${ICAV2_CLI_PLUGINS_HOME}/source.sh"
 
 
 ############################
 # SHOW BASHRC LINE TO ADD
 #############################
-
 echo_stderr "Add the following line(s) to your ${rc_profile} file"
 echo_stderr "############# ICAV2 CLI PLUGINS #############"
 echo_stderr ". \"\${HOME}/.icav2-cli-plugins/source.sh\""
