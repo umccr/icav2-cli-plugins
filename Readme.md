@@ -186,7 +186,7 @@ See more in [project pipelines wiki][project_pipelines_create_workflow_from_gith
 See more in [project pipelines wiki][project_pipelines_create_wes_input_template]
 
 
-#### icav2 projectpipelines start-cwl-wes
+#### icav2 projectpipelines start-wes
 
 > Launch a CWL Workflow from a wes template
 
@@ -306,7 +306,7 @@ View a component for a cwltool step
 [project_pipelines_create_workflow_from_zip]: https://github.com/umccr/icav2-cli-plugins/wiki/ProjectPipelines#create-cwl-pipeline-from-zip
 [project_pipelines_create_workflow_from_github_release]: https://github.com/umccr/icav2-cli-plugins/wiki/ProjectPipelines#create-cwl-pipeline-from-github-release
 [project_pipelines_create_wes_input_template]: https://github.com/umccr/icav2-cli-plugins/wiki/ProjectPipelines#create-cwl-wes-input-template
-[project_pipelines_start_cwl_wes]: https://github.com/umccr/icav2-cli-plugins/wiki/ProjectPipelines#start-cwl-wes
+[project_pipelines_start_cwl_wes]: https://github.com/umccr/icav2-cli-plugins/wiki/ProjectPipelines#start-wes
 [project_pipelines_release]: https://github.com/umccr/icav2-cli-plugins/wiki/ProjectPipelines#release
 
 [project_analyses_wiki_get_cwl_anlysis_input_json]: https://github.com/umccr/icav2-cli-plugins/wiki/ProjectAnalyses#get-cwl-analysis-input-json

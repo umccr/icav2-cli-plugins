@@ -473,7 +473,7 @@ subcommands:
             multiple: true
             type: string
 
-      start-cwl-wes:
+      start-wes:
         summary: Launch an analysis on icav2
         options:
           - name: launch-yaml
