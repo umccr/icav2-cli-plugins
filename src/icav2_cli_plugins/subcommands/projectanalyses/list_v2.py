@@ -203,7 +203,7 @@ Example:
 
         # Drop columns if not long listing
         if not self.long_listing:
-            analysis_df = analysis_df.drop(columns=["time_created", "time_modified", "pipeline_code"])
+            analysis_df = analysis_df.drop(columns=["time_created", "pipeline_code"])
 
         column_dtypes = analysis_df.dtypes.to_frame().reset_index()
         column_dtypes.columns = ["Column", "Type"]
