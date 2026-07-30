@@ -27,6 +27,7 @@ MacOS users, please install greadlink through 'brew install coreutils'
 Options:
 --install-pandoc:      Required for running the command icav2 projectpipelines create-cwl-from-zip
 --no-autocompletion:   Only for installation into GitHub actions (where _init_completion is not present)
+--skip-binary:         Skip downloading the icav2 binary (for environments where it's already available)
 "
 
 ICAV2_CLI_PLUGINS_HOME="$HOME/.icav2-cli-plugins"
@@ -36,7 +37,8 @@ JQ_VERSION="1.6"
 YQ_VERSION="4.18.1"
 CURL_VERSION="7.76.0"
 PYTHON_VERSION="3.12"
-ICAV2_COMMAND_VERSION="2.30.0"
+ICAV2_CLI_VERSION="2.30.0"
+ICAV2_CLI_DOWNLOAD_BASE_URL="https://stratus-documentation-us-east-1-public.s3.amazonaws.com/cli"
 
 ###########
 # Functions
@@ -124,20 +126,6 @@ check_yq_version() {
   fi
 }
 
-get_icav2_command_version(){
-  # Input:
-  # icav2 version 2.30.0
-  # Output: 2.30.0
-  command icav2 version 2>/dev/null | cut -d' ' -f3
-}
-
-check_icav2_command_version(){
-    if ! verlte "${ICAV2_COMMAND_VERSION}" "$(get_icav2_command_version)"; then
-    echo_stderr "Your icav2 command version is too old"
-    return 1
-  fi
-}
-
 get_curl_version(){
   # Input:
   #   curl 7.81.0 (x86_64-pc-linux-gnu) libcurl/7.81.0 OpenSSL/3.0.2 zlib/1.2.11 brotli/1.0.9 zstd/1.4.8 libidn2/2.3.2 libpsl/0.21.0 (+libidn2/2.3.2) libssh/0.9.6/openssl/zlib nghttp2/1.43.0 librtmp/2.3 OpenLDAP/2.5.16
@@ -206,6 +194,75 @@ get_user_shell(){
   fi
 }
 
+detect_platform(){
+  : '
+  Detect the operating system (linux or darwin)
+  '
+  local platform
+  platform="$(uname -s | tr '[:upper:]' '[:lower:]')"
+  case "${platform}" in
+    linux|darwin)
+      echo "${platform}"
+      ;;
+    *)
+      echo_stderr "ERROR: Unsupported platform '${platform}'. Only linux and darwin are supported."
+      return 1
+      ;;
+  esac
+}
+
+detect_architecture(){
+  : '
+  Detect the CPU architecture and map to amd64 or arm64
+  '
+  local arch
+  arch="$(uname -m)"
+  case "${arch}" in
+    x86_64|amd64)
+      echo "amd64"
+      ;;
+    aarch64|arm64)
+      echo "arm64"
+      ;;
+    *)
+      echo_stderr "ERROR: Unsupported architecture '${arch}'. Only x86_64/amd64 and aarch64/arm64 are supported."
+      return 1
+      ;;
+  esac
+}
+
+download_icav2_binary(){
+  : '
+  Download the icav2 binary for the current platform and architecture.
+  Aborts installation if download fails.
+  '
+  local platform="$1"
+  local arch="$2"
+  local version="${ICAV2_CLI_VERSION}"
+  local download_url="${ICAV2_CLI_DOWNLOAD_BASE_URL}/${version}/${platform}/${arch}/icav2"
+  local target_path="${ICAV2_CLI_PLUGINS_HOME}/bin/_icav2"
+
+  echo_stderr "Downloading icav2 binary (version ${version}) for ${platform}/${arch}..."
+  echo_stderr "URL: ${download_url}"
+
+  if ! curl --fail --silent --location --output "${target_path}" "${download_url}"; then
+    echo_stderr "ERROR: Failed to download icav2 binary from ${download_url}"
+    echo_stderr "Please check your network connection and try again."
+    rm -f "${target_path}"
+    return 1
+  fi
+
+  # Verify the file was actually downloaded (non-empty)
+  if [[ ! -s "${target_path}" ]]; then
+    echo_stderr "ERROR: Downloaded icav2 binary is empty. Download may have failed."
+    rm -f "${target_path}"
+    return 1
+  fi
+
+  chmod 0755 "${target_path}"
+  echo_stderr "icav2 binary installed at ${target_path}"
+}
+
 get_this_path() {
   : '
   Mac users use greadlink over readlink
@@ -233,6 +290,7 @@ get_this_path() {
 # Get args from command line
 install_pandoc="false"
 no_autocompletion="true"
+skip_binary="false"
 while [ $# -gt 0 ]; do
   case "$1" in
     --install-pandoc)
@@ -240,6 +298,9 @@ while [ $# -gt 0 ]; do
       ;;
     --no-autocompletion)
       no_autocompletion="true"
+      ;;
+    --skip-binary)
+      skip_binary="true"
       ;;
     -h | --help)
       print_help
@@ -273,12 +334,6 @@ fi
 
 if ! check_yq_version; then
   echo_stderr "Please update your version of yq and then rerun the installation"
-  print_help
-  exit 1
-fi
-
-if ! check_icav2_command_version; then
-  echo_stderr "Please update your version of the icav2 CLI and then rerun the installation"
   print_help
   exit 1
 fi
@@ -352,6 +407,54 @@ fi
 # CREATE DIRS
 #############
 mkdir -p "${ICAV2_CLI_PLUGINS_HOME}"
+mkdir -p "${ICAV2_CLI_PLUGINS_HOME}/bin"
+mkdir -p "${ICAV2_CLI_PLUGINS_HOME}/cache"
+
+
+#############################
+# DOWNLOAD ICAV2 BINARY
+#############################
+if [[ "${skip_binary}" == "false" ]]; then
+  detected_platform="$(detect_platform)" || exit 1
+  detected_arch="$(detect_architecture)" || exit 1
+
+  if ! download_icav2_binary "${detected_platform}" "${detected_arch}"; then
+    echo_stderr "ERROR: icav2 binary download failed. Aborting installation."
+    exit 1
+  fi
+fi
+
+
+#############################
+# CREATE CONFIG FILE
+#############################
+if [[ ! -f "${ICAV2_CLI_PLUGINS_HOME}/config" ]]; then
+  touch "${ICAV2_CLI_PLUGINS_HOME}/config"
+  chmod 0600 "${ICAV2_CLI_PLUGINS_HOME}/config"
+fi
+
+
+#############################
+# MIGRATION PROMPT
+#############################
+if [[ -d "${ICAV2_CLI_PLUGINS_HOME}/tenants" ]]; then
+  if [ -t 0 ]; then
+    echo_stderr ""
+    echo_stderr "Existing tenant configurations detected in ${ICAV2_CLI_PLUGINS_HOME}/tenants/"
+    read -r -p "Migrate to profile-based config? [y/N] " migrate_response
+    if [[ "${migrate_response}" =~ ^[Yy]$ ]]; then
+      echo_stderr ""
+      echo_stderr "To migrate, run 'icav2 configure set <profile_name>' for each tenant."
+      echo_stderr "Your existing tenant configurations remain in ${ICAV2_CLI_PLUGINS_HOME}/tenants/ until you remove them."
+      echo_stderr ""
+    else
+      echo_stderr "Skipping migration. Existing tenants/ directory left unchanged."
+    fi
+  else
+    echo_stderr "Non-interactive mode: skipping tenant migration prompt."
+    echo_stderr "Existing tenants/ directory left unchanged."
+  fi
+fi
 
 
 #############################
@@ -469,51 +572,22 @@ fi
 ########################
 {
   echo "#!/usr/bin/env bash"
-  echo "if [[ \"${OSTYPE}\" == \"darwin\"* ]]; then"
-  echo "  __icav2_source_script_readlink_program=\"greadlink\""
-  echo "else"
-  echo "  __icav2_source_script_readlink_program=\"readlink\""
-  echo "fi"
-  echo ""
-  echo "if ! type \"\${__icav2_source_script_readlink_program}\" 1>/dev/null; then"
-  echo "  if [[ \"\${__icav2_source_script_readlink_program}\" == \"greadlink\" ]]; then"
-  echo "    echo \"On a mac but 'greadlink' not found\" 1>&2"
-  echo "    echo \"Please run 'brew install coreutils' and then re-run this script\" 1>&2"
-  echo "    return 1"
-  echo "  else"
-  echo "    echo \"readlink not installed. Please install before continuing\" 1>&2"
-  echo "    return 1"
-  echo "  fi"
-  echo "fi"
   echo ""
   echo "# ICAV2 CLI PLUGINS"
   echo "export ICAV2_CLI_PLUGINS_HOME=\"\${HOME}/.icav2-cli-plugins\""
   echo ""
-  echo "__icav2_shell_exe=\"\$(\"\${__icav2_source_script_readlink_program}\" -f /proc/\$$/exe)\""
-  echo "# Source functions"
-  echo "for __icav2_shell_function_file_name in \"\${ICAV2_CLI_PLUGINS_HOME}/shell_functions/\"*; do"
-  echo "    . \${__icav2_shell_function_file_name}; "
-  echo "done"
+  echo "# Add bin/ to PATH so _icav2 and icav2 wrapper are accessible"
+  echo "export PATH=\"\${ICAV2_CLI_PLUGINS_HOME}/bin:\${PATH}\""
   echo ""
-  echo "# Add autocompletions"
-  echo "if [[ \"\$(basename \"\${__icav2_shell_exe}\")\" == \"bash\" ]]; then"
-  echo "  for __icav2_autocompletion_file_path in \"\$ICAV2_CLI_PLUGINS_HOME/autocompletion/\$(basename \"\${__icav2_shell_exe}\")/\"*\".bash\"; do"
-  echo "    . \"\$__icav2_autocompletion_file_path\""
+  echo "# Source shell functions if they exist (backward compatibility)"
+  echo "if [[ -d \"\${ICAV2_CLI_PLUGINS_HOME}/shell_functions\" ]]; then"
+  echo "  for __icav2_shell_function_file_name in \"\${ICAV2_CLI_PLUGINS_HOME}/shell_functions/\"*; do"
+  echo "    if [[ -f \"\${__icav2_shell_function_file_name}\" ]]; then"
+  echo "      . \"\${__icav2_shell_function_file_name}\""
+  echo "    fi"
   echo "  done"
-  echo "elif [[ \"\$(basename \"\${__icav2_shell_exe}\")\" == \"zsh\" ]]; then"
-  echo "  fpath=(\"\${ICAV2_CLI_PLUGINS_HOME}/autocompletion/\$(basename \"\${__icav2_shell_exe}\")\" \$fpath)"
-  echo "  if [[ \"${OSTYPE}\" == \"darwin\"* ]]; then"
-  echo "    # Mac Users need to run 'autoload' before running compinit"
-  echo "    autoload -Uz compinit"
-  echo "  fi"
-  echo "  compinit"
+  echo "  unset __icav2_shell_function_file_name"
   echo "fi"
-  echo ""
-  echo "# Unset local values"
-  echo "unset __icav2_source_script_readlink_program"
-  echo "unset __icav2_shell_exe"
-  echo "unset __icav2_shell_function_file_name"
-  echo "unset __icav2_autocompletion_file_path"
 
 } > "${ICAV2_CLI_PLUGINS_HOME}/source.sh"
 
