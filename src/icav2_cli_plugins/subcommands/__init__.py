@@ -10,42 +10,8 @@ from pathlib import Path
 from typing import Union, List, Optional, Type, Dict, get_type_hints, Tuple, get_origin, Generic
 from docopt import docopt
 from ruamel.yaml import YAML
-import pandas as pd
 from enum import Enum
 from inspect import isclass
-
-# Import wrapica
-from wrapica.bundle import Bundle, coerce_bundle_id_or_name_to_bundle_obj
-from wrapica.data import coerce_data_id_path_or_icav2_uri_to_data_obj, Data
-from wrapica.enums import AnalysisStorageSize
-from wrapica.pipelines import (
-    PipelineType,
-    coerce_pipeline_id_or_code_to_pipeline_obj
-)
-from wrapica.project_data import (
-    coerce_data_id_uri_or_path_to_project_data_obj, ProjectData, is_folder_id_format
-)
-from wrapica.project import (
-    Project,
-    coerce_project_id_or_name_to_project_obj,
-    get_project_id
-)
-from wrapica.project_analysis import (
-    AnalysisStorageType, AnalysisType,
-    coerce_analysis_id_or_user_reference_to_analysis_obj
-)
-from wrapica.project_pipelines import (
-    ProjectPipelineType,
-    coerce_analysis_storage_id_or_size_to_analysis_storage,
-    coerce_pipeline_id_or_code_to_project_pipeline_obj,
-)
-from wrapica.region import (
-    Region,
-    coerce_region_id_or_city_name_to_region_obj
-)
-from wrapica.user import (
-    User, coerce_user_id_or_name_to_user_obj
-)
 
 # Get utils
 from ..utils import is_uuid_format
@@ -145,6 +111,18 @@ class DocOptArg:
         :param value:
         :return:
         """
+        # Lazy imports for heavy libraries
+        from wrapica.bundle import Bundle, coerce_bundle_id_or_name_to_bundle_obj
+        from wrapica.data import coerce_data_id_path_or_icav2_uri_to_data_obj, Data
+        from wrapica.enums import AnalysisStorageSize
+        from wrapica.pipelines import PipelineType, coerce_pipeline_id_or_code_to_pipeline_obj
+        from wrapica.project_data import coerce_data_id_uri_or_path_to_project_data_obj, ProjectData, is_folder_id_format
+        from wrapica.project import Project, coerce_project_id_or_name_to_project_obj, get_project_id
+        from wrapica.project_analysis import AnalysisStorageType, AnalysisType, coerce_analysis_id_or_user_reference_to_analysis_obj
+        from wrapica.project_pipelines import ProjectPipelineType, coerce_analysis_storage_id_or_size_to_analysis_storage, coerce_pipeline_id_or_code_to_project_pipeline_obj
+        from wrapica.region import Region, coerce_region_id_or_city_name_to_region_obj
+        from wrapica.user import User, coerce_user_id_or_name_to_user_obj
+
         # The class attribute typing hint should match this accordingly for these 'magicals'
         if key in ["project", "projects", "project_id_or_name"]:
             if not isclass(self.arg_type) or not issubclass(self.arg_type, Project):
@@ -410,6 +388,7 @@ class DocOptArg:
                     self.arg_value = Path(self.arg_value)
         if self.arg_type == datetime:
             if self.arg_value is not None and not isinstance(self.arg_value, datetime):
+                import pandas as pd  # Lazy import
                 if self.is_list:
                     self.arg_value = map(pd.to_datetime, self.arg_value)
                 else:
@@ -432,6 +411,11 @@ class DocOptArg:
         setattr(command_obj, attribute, self.arg_value)
 
     def get_arg_type(self, command_obj: 'Command', attribute: str):
+        # Lazy imports for wrapica types used in comparisons
+        from wrapica.pipelines import PipelineType
+        from wrapica.project_pipelines import ProjectPipelineType
+        from wrapica.project_analysis import AnalysisType, AnalysisStorageType
+
         # Get the type of the attribute
         arg_hints = get_type_hints(command_obj)[attribute]
 
