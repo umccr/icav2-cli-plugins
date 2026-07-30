@@ -112,7 +112,7 @@ Example:
         # Check regions match
         has_errors = False
         for project_obj_iter in self.project_obj_list:
-            if not project_obj_iter.region.id == self.bundle_region.id:
+            if not str(project_obj_iter.region.id) == str(self.bundle_region.id):
                 logger.error(
                     f"Cannot add bundle '{self.bundle_obj.id}' "
                     f"to project '{project_obj_iter.id}' as they are in different regions"

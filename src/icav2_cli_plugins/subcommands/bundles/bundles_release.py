@@ -8,9 +8,9 @@ Release a bundle
 from typing import Optional
 
 # Wrapica imports
+from libica.openapi.v3 import ApiException
 from wrapica.bundle import release_bundle, get_bundle_obj_from_bundle_id, Bundle
 from wrapica.enums import BundleStatus
-from wrapica.libica_exceptions import ApiException
 
 # Utils
 from ...utils.errors import InvalidArgumentError

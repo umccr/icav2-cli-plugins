@@ -1086,7 +1086,7 @@ _icav2_projectdata_view_param_data_path_completion
 
                 case $state in
                 cmd2)
-                    _alternative 'args:cmd3:((create\:"Create a pipeline" create-cwl-wes-input-template\:"Create a WES input template for a CWL workflow ready for launch" create-cwl-pipeline-from-github-release\:"From a github release, deploy a workflow to icav2" create-cwl-pipeline-from-zip\:"From a zip file, deploy a workflow to icav2" input\:"Retrieve input parameters of pipeline" link\:"Link pipeline to a project" list\:"List of pipelines for a project" start\:"Start a pipeline" start-cwl-wes\:"Launch an analysis on icav2" unlink\:"Unlink pipeline from a project" update))'
+                    _alternative 'args:cmd3:((create\:"Create a pipeline" create-cwl-wes-input-template\:"Create a WES input template for a CWL workflow ready for launch" create-cwl-pipeline-from-github-release\:"From a github release, deploy a workflow to icav2" create-cwl-pipeline-from-zip\:"From a zip file, deploy a workflow to icav2" input\:"Retrieve input parameters of pipeline" link\:"Link pipeline to a project" list\:"List of pipelines for a project" start\:"Start a pipeline" start-wes\:"Launch an analysis on icav2" unlink\:"Unlink pipeline from a project" update))'
                 ;;
 
                 args)
@@ -1216,19 +1216,19 @@ _files
 
 
                     ;;
-                    start-cwl-wes)
+                    start-wes)
 
-                        # ---- Command: projectpipelines start-cwl-wes
+                        # ---- Command: projectpipelines start-wes
                         _arguments -s -C \
                             '1: :->cmd1' \
                             '2: :->cmd2' \
                             '--help[Show command help]' \
                             '-h[Show command help]' \
                             '--launch-yaml[Required, input json similar to v1]:launch-yaml:_files' \
-                            '--pipeline-id[Optional, id of the pipeline you wish to launch]:pipeline-id:_icav2_projectpipelines_start-cwl-wes_option_pipeline_id_completion' \
-                            '--pipeline-code[Optional, name of the pipeline you wish to launch]:pipeline-code:_icav2_projectpipelines_start-cwl-wes_option_pipeline_code_completion' \
+                            '--pipeline-id[Optional, id of the pipeline you wish to launch]:pipeline-id:_icav2_projectpipelines_start-wes_option_pipeline_id_completion' \
+                            '--pipeline-code[Optional, name of the pipeline you wish to launch]:pipeline-code:_icav2_projectpipelines_start-wes_option_pipeline_code_completion' \
                             '--output-parent-folder-id[Optional, the id of the parent folder to write outputs to]:output-parent-folder-id' \
-                            '--output-parent-folder-path[Optional, the path to the parent folder to write outputs to (will be created if it doesn'"'"'t exist)]:output-parent-folder-path:_icav2_projectpipelines_start-cwl-wes_option_output_parent_folder_path_completion' \
+                            '--output-parent-folder-path[Optional, the path to the parent folder to write outputs to (will be created if it doesn'"'"'t exist)]:output-parent-folder-path:_icav2_projectpipelines_start-wes_option_output_parent_folder_path_completion' \
                             '--analysis-storage-id[Optional, analysis storage id, overrides default analysis storage size]:analysis-storage-id' \
                             '--analysis-storage-size[Optional, analysis storage size, one of Small, Medium, Large]:analysis-storage-size:("Small" "Medium" "Large")' \
                             '--activation-id[Optional, the activation id used by the pipeline analysis]:activation-id' \
@@ -4087,7 +4087,7 @@ jq --raw-output \
  ) )
     compadd -X "output_parent_folder_path:" $__dynamic_completion
 }
-_icav2_projectpipelines_start-cwl-wes_option_pipeline_id_completion() {
+_icav2_projectpipelines_start-wes_option_pipeline_id_completion() {
     local __dynamic_completion
     local CURRENT_WORD="$words[CURRENT]"
     IFS=$'\n' __dynamic_completion=( $( 
@@ -4223,7 +4223,7 @@ eval "$(\
  ) )
     compadd -X "pipeline_id:" $__dynamic_completion
 }
-_icav2_projectpipelines_start-cwl-wes_option_pipeline_code_completion() {
+_icav2_projectpipelines_start-wes_option_pipeline_code_completion() {
     local __dynamic_completion
     local CURRENT_WORD="$words[CURRENT]"
     IFS=$'\n' __dynamic_completion=( $( 
@@ -4363,7 +4363,7 @@ eval "$(\
  ) )
     compadd -X "pipeline_code:" $__dynamic_completion
 }
-_icav2_projectpipelines_start-cwl-wes_option_output_parent_folder_path_completion() {
+_icav2_projectpipelines_start-wes_option_output_parent_folder_path_completion() {
     local __dynamic_completion
     local CURRENT_WORD="$words[CURRENT]"
     IFS=$'\n' __dynamic_completion=( $( 

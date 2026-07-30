@@ -7,13 +7,11 @@ Launch a workflow through CWL WES
 # External data
 import json
 from collections import OrderedDict
-from tempfile import NamedTemporaryFile
 from typing import Optional, List, Union, Dict
 from ruamel.yaml import YAML
 from pathlib import Path
 
 # Wrapica
-from wrapica.data import get_project_data_obj_from_data_id
 from wrapica.enums import WorkflowLanguage
 from wrapica.project_analysis import AnalysisType
 from wrapica.project_pipelines import (
@@ -21,15 +19,16 @@ from wrapica.project_pipelines import (
     AnalysisStorageType,
     ICAv2CwlAnalysisJsonInput,
     ICAv2CWLPipelineAnalysis,
+    ICAv2NextflowPipelineAnalysis,
     ICAv2PipelineAnalysisTags,
     coerce_analysis_storage_id_or_size_to_analysis_storage, coerce_pipeline_id_or_code_to_project_pipeline_obj,
     get_default_analysis_storage_obj_from_project_pipeline,
     ICAv2NextflowAnalysisInput
 )
-from wrapica.project_data import ProjectData, coerce_data_id_uri_or_path_to_project_data_obj, \
-    convert_project_data_obj_to_uri, write_icav2_file_contents
-from wrapica.utils.nextflow_helpers import generate_samplesheet_file_from_input_dict, \
-    download_nextflow_schema_input_json_from_pipeline_id
+from wrapica.project_data import (
+    ProjectData, coerce_data_id_uri_or_path_to_project_data_obj, \
+    convert_project_data_obj_to_uri
+)
 
 # Get utils
 from ...utils.errors import InvalidArgumentError
@@ -51,6 +50,7 @@ class ProjectPipelinesStartWES(Command):
                                      [--pipeline=<pipeline_id_or_code>]
                                      [--analysis-output=<analysis_output_uri_or_path>]
                                      [--ica-logs=<ica_logs_uri_or_path>]
+                                     [--cache=<cache_uri_or_path>]
                                      [--analysis-storage=<analysis_storage_id_or_size>]
                                      [--activation-id=<activation_id>]
                                      [--user-tag=<user_tag>]...
@@ -72,6 +72,7 @@ Description:
           * pipeline ( Optional, pipeline id or code can also be specified on the cli)
           * analysis_output ( Optional, analysis output can also be specified on the cli)
           * ica_logs ( Optional, can also be specified on cli) :construction: ICAv2 doesn't support this with analysis_output also present.
+          * cache ( Optional, only for Nextflow pipelines which use the 'input' parameter in their top level keys to specify a samplesheet, can also be specified on cli)
           * user_tags (Optional, a dictionary or array of user tags to attach to this analysis)
           * technical_tags (Optional, a dictionary or array of technical tags to attach to this analysis)
           * reference_tags (Optional array of reference tags to attach to this analysis)
@@ -133,7 +134,7 @@ Environment:
     ICAV2_PROJECT_ID (optional, taken from ~/.session.ica.yaml otherwise)
 
 Example:
-    icav2 projectpipelines start-cwl-wes --launch-yaml /path/to/input.yaml
+    icav2 projectpipelines start-wes --launch-yaml /path/to/input.yaml
     """
 
     launch_yaml_path: Path
@@ -202,8 +203,8 @@ Example:
         self.user_reference: Optional[str] = None
         self.workflow_language: Optional[WorkflowLanguage] = None
 
-        self.analysis_input_obj: Optional[ICAv2CwlAnalysisJsonInput] = None
-        self.analysis_obj: Optional[ICAv2CWLPipelineAnalysis] = None
+        self.analysis_input_obj: Optional[Union[ICAv2CwlAnalysisJsonInput | ICAv2NextflowAnalysisInput]] = None
+        self.analysis_obj: Optional[Union[ICAv2CWLPipelineAnalysis, ICAv2NextflowPipelineAnalysis]] = None
         self.analysis_id: Optional[str] = None
 
         super().__init__(command_argv)
@@ -297,7 +298,8 @@ Example:
                 )
             else:
                 self.analysis_storage_obj = coerce_analysis_storage_id_or_size_to_analysis_storage(
-                    analysis_storage_yaml
+                    project_id=self.project_id,
+                    analysis_storage_id_or_size=analysis_storage_yaml
                 )
 
         # Check if activation ID is set?
@@ -352,53 +354,52 @@ Example:
                     }
                 )
 
-            self.analysis_input_obj: ICAv2CwlAnalysisJsonInput = ICAv2CwlAnalysisJsonInput(
+            self.analysis_input_obj = ICAv2CwlAnalysisJsonInput(
                 inputs_dict
             )
         else:  # Nextflow
             # Initialise the analysis
             from wrapica.project_pipelines import ICAv2NextflowPipelineAnalysis as ICAv2PipelineAnalysis
-            if "samplesheet_input" in inputs_dict.keys():
-                # First we need to update samplesheet_input to input
-                samplesheet_tmp_obj = NamedTemporaryFile(prefix="samplesheet_input_", suffix=".csv")
-                samplesheet_tmp_path = Path(samplesheet_tmp_obj.name)
+            # if "samplesheet_input" in inputs_dict.keys():
+            #     # First we need to update samplesheet_input to input
+            #     samplesheet_tmp_obj = NamedTemporaryFile(prefix="samplesheet_input_", suffix=".csv")
+            #     samplesheet_tmp_path = Path(samplesheet_tmp_obj.name)
+            #
+            #     schema_input_json_file_tmp_obj = NamedTemporaryFile(delete=False, prefix='schema_input', suffix=".json")
+            #     schema_input_json_file_path = Path(schema_input_json_file_tmp_obj.name)
+            #
+            #     # Download the schema input json
+            #     download_nextflow_schema_input_json_from_pipeline_id(
+            #         pipeline_id=self.pipeline_obj.pipeline.id,
+            #         schema_input_json_path=schema_input_json_file_path
+            #     )
+            #
+            #     # Generate the samplesheet file
+            #     generate_samplesheet_file_from_input_dict(
+            #         samplesheet_dict=inputs_dict["samplesheet_input"],
+            #         schema_input_path=schema_input_json_file_path,
+            #         samplesheet_path=samplesheet_tmp_path
+            #     )
+            #
+            #     # Upload the samplesheet file to icav2
+            #     samplesheet_input_file_id = write_icav2_file_contents(
+            #         project_id=self.cache_obj.project_id,
+            #         data_path=Path(self.cache_obj.data.details.path) / "samplesheet_input.csv",
+            #         file_stream_or_path=samplesheet_tmp_path
+            #     )
+            #
+            #     # Now pop the samplesheet_input and instead set 'input' as a file id, set to the samplesheet file
+            #     _ = inputs_dict.pop("samplesheet_input")
+            #     # Coerce file id into icav2 uri
+            #     inputs_dict["input"] = convert_project_data_obj_to_uri(
+            #         get_project_data_obj_from_data_id(
+            #             samplesheet_input_file_id
+            #         )
+            #     )
 
-                schema_input_json_file_tmp_obj = NamedTemporaryFile(delete=False, prefix='schema_input', suffix=".json")
-                schema_input_json_file_path = Path(schema_input_json_file_tmp_obj.name)
-
-                # Download the schema input json
-                download_nextflow_schema_input_json_from_pipeline_id(
-                    pipeline_id=self.pipeline_obj.pipeline.id,
-                    schema_input_json_path=schema_input_json_file_path
-                )
-
-                # Generate the samplesheet file
-                generate_samplesheet_file_from_input_dict(
-                    samplesheet_dict=inputs_dict["samplesheet_input"],
-                    schema_input_path=schema_input_json_file_path,
-                    samplesheet_path=samplesheet_tmp_path
-                )
-
-                # Upload the samplesheet file to icav2
-                samplesheet_input_file_id = write_icav2_file_contents(
-                    project_id=self.cache_obj.project_id,
-                    data_path=Path(self.cache_obj.data.details.path) / "samplesheet_input.csv",
-                    file_stream_or_path=samplesheet_tmp_path
-                )
-
-                # Now pop the samplesheet_input and instead set 'input' as a file id, set to the samplesheet file
-                _ = inputs_dict.pop("samplesheet_input")
-                # Coerce file id into icav2 uri
-                inputs_dict["input"] = convert_project_data_obj_to_uri(
-                    get_project_data_obj_from_data_id(
-                        samplesheet_input_file_id
-                    )
-                )
-
-            self.analysis_input_obj: ICAv2NextflowAnalysisInput = ICAv2NextflowAnalysisInput(
+            self.analysis_input_obj = ICAv2NextflowAnalysisInput(
                 inputs_dict,
-                project_id=self.project_id,
-                pipeline_id=self.pipeline_obj.pipeline.id
+                cache_uri=convert_project_data_obj_to_uri(self.cache_obj)
             )
 
         # Initialise the analysis

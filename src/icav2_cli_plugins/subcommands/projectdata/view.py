@@ -82,7 +82,7 @@ Example: icav2 projectdata view /output_data/tiny.fastq.gz | zcat | head
         self.project_id = get_project_id()
 
         # Check browser configuration
-        if self.is_browser and not environ.get("BROWSER", None) is None:
+        if self.is_browser and environ.get("BROWSER", None) is None:
             logger.error("--browser option set but BROWSER env var is empty")
             raise EnvironmentError
 

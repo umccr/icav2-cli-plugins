@@ -6,7 +6,7 @@ Use AWS sync command to download data from ICAv2
 
 # External imports
 from pathlib import Path
-from typing import List, Optional, Dict
+from typing import List, Optional
 from urllib.parse import urlunparse
 
 # Wrapica imports
@@ -15,6 +15,7 @@ from wrapica.project_data import (
     ProjectData,
     get_aws_credentials_access_for_project_folder
 )
+from libica.openapi.v3 import AwsTempCredentials
 
 # Utils imports
 from ...utils.errors import InvalidArgumentError
@@ -36,7 +37,7 @@ logger = get_logger()
 class S3SyncDownload(Command):
     """Usage:
     icav2 projectdata s3-sync-download help
-    icav2 projectdata s3-sync-download <data> <download_path>
+    icav2 projectdata s3-sync-download <data> <local_download_path>
                                        [-w <file_path> | --write-script-path=<file_path>]
                                        [--s3-sync-arg=<s3_sync_arg>]...
 
@@ -49,7 +50,7 @@ Options:
     <data>                                             Required, the data path to icav2 data folder you wish to download from
                                                        May also specify a folder id or an icav2 uri
 
-    <download_path>                                    Required, the local download directory, parent folder must exist
+    <local_download_path>                                    Required, the local download directory, parent folder must exist
 
     -w <file_path>, --write-script-path=<file_path>    Optional, write out a script instead of invoking aws s3 command
                                                        that holds the AWS S3 Sync parameters.
@@ -86,7 +87,7 @@ Examples: icav2 projectdata s3-sync-download /test_data/outputs/ $HOME/outputs/
                 cli_arg_keys=["data"],
             ),
             "download_path": DocOptArg(
-                cli_arg_keys=["download_path"],
+                cli_arg_keys=["local_download_path"],
             ),
             "write_script_path": DocOptArg(
                 cli_arg_keys=["--write-script-path"],
@@ -99,7 +100,7 @@ Examples: icav2 projectdata s3-sync-download /test_data/outputs/ $HOME/outputs/
         # Initialise parameters
         self.project_id: Optional[str] = None
         self.s3_path: Optional[str] = None
-        self.s3_env_vars: Optional[Dict] = None
+        self.s3_env_vars: Optional[AwsTempCredentials] = None
 
         super().__init__(command_argv)
 
@@ -172,10 +173,15 @@ Examples: icav2 projectdata s3-sync-download /test_data/outputs/ $HOME/outputs/
         # Trailing slash already part of object prefix
         self.s3_path = urlunparse(
             (
-                "s3", self.s3_env_vars.get('bucket'), self.s3_env_vars.get('object_prefix'),
+                "s3", self.s3_env_vars.bucket, self.s3_env_vars.object_prefix,
                 None, None, None
             )
         )
+
+        # Set s3 sync args to empty list if not set
+        if self.s3_sync_args is None:
+            self.s3_sync_args = []
+
 
     def create_sync_script(self):
         with open(self.write_script_path, "w") as file_h:

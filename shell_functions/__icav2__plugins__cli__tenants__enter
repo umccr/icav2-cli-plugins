@@ -174,6 +174,10 @@ Parameters:
     server_url="ica.illumina.com"
   fi
 
+  ICAV2_SERVER_URL="${server_url}"
+  echo "Exporting env var ICAV2_SERVER_URL as '${ICAV2_SERVER_URL}'" 1>&2
+  export ICAV2_SERVER_URL
+
   ICAV2_BASE_URL="https://${server_url}/ica/rest"
   echo "Exporting env var ICAV2_BASE_URL as '${ICAV2_BASE_URL}'" 1>&2
   export ICAV2_BASE_URL
@@ -186,10 +190,7 @@ Parameters:
     cut -d'.' -f1
   )"
 
-  # Read config
-  # FIXME - instead we get this from config.plugins.yaml
-  # FIXME - so we have both config.yaml and config.plugins.yaml
-  # FIXME - config.yaml is for icav2 cli commands, and is softlinks to ~/.icav2/config.yaml
+  # Read config.yaml for x-api-key
   x_api_key="$( \
     yq \
       --unwrapScalar \
