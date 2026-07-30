@@ -68,3 +68,7 @@ docs = [
     "sphinx_autodoc_typehints",
     "toml-to-requirements",
 ]
+test = [
+    "hypothesis >= 6.0, < 7",
+    "pytest >= 7.0, < 9",
+]
