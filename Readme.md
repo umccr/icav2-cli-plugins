@@ -2,19 +2,112 @@
 
 > I'm sorry I couldn't think of a superhero pun for this repository
 
-This plugin contains the following extensions to the icav2 cli. 
+This plugin extends the [Illumina Connected Analytics v2 (ICAv2)][icav2_docs] CLI with higher-level operations for bundle management, project data, pipeline deployment, analysis inspection, and multi-tenant configuration.
 
 Much of this is inspired from the [ica-ica-lazy repo][ica_ica_lazy].  
+Autocompletion features are courtesy of the [app-spec project][app_spec_project].
 
-Autocompletion features are courtesy of the [app-spec project][app_spec_project]
+Please refer to the [wiki page][wiki_page] for [installation][installation_wiki_page] and [usage][wiki_page].
 
-Please refer to [wiki page][wiki_page] for [installation][installation_wiki_page] and [usage][wiki_page].
+## What's New — Profile-Based Configuration
+
+The CLI now supports **AWS CLI-style named profiles** stored in `~/.icav2-cli-plugins/config`. This replaces the previous shell-function-based tenant/project context management and enables:
+
+- **Standalone operation** — no shell function sourcing required
+- **Multi-tenant profiles** — switch tenants via `ICAV2_PROFILE` env var or `--profile` flag
+- **Script-friendly** — works in subshells, CI/CD pipelines, and non-interactive contexts
+- **Token caching** — per-profile token cache with automatic refresh
+- **Bundled binary** — local `_icav2` binary removes external dependency on `command icav2`
+- **Fast startup** — lazy imports keep `icav2 help` and `icav2 version` under 500ms
+
+### Quick Start
+
+```bash
+# Install (downloads icav2 binary + sets up Python env)
+bash install.sh
+
+# Configure your first profile
+icav2 configure set
+
+# Or configure a named profile
+icav2 configure set production
+
+# List configured profiles
+icav2 configure list
+
+# Use a specific profile
+export ICAV2_PROFILE=production
+icav2 projectdata ls /
+
+# Or use the --profile flag
+icav2 --profile production projectdata ls /
+```
+
+### Config File Format
+
+```ini
+# ~/.icav2-cli-plugins/config
+
+[default]
+server_url = ica.illumina.com
+x_api_key = <your-api-key>
+project_name = my-project
+
+[profile production]
+server_url = ica.illumina.com
+x_api_key = <prod-api-key>
+project_id = <project-uuid>
+output_format = json
+```
+
+### Profile Resolution Precedence
+
+| Priority | Source |
+|----------|--------|
+| 1 (highest) | Environment variables (`ICAV2_ACCESS_TOKEN`, `ICAV2_PROJECT_ID`, `ICAV2_BASE_URL`) |
+| 2 | `--profile` CLI flag |
+| 3 | `ICAV2_PROFILE` env var |
+| 4 | `ICAV2_TENANT_NAME` env var (backward compatibility) |
+| 5 (lowest) | `[default]` profile in config file |
+
+### Backward Compatibility
+
+Existing environment variables continue to work:
+- `ICAV2_ACCESS_TOKEN` — overrides profile token
+- `ICAV2_PROJECT_ID` — overrides profile project
+- `ICAV2_BASE_URL` — overrides profile server URL
+- `ICAV2_TENANT_NAME` — treated as profile name when `ICAV2_PROFILE` is unset
+
+The legacy `tenants/` directory and shell functions are preserved. Existing workflows using `icav2 tenants init` / `icav2 tenants enter` still function.
+
+---
 
 ## Features
 
+### icav2 configure (NEW)
+
+Profile management commands for the new configuration system.
+
+#### icav2 configure set
+
+> Interactively configure a profile (prompts for server URL, API key, project name)
+
+```bash
+icav2 configure set              # Configure the default profile
+icav2 configure set production   # Configure a named profile
+```
+
+#### icav2 configure list
+
+> Display all configured profiles
+
+```bash
+icav2 configure list
+```
+
 ### icav2 bundles extensions
 
-Support for generating and deploying bundles 
+Support for generating and deploying bundles.
 
 #### icav2 bundles init                   
 
@@ -62,7 +155,7 @@ See more in [icav2_bundles_add_to_project][bundles_add_to_project]
 
 #### icav2 tenants init
 
-> Register a tenant with the plugins repository
+> Register a tenant with the plugins repository (legacy — consider using `icav2 configure set` instead)
 
 See more in [icav2_context_handling][tenants_init]
 
@@ -89,7 +182,6 @@ See more in [icav2_context_handling][tenants_set_default_project]
 #### icav2 tenants set-default-tenant
 
 > Set a registered tenant to be the default tenant
-> Replaces api key in $HOME/.icav2/config.yaml
 
 See more in [icav2_context_handling][tenants_set_default_tenant]
 
@@ -248,6 +340,25 @@ See more in [project analyses wiki][project_analyses_wiki_get_analyses_step_logs
 
 See more in [project analyses wiki][project_analyses_wiki_gantt_plot]
 
+---
+
+## Directory Layout
+
+```
+~/.icav2-cli-plugins/
+├── config                    # INI-style profile configuration
+├── bin/
+│   └── _icav2                # Bundled icav2 binary
+├── cache/
+│   └── <profile_name>/
+│       └── session.yaml      # Cached access token per profile
+├── pyenv/                    # Python virtual environment
+├── shell_functions/          # Legacy shell functions (backward compat)
+├── autocompletion/           # Bash/zsh completions
+└── tenants/                  # Legacy tenant configs (preserved)
+```
+
+---
 
 ## Coming soon
 
@@ -255,11 +366,11 @@ See more in [project analyses wiki][project_analyses_wiki_gantt_plot]
 
 List all available components to view for a cwltool step.  
 
-Mines the cwltool stderr debug logs for available components for a given step name
-
 ### icav2 projectanalyses get-cwltool-step-components <analysis-id> --step-name <step-id> --component-name <component-name>
 
 View a component for a cwltool step
+
+[icav2_docs]: https://help.ica.illumina.com/
 
 [gds_ls]: https://github.com/umccr/ica-ica-lazy/wiki/Data_Traversal#gds-ls
 [gds_view]: https://github.com/umccr/ica-ica-lazy/wiki/Data_Traversal#gds-view
@@ -278,7 +389,7 @@ View a component for a cwltool step
 
 [wiki_page]: https://github.com/umccr/icav2-cli-plugins/wiki
 
-[installation_wiki_page]: https://github.com/umccr/icav2-cli-plugins/wiki#installation
+[installation_wiki_page]: https://github.com/umccr/icav2-cli-plugins/wiki/Installation
 
 [bundles_init]: https://github.com/umccr/icav2-cli-plugins/wiki/Bundles#init
 [bundles_get]: https://github.com/umccr/icav2-cli-plugins/wiki/Bundles#get
