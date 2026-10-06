@@ -52,6 +52,9 @@ graph TD
 ├── cache/
 │   └── <profile_name>/
 │       └── session.yaml            # Cached access token per profile
+├── keys/                           # Optional RSA key pair for API key encryption
+│   ├── id_rsa                      # Private key (mode 0600)
+│   └── id_rsa.pub                  # Public key (mode 0644)
 └── tenants/                        # Legacy (preserved for migration)
 ```
 
@@ -281,12 +284,70 @@ def lazy_import_command(cmd: str):
     return importlib.import_module(module_path)
 ```
 
+### 7. API Key Encryption (`utils/api_key_encryption.py`)
+
+Optional at-rest encryption for API keys using RSA-OAEP with SHA-256. When encryption is enabled, the API key is encrypted with the user's public key before storing in the config file, and decrypted with the private key at runtime.
+
+```python
+from pathlib import Path
+from typing import Optional, Tuple
+
+# Prefix marking encrypted values in config
+ENCRYPTED_PREFIX = "ENCRYPTED:"
+
+# Default key locations
+DEFAULT_KEY_DIR = Path.home() / ".icav2-cli-plugins" / "keys"
+DEFAULT_PRIVATE_KEY_PATH = DEFAULT_KEY_DIR / "id_rsa"
+DEFAULT_PUBLIC_KEY_PATH = DEFAULT_KEY_DIR / "id_rsa.pub"
+
+
+def is_encrypted(value: str) -> bool:
+    """Check if a stored API key value is encrypted."""
+    ...
+
+def generate_key_pair(
+    private_key_path: Path, public_key_path: Path,
+    passphrase: Optional[str] = None,
+) -> Tuple[Path, Path]:
+    """Generate RSA-4096 key pair. Private key optionally passphrase-protected."""
+    ...
+
+def encrypt_api_key(api_key: str, public_key_path: Path) -> str:
+    """Encrypt API key with RSA-OAEP. Returns 'ENCRYPTED:<base64>'."""
+    ...
+
+def decrypt_api_key(
+    encrypted_value: str, private_key_path: Path,
+    passphrase: Optional[str] = None,
+) -> str:
+    """Decrypt an 'ENCRYPTED:<base64>' value back to plain text."""
+    ...
+
+def resolve_api_key(
+    stored_value: str, private_key_path: Optional[Path] = None,
+    passphrase: Optional[str] = None,
+) -> str:
+    """
+    Main entry point: returns plain text API key.
+    Decrypts if encrypted, returns as-is if plain text.
+    Prompts for passphrase interactively if private key is protected.
+    """
+    ...
+```
+
+**Design decisions:**
+- RSA-4096 with OAEP/SHA-256 padding for strong security without key size limits being an issue for short API keys.
+- `ENCRYPTED:` prefix makes it unambiguous in config whether encryption is active.
+- Private key passphrase support adds a second factor — even if both config and key are compromised, the passphrase is needed.
+- `cryptography` library chosen over openssl subprocess: pure Python, no external binary dependency, better error handling, well-maintained.
+- Per-profile key paths: profiles can reference different key pairs via `encryption_public_key` and `encryption_private_key` fields, or fall back to the default location.
+
 ## Data Models
 
 ### Config File Format (INI)
 
 ```ini
-# Default profile
+# Default profile (plain text API key)
 [default]
 server_url = ica.illumina.com
 x_api_key = abc123...
@@ -294,16 +355,18 @@ project_id = proj-uuid-here
 project_name = my-project
 output_format = table
 
-# Named profile
+# Named profile with encrypted API key
 [profile production]
 server_url = ica.illumina.com
-x_api_key = def456...
+x_api_key = ENCRYPTED:base64encodedciphertexthere...
 project_id = proj-uuid-prod
 project_name = production-project
 token_tid = tenant-id-base64
 output_format = json
+encryption_public_key = ~/.icav2-cli-plugins/keys/id_rsa.pub
+encryption_private_key = ~/.icav2-cli-plugins/keys/id_rsa
 
-# Another named profile
+# Another named profile (plain text, no encryption)
 [profile staging]
 server_url = ica.illumina.com
 x_api_key = ghi789...

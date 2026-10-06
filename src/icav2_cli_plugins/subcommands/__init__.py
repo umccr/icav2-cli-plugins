@@ -778,6 +778,8 @@ class SuperCommand:
 
     def __init__(self, command_argv):
         # Get the subcommand arg
+        if len(command_argv) < 2 or command_argv[1] in ("-h", "--help"):
+            self._help()
         subcommand = command_argv[1]
         self.subcommand_obj = self.get_subcommand_obj(subcommand, command_argv)
 
@@ -792,6 +794,44 @@ class SuperCommand:
         print(self.__doc__)
         # If fail will exit 1, else exit 0.
         sys.exit(int(fail))
+
+    def _delegate_to_icav2(self, command_argv):
+        """
+        Delegate an unrecognized subcommand to the native _icav2 binary.
+        Uses os.execve to replace the current process, inheriting
+        ICAV2_ACCESS_TOKEN, ICAV2_BASE_URL, and ICAV2_PROJECT_ID from the environment
+        (already set by _set_environment_from_config in the dispatch phase).
+
+        Also passes --server-url explicitly since the _icav2 binary may not
+        read ICAV2_BASE_URL from the environment.
+        """
+        import os
+        from ..utils.globals import LOCAL_BINARY_PATH
+
+        if not LOCAL_BINARY_PATH.exists():
+            print(
+                f"Error: _icav2 binary not found at {LOCAL_BINARY_PATH}. "
+                f"Please re-run the installer to set it up.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+
+        binary_path = str(LOCAL_BINARY_PATH)
+
+        # Build the argv for _icav2, injecting --server-url from ICAV2_BASE_URL
+        # The _icav2 binary expects --server-url as the hostname (e.g. "ica.illumina.com")
+        # whereas ICAV2_BASE_URL is the full URL (e.g. "https://ica.illumina.com/ica/rest")
+        base_url = os.environ.get("ICAV2_BASE_URL", "")
+        extra_flags = []
+        if base_url:
+            # Extract just the hostname from the full base URL
+            from urllib.parse import urlparse
+            parsed = urlparse(base_url)
+            if parsed.hostname:
+                extra_flags = ["--server-url", parsed.hostname]
+
+        argv = [binary_path] + command_argv + extra_flags
+        os.execve(binary_path, argv, os.environ)
 
     def __call__(self):
         self.subcommand_obj()

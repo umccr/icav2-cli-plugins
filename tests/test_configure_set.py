@@ -37,6 +37,20 @@ class TestCommandInit:
 class TestCommandCall:
     """Tests for Command.__call__() interactive flow."""
 
+    @pytest.fixture(autouse=True)
+    def _disable_auto_encryption(self, tmp_path, monkeypatch):
+        """Prevent tests from auto-encrypting by pointing to non-existent keys."""
+        fake_pub = tmp_path / "nonexistent_keys" / "id_rsa.pub"
+        fake_priv = tmp_path / "nonexistent_keys" / "id_rsa"
+        monkeypatch.setattr(
+            "icav2_cli_plugins.subcommands.configure.configure_set.DEFAULT_PUBLIC_KEY_PATH",
+            fake_pub,
+        )
+        monkeypatch.setattr(
+            "icav2_cli_plugins.subcommands.configure.configure_set.DEFAULT_PRIVATE_KEY_PATH",
+            fake_priv,
+        )
+
     def test_successful_profile_creation(self, tmp_path: Path):
         """Successful flow: prompts, validates key, writes config."""
         config_path = tmp_path / "config"
@@ -44,6 +58,7 @@ class TestCommandCall:
         inputs = iter([
             "ica.illumina.com",  # server_url
             "my-api-key-123",    # x_api_key
+            "my-tenant",         # tenant_name
             "my-project",        # project_name
         ])
 
@@ -51,11 +66,19 @@ class TestCommandCall:
         mock_response.status_code = 200
         mock_response.json.return_value = {"token": "generated-token"}
 
+        # Mock the project list API call for resolving project name -> ID
+        mock_projects_response = MagicMock()
+        mock_projects_response.status_code = 200
+        mock_projects_response.json.return_value = {
+            "items": [{"name": "my-project", "id": "proj-uuid-123"}]
+        }
+
         cmd = Command(["configure", "set", "myprofile"])
 
         with patch("builtins.input", lambda prompt: next(inputs)), \
              patch("icav2_cli_plugins.subcommands.configure.configure_set.CONFIG_FILE_PATH", config_path), \
-             patch("icav2_cli_plugins.utils.token_manager.requests.post", return_value=mock_response):
+             patch("icav2_cli_plugins.utils.token_manager.requests.post", return_value=mock_response), \
+             patch("icav2_cli_plugins.subcommands.configure.configure_set.requests.get", return_value=mock_projects_response):
             cmd()
 
         # Verify config was written
@@ -66,6 +89,8 @@ class TestCommandCall:
         assert profiles["myprofile"].server_url == "ica.illumina.com"
         assert profiles["myprofile"].x_api_key == "my-api-key-123"
         assert profiles["myprofile"].project_name == "my-project"
+        assert profiles["myprofile"].project_id == "proj-uuid-123"
+        assert profiles["myprofile"].tenant_name == "my-tenant"
 
     def test_default_profile_when_no_name(self, tmp_path: Path):
         """When no profile name given, writes to [default] section."""
@@ -74,6 +99,7 @@ class TestCommandCall:
         inputs = iter([
             "",                  # server_url (empty -> default)
             "api-key-456",       # x_api_key
+            "",                  # tenant_name (empty -> None)
             "",                  # project_name (empty -> None)
         ])
 
@@ -94,6 +120,7 @@ class TestCommandCall:
         assert profiles["default"].server_url == "ica.illumina.com"
         assert profiles["default"].x_api_key == "api-key-456"
         assert profiles["default"].project_name is None
+        assert profiles["default"].tenant_name is None
 
     def test_api_key_validation_failure_exits(self, tmp_path: Path, capsys):
         """When API key validation fails, exit without writing config."""
@@ -102,6 +129,7 @@ class TestCommandCall:
         inputs = iter([
             "ica.illumina.com",
             "bad-api-key",
+            "my-tenant",
             "project",
         ])
 
@@ -129,6 +157,7 @@ class TestCommandCall:
         inputs = iter([
             "ica.illumina.com",
             "",                  # empty api key
+            "my-tenant",
             "project",
         ])
 
@@ -163,6 +192,7 @@ class TestCommandCall:
         inputs = iter([
             "new-server.com",
             "new-api-key",
+            "new-tenant",
             "new-project",
         ])
 
@@ -170,17 +200,26 @@ class TestCommandCall:
         mock_response.status_code = 200
         mock_response.json.return_value = {"token": "new-token"}
 
+        mock_projects_response = MagicMock()
+        mock_projects_response.status_code = 200
+        mock_projects_response.json.return_value = {
+            "items": [{"name": "new-project", "id": "proj-new-uuid"}]
+        }
+
         cmd = Command(["configure", "set", "myprofile"])
 
         with patch("builtins.input", lambda prompt: next(inputs)), \
              patch("icav2_cli_plugins.subcommands.configure.configure_set.CONFIG_FILE_PATH", config_path), \
-             patch("icav2_cli_plugins.utils.token_manager.requests.post", return_value=mock_response):
+             patch("icav2_cli_plugins.utils.token_manager.requests.post", return_value=mock_response), \
+             patch("icav2_cli_plugins.subcommands.configure.configure_set.requests.get", return_value=mock_projects_response):
             cmd()
 
         profiles = parser.parse_file(config_path)
         assert profiles["myprofile"].server_url == "new-server.com"
         assert profiles["myprofile"].x_api_key == "new-api-key"
         assert profiles["myprofile"].project_name == "new-project"
+        assert profiles["myprofile"].project_id == "proj-new-uuid"
+        assert profiles["myprofile"].tenant_name == "new-tenant"
 
     def test_preserves_other_profiles_on_overwrite(self, tmp_path: Path):
         """When overwriting a profile, other profiles are preserved."""
@@ -204,7 +243,8 @@ class TestCommandCall:
         inputs = iter([
             "ica.illumina.com",
             "new-default-key",
-            "",
+            "",                  # tenant_name (empty -> None)
+            "",                  # project_name (empty -> None)
         ])
 
         mock_response = MagicMock()
@@ -232,7 +272,8 @@ class TestCommandCall:
         inputs = iter([
             "ica.illumina.com",
             "key-123",
-            "",
+            "",                  # tenant_name (empty -> None)
+            "",                  # project_name (empty -> None)
         ])
 
         mock_response = MagicMock()

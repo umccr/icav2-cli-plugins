@@ -527,20 +527,6 @@ subcommands:
     subcommands:
       create:
         summary: Create a project
-      enter:
-        summary: Enter project context
-        parameters:
-          - name: project_name
-            summary: Name of project to enter
-            type: string
-            completion:
-              command_string: | 
-                __list_project_names.sh
-        options:
-          - name: global
-            summary: Update context in session yaml file
-      exit:
-        summary: Exit project context
       get:
         summary: Get details of a project
       list:
@@ -568,23 +554,57 @@ subcommands:
       update:
         summary: Update a sample for a project
 
+  jobs:
+    summary: Job commands
+    subcommands:
+      get:
+        summary: Get the details of a job
+        parameters:
+          - name: job_id
+            summary: ID of the job
+        options:
+          - name: yaml
+            summary: Print the output in yaml format (default is json)
+
   regions:
     summary: Region commands
     subcommands:
       list:
         summary: list of regions
+        options:
+          - name: json
+            summary: Print the output in json format
+          - name: yaml
+            summary: Print the output in yaml format
+      get-default-region:
+        summary: Get the default region for the user
+        options:
+          - name: json
+            summary: Print the full region object in json format
+          - name: yaml
+            summary: Print the full region object in yaml format
 
   storagebundles:
     summary: Storage bundle commands
     subcommands:
       list:
         summary: list of storage bundles
+        options:
+          - name: json
+            summary: Print the output in json format
+          - name: yaml
+            summary: Print the output in yaml format
 
   storageconfigurations:
     summary: Storage configurations commands
     subcommands:
       list:
         summary: list of storage configurations
+        options:
+          - name: json
+            summary: Print the output in json format
+          - name: yaml
+            summary: Print the output in yaml format
 
   tenants:
     summary: Handle tenant switching
@@ -631,10 +651,8 @@ subcommands:
   tokens:
     summary: Tokens commands
     subcommands:
-      create:
-        summary: Create a JWT token
-      refresh:
-        summary: Refresh a JWT token from basic authentication
+      export:
+        summary: Print the current JWT access token to stdout
 
   version:
     summary: The version of this application

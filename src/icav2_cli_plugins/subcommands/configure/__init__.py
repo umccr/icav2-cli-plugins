@@ -6,14 +6,16 @@ Provides commands to create, list, and manage profiles in the
 ~/.icav2-cli-plugins/config file.
 
 Subcommands:
-  set   - Interactively configure a profile
-  list  - Display all configured profiles
+  set             - Interactively configure a profile
+  list            - Display all configured profiles
+  generate-keys   - Generate RSA key pair for API key encryption
 """
 
 # Command registration mapping for the configure subcommand group
 CONFIGURE_SUBCOMMANDS = {
     "set": "icav2_cli_plugins.subcommands.configure.configure_set",
     "list": "icav2_cli_plugins.subcommands.configure.configure_list",
+    "generate-keys": "icav2_cli_plugins.subcommands.configure.configure_generate_keys",
 }
 
 

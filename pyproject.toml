@@ -38,8 +38,9 @@ dependencies = [
     "matplotlib >= 3.7.1, < 4",
     "invoke >= 2.0.0, < 3",
     "fabric >= 3.0.0, < 4",
+    "cryptography >= 43.0, < 45",
     "deepdiff >= 6.7.1, < 7",
-    "wrapica >= 2.40.1, <2.41.0",
+    "wrapica >= 2.48.2, < 2.49.0",
     "nf-core >= 2.14",
     "pip>=26.0.1",
     "pandas-stubs~=2.3.3",
@@ -53,6 +54,7 @@ Homepage = "https://github.com/umccr/icav2-cli-plugins"
 
 [project.scripts]
 "icav2-cli-plugins.py" = "icav2_cli_plugins.utils.cli:main"
+"icav2" = "icav2_cli_plugins.utils.cli:main"
 
 [project.optional-dependencies]
 pandoc = [

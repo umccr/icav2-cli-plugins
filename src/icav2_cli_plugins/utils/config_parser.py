@@ -26,8 +26,13 @@ class ProfileConfig:
     x_api_key: Optional[str] = None
     project_id: Optional[str] = None
     project_name: Optional[str] = None
+    tenant_name: Optional[str] = None
     token_tid: Optional[str] = None
     output_format: str = "table"
+    encryption_public_key: Optional[str] = None
+    encryption_private_key: Optional[str] = None
+    access_token: Optional[str] = None
+    access_token_expiry: Optional[str] = None
 
 
 class ConfigParseError(Exception):
@@ -52,7 +57,9 @@ class ConfigParser:
     # Known keys that map to ProfileConfig fields
     _KNOWN_KEYS = frozenset({
         'server_url', 'x_api_key', 'project_id',
-        'project_name', 'token_tid', 'output_format',
+        'project_name', 'tenant_name', 'token_tid', 'output_format',
+        'encryption_public_key', 'encryption_private_key',
+        'access_token', 'access_token_expiry',
     })
 
     def parse(self, content: str) -> Dict[str, ProfileConfig]:
@@ -124,8 +131,13 @@ class ConfigParser:
                 x_api_key=kvs.get('x_api_key'),
                 project_id=kvs.get('project_id'),
                 project_name=kvs.get('project_name'),
+                tenant_name=kvs.get('tenant_name'),
                 token_tid=kvs.get('token_tid'),
                 output_format=kvs.get('output_format', 'table'),
+                encryption_public_key=kvs.get('encryption_public_key'),
+                encryption_private_key=kvs.get('encryption_private_key'),
+                access_token=kvs.get('access_token'),
+                access_token_expiry=kvs.get('access_token_expiry'),
             )
 
         return profiles
@@ -204,10 +216,20 @@ class ConfigParser:
                 lines.append(f'project_id = {profile.project_id}')
             if profile.project_name is not None:
                 lines.append(f'project_name = {profile.project_name}')
+            if profile.tenant_name is not None:
+                lines.append(f'tenant_name = {profile.tenant_name}')
             if profile.token_tid is not None:
                 lines.append(f'token_tid = {profile.token_tid}')
             if profile.output_format is not None:
                 lines.append(f'output_format = {profile.output_format}')
+            if profile.encryption_public_key is not None:
+                lines.append(f'encryption_public_key = {profile.encryption_public_key}')
+            if profile.encryption_private_key is not None:
+                lines.append(f'encryption_private_key = {profile.encryption_private_key}')
+            if profile.access_token is not None:
+                lines.append(f'access_token = {profile.access_token}')
+            if profile.access_token_expiry is not None:
+                lines.append(f'access_token_expiry = {profile.access_token_expiry}')
 
             sections.append('\n'.join(lines))
 

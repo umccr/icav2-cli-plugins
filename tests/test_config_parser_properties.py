@@ -74,6 +74,7 @@ def profile_config_strategy(name_strategy=profile_name_strategy):
         x_api_key=optional_string_strategy,
         project_id=optional_string_strategy,
         project_name=optional_string_strategy,
+        tenant_name=optional_string_strategy,
         token_tid=optional_string_strategy,
         output_format=output_format_strategy,
     )
@@ -187,7 +188,7 @@ class TestConfigRoundTrip:
 
 
 # Known keys from ProfileConfig (excluding output_format which has validation)
-DUPLICABLE_KEYS = ["server_url", "x_api_key", "project_id", "project_name", "token_tid"]
+DUPLICABLE_KEYS = ["server_url", "x_api_key", "project_id", "project_name", "tenant_name", "token_tid"]
 
 
 # Feature: profile-based-config, Property 9: Duplicate keys resolve to last occurrence

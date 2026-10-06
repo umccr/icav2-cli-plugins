@@ -453,7 +453,6 @@ class TestSourceShContent:
                 set -euo pipefail
                 export HOME="{tmpdir}"
                 mkdir -p "{tmpdir}/.icav2-cli-plugins/bin"
-                mkdir -p "{tmpdir}/.icav2-cli-plugins/shell_functions"
 
                 cat > "{tmpdir}/.icav2-cli-plugins/source.sh" << 'SOURCESH'
 #!/usr/bin/env bash
@@ -463,16 +462,6 @@ export ICAV2_CLI_PLUGINS_HOME="${{HOME}}/.icav2-cli-plugins"
 
 # Add bin/ to PATH so _icav2 and icav2 wrapper are accessible
 export PATH="${{ICAV2_CLI_PLUGINS_HOME}}/bin:${{PATH}}"
-
-# Source shell functions if they exist (backward compatibility)
-if [[ -d "${{ICAV2_CLI_PLUGINS_HOME}}/shell_functions" ]]; then
-  for __icav2_shell_function_file_name in "${{ICAV2_CLI_PLUGINS_HOME}}/shell_functions/"*; do
-    if [[ -f "${{__icav2_shell_function_file_name}}" ]]; then
-      . "${{__icav2_shell_function_file_name}}"
-    fi
-  done
-  unset __icav2_shell_function_file_name
-fi
 SOURCESH
 
                 . "{tmpdir}/.icav2-cli-plugins/source.sh"
@@ -502,16 +491,6 @@ SOURCESH
                   echo ''
                   echo '# Add bin/ to PATH so _icav2 and icav2 wrapper are accessible'
                   echo 'export PATH="${{ICAV2_CLI_PLUGINS_HOME}}/bin:${{PATH}}"'
-                  echo ''
-                  echo '# Source shell functions if they exist (backward compatibility)'
-                  echo 'if [[ -d "${{ICAV2_CLI_PLUGINS_HOME}}/shell_functions" ]]; then'
-                  echo '  for __icav2_shell_function_file_name in "${{ICAV2_CLI_PLUGINS_HOME}}/shell_functions/"*; do'
-                  echo '    if [[ -f "${{__icav2_shell_function_file_name}}" ]]; then'
-                  echo '      . "${{__icav2_shell_function_file_name}}"'
-                  echo '    fi'
-                  echo '  done'
-                  echo '  unset __icav2_shell_function_file_name'
-                  echo 'fi'
                 }} > "${{ICAV2_CLI_PLUGINS_HOME}}/source.sh"
 
                 cat "${{ICAV2_CLI_PLUGINS_HOME}}/source.sh"

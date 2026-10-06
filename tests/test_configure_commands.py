@@ -28,10 +28,25 @@ from icav2_cli_plugins.utils.config_parser import ConfigParser, ProfileConfig
 class TestConfigureSetSuccess:
     """Test configure set with mocked stdin and mocked token generation."""
 
+    @pytest.fixture(autouse=True)
+    def _disable_auto_encryption(self, tmp_path, monkeypatch):
+        """Prevent tests from auto-encrypting by pointing to non-existent keys."""
+        fake_pub = tmp_path / "nonexistent_keys" / "id_rsa.pub"
+        fake_priv = tmp_path / "nonexistent_keys" / "id_rsa"
+        monkeypatch.setattr(
+            "icav2_cli_plugins.subcommands.configure.configure_set.DEFAULT_PUBLIC_KEY_PATH",
+            fake_pub,
+        )
+        monkeypatch.setattr(
+            "icav2_cli_plugins.subcommands.configure.configure_set.DEFAULT_PRIVATE_KEY_PATH",
+            fake_priv,
+        )
+
     def test_set_with_valid_inputs_writes_profile(self, tmp_path: Path, monkeypatch):
         """
-        Mock input() to provide server_url, api_key, project_name.
+        Mock input() to provide server_url, api_key, tenant_name, project_name.
         Mock TokenManager._generate_token to succeed.
+        Mock _resolve_project_id to return a project ID.
         Verify profile is written to config file correctly.
         Requirement: 8.1, 8.5
         """
@@ -41,6 +56,7 @@ class TestConfigureSetSuccess:
         responses = iter([
             "my-server.illumina.com",  # server_url
             "test-api-key-abc123",     # x_api_key
+            "my-tenant",               # tenant_name
             "my-project",              # project_name
         ])
         monkeypatch.setattr("builtins.input", lambda prompt: next(responses))
@@ -56,7 +72,13 @@ class TestConfigureSetSuccess:
             __import__("icav2_cli_plugins.utils.token_manager", fromlist=["TokenManager"]).TokenManager,
             "_generate_token",
             return_value="mocked-jwt-token-12345",
-        ):
+        ), patch(
+            "icav2_cli_plugins.subcommands.configure.configure_set.requests.get",
+        ) as mock_get:
+            mock_get.return_value = MagicMock(
+                status_code=200,
+                json=MagicMock(return_value={"items": [{"name": "my-project", "id": "proj-uuid-123"}]}),
+            )
             cmd = ConfigureSetCommand(["configure", "set", "dev-profile"])
             cmd()
 
@@ -68,6 +90,8 @@ class TestConfigureSetSuccess:
         assert profiles["dev-profile"].server_url == "my-server.illumina.com"
         assert profiles["dev-profile"].x_api_key == "test-api-key-abc123"
         assert profiles["dev-profile"].project_name == "my-project"
+        assert profiles["dev-profile"].project_id == "proj-uuid-123"
+        assert profiles["dev-profile"].tenant_name == "my-tenant"
 
     def test_set_token_generation_failure_does_not_modify_config(
         self, tmp_path: Path, monkeypatch, capsys
@@ -82,6 +106,7 @@ class TestConfigureSetSuccess:
         responses = iter([
             "ica.illumina.com",
             "bad-api-key",
+            "my-tenant",
             "project-name",
         ])
         monkeypatch.setattr("builtins.input", lambda prompt: next(responses))
@@ -117,6 +142,7 @@ class TestConfigureSetSuccess:
         responses = iter([
             "",               # server_url (empty -> default ica.illumina.com)
             "my-key-xyz",     # x_api_key
+            "",               # tenant_name (empty -> None)
             "",               # project_name (empty -> None)
         ])
         monkeypatch.setattr("builtins.input", lambda prompt: next(responses))
@@ -139,6 +165,7 @@ class TestConfigureSetSuccess:
         assert profiles["default"].server_url == "ica.illumina.com"
         assert profiles["default"].x_api_key == "my-key-xyz"
         assert profiles["default"].project_name is None
+        assert profiles["default"].tenant_name is None
 
     def test_set_existing_profile_overwrites(self, tmp_path: Path, monkeypatch):
         """
@@ -168,6 +195,7 @@ class TestConfigureSetSuccess:
         responses = iter([
             "new-server.com",       # new server_url
             "new-api-key-222",      # new x_api_key
+            "new-tenant",           # new tenant_name
             "new-project-name",     # new project_name
         ])
         monkeypatch.setattr("builtins.input", lambda prompt: next(responses))
@@ -180,7 +208,13 @@ class TestConfigureSetSuccess:
             __import__("icav2_cli_plugins.utils.token_manager", fromlist=["TokenManager"]).TokenManager,
             "_generate_token",
             return_value="new-token",
-        ):
+        ), patch(
+            "icav2_cli_plugins.subcommands.configure.configure_set.requests.get",
+        ) as mock_get:
+            mock_get.return_value = MagicMock(
+                status_code=200,
+                json=MagicMock(return_value={"items": [{"name": "new-project-name", "id": "proj-new-uuid"}]}),
+            )
             cmd = ConfigureSetCommand(["configure", "set", "staging"])
             cmd()
 
@@ -189,6 +223,8 @@ class TestConfigureSetSuccess:
         assert profiles["staging"].server_url == "new-server.com"
         assert profiles["staging"].x_api_key == "new-api-key-222"
         assert profiles["staging"].project_name == "new-project-name"
+        assert profiles["staging"].project_id == "proj-new-uuid"
+        assert profiles["staging"].tenant_name == "new-tenant"
         # Verify default profile was preserved
         assert "default" in profiles
         assert profiles["default"].x_api_key == "default-key"
@@ -313,6 +349,20 @@ class TestConfigureListOutput:
 class TestFilePermissions:
     """Test that config file is created with mode 0600."""
 
+    @pytest.fixture(autouse=True)
+    def _disable_auto_encryption(self, tmp_path, monkeypatch):
+        """Prevent tests from auto-encrypting by pointing to non-existent keys."""
+        fake_pub = tmp_path / "nonexistent_keys" / "id_rsa.pub"
+        fake_priv = tmp_path / "nonexistent_keys" / "id_rsa"
+        monkeypatch.setattr(
+            "icav2_cli_plugins.subcommands.configure.configure_set.DEFAULT_PUBLIC_KEY_PATH",
+            fake_pub,
+        )
+        monkeypatch.setattr(
+            "icav2_cli_plugins.subcommands.configure.configure_set.DEFAULT_PRIVATE_KEY_PATH",
+            fake_priv,
+        )
+
     def test_config_file_permissions_on_create(self, tmp_path: Path, monkeypatch):
         """
         Verify config file is created with mode 0600.
@@ -323,6 +373,7 @@ class TestFilePermissions:
         responses = iter([
             "ica.illumina.com",
             "key-for-perms-test",
+            "my-tenant",
             "project",
         ])
         monkeypatch.setattr("builtins.input", lambda prompt: next(responses))
@@ -335,7 +386,13 @@ class TestFilePermissions:
             __import__("icav2_cli_plugins.utils.token_manager", fromlist=["TokenManager"]).TokenManager,
             "_generate_token",
             return_value="perms-token",
-        ):
+        ), patch(
+            "icav2_cli_plugins.subcommands.configure.configure_set.requests.get",
+        ) as mock_get:
+            mock_get.return_value = MagicMock(
+                status_code=200,
+                json=MagicMock(return_value={"items": [{"name": "project", "id": "proj-perms-id"}]}),
+            )
             cmd = ConfigureSetCommand(["configure", "set", "test"])
             cmd()
 
@@ -364,7 +421,8 @@ class TestFilePermissions:
         responses = iter([
             "ica.illumina.com",
             "new-key",
-            "",
+            "",                  # tenant_name (empty -> None)
+            "",                  # project_name (empty -> None)
         ])
         monkeypatch.setattr("builtins.input", lambda prompt: next(responses))
         monkeypatch.setattr(

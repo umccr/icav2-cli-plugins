@@ -51,7 +51,6 @@ Arguments are resolved with increasing precedence: environment variables → YAM
 
 ### Shell Integration
 
-- `shell_functions/` – Bash functions sourced into the user's shell (project/tenant context switching)
 - `autocompletion/` – Generated bash/zsh completions from `autocompletion/specs/icav2.yaml`
 
 ### File Naming

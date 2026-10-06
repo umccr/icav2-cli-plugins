@@ -163,7 +163,6 @@ class TestUnknownCommandDelegation:
             "projectanalyses",
             "projectdata",
             "projectpipelines",
-            "tenants",
             "configure",
         ]
 

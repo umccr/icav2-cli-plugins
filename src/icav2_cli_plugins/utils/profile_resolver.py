@@ -26,8 +26,12 @@ class ResolvedConfig:
     base_url: str
     access_token: Optional[str]
     project_id: Optional[str]
+    project_name: Optional[str]
     api_key: Optional[str]
     output_format: str
+    encryption_private_key: Optional[str] = None
+    encryption_public_key: Optional[str] = None
+    cached_access_token: Optional[str] = None
 
 
 class ProfileResolver:
@@ -101,8 +105,12 @@ class ProfileResolver:
             base_url=base_url,
             access_token=None,
             project_id=profile.project_id,
+            project_name=profile.project_name,
             api_key=profile.x_api_key,
             output_format=profile.output_format or "table",
+            encryption_private_key=profile.encryption_private_key,
+            encryption_public_key=profile.encryption_public_key,
+            cached_access_token=profile.access_token,
         )
 
         # Apply environment variable overrides

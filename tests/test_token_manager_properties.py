@@ -43,7 +43,7 @@ def _make_jwt_with_exp(exp: int) -> str:
 
 
 # Use a fixed dummy path for TokenManager since _is_token_fresh doesn't use the filesystem
-_DUMMY_CACHE_DIR = Path("/tmp/test-token-manager-pbt")
+_DUMMY_CONFIG_PATH = Path("/tmp/test-token-manager-pbt/config")
 
 
 # ---------------------------------------------------------------------------
@@ -78,7 +78,7 @@ class TestTokenCacheFreshnessDecision:
         exp = fixed_now + exp_offset
         token = _make_jwt_with_exp(exp)
 
-        tm = TokenManager("test-profile", _DUMMY_CACHE_DIR)
+        tm = TokenManager("test-profile", _DUMMY_CONFIG_PATH)
 
         # Mock time.time() to return a fixed value for deterministic testing
         with patch("icav2_cli_plugins.utils.token_manager.time.time", return_value=float(fixed_now)):
@@ -104,7 +104,7 @@ class TestTokenCacheFreshnessDecision:
         exp = fixed_now + TOKEN_REFRESH_THRESHOLD  # exactly at threshold
         token = _make_jwt_with_exp(exp)
 
-        tm = TokenManager("test-profile", _DUMMY_CACHE_DIR)
+        tm = TokenManager("test-profile", _DUMMY_CONFIG_PATH)
 
         with patch("icav2_cli_plugins.utils.token_manager.time.time", return_value=float(fixed_now)):
             result = tm._is_token_fresh(token)
@@ -125,7 +125,7 @@ class TestTokenCacheFreshnessDecision:
         exp = fixed_now + TOKEN_REFRESH_THRESHOLD + 1
         token = _make_jwt_with_exp(exp)
 
-        tm = TokenManager("test-profile", _DUMMY_CACHE_DIR)
+        tm = TokenManager("test-profile", _DUMMY_CONFIG_PATH)
 
         with patch("icav2_cli_plugins.utils.token_manager.time.time", return_value=float(fixed_now)):
             result = tm._is_token_fresh(token)
@@ -143,7 +143,7 @@ class TestTokenCacheFreshnessDecision:
 
         Any malformed or invalid JWT string is treated as stale (returns False).
         """
-        tm = TokenManager("test-profile", _DUMMY_CACHE_DIR)
+        tm = TokenManager("test-profile", _DUMMY_CONFIG_PATH)
         result = tm._is_token_fresh(malformed_token)
 
         assert result is False, (
@@ -162,7 +162,7 @@ class TestTokenCacheFreshnessDecision:
         payload = {"iss": "test", "sub": "user", "iat": fixed_now}
         token = jwt.encode(payload, "secret", algorithm="HS256")
 
-        tm = TokenManager("test-profile", _DUMMY_CACHE_DIR)
+        tm = TokenManager("test-profile", _DUMMY_CONFIG_PATH)
 
         with patch("icav2_cli_plugins.utils.token_manager.time.time", return_value=float(fixed_now)):
             result = tm._is_token_fresh(token)

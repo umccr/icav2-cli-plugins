@@ -15,7 +15,6 @@ Usage:
 
 Plugin Commands:
     init                 Initialise a tenant and provide an API Key used for that tenant
-    enter                Enter a tenant (updates users ICAV2_ACCESS_TOKEN env var)
     list                 List available tenants to enter
     set-default-project  Set the default project for a given tenant
     set-default-tenant   Set the default tenant

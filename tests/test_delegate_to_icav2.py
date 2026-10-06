@@ -95,8 +95,8 @@ class TestDelegateToIcav2ExecveCall:
         call_args = mock_execve.call_args
         # First arg: binary path
         assert call_args[0][0] == str(fake_binary)
-        # Second arg: argv list (binary + args)
-        assert call_args[0][1] == [str(fake_binary), "projects", "list"]
+        # Second arg: argv list (binary + args + --server-url flag)
+        assert call_args[0][1] == [str(fake_binary), "projects", "list", "--server-url", "ica.illumina.com"]
         # Third arg: environment dict
         env = call_args[0][2]
         assert env["ICAV2_ACCESS_TOKEN"] == "test-token"

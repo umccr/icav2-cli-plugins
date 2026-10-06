@@ -2,10 +2,10 @@
 """
 Unit tests for TokenManager.
 
-Tests caching, freshness checking, and token generation logic.
+Tests token freshness checking, generation, persistence to config, and
+the encrypted token lifecycle.
 """
 
-import json
 import time
 from pathlib import Path
 from unittest.mock import patch, MagicMock
@@ -14,6 +14,7 @@ import jwt
 import pytest
 
 from icav2_cli_plugins.utils.token_manager import TokenManager
+from icav2_cli_plugins.utils.config_parser import ConfigParser, ProfileConfig
 
 
 def _make_jwt(exp: int, extra_claims: dict | None = None) -> str:
@@ -24,125 +25,73 @@ def _make_jwt(exp: int, extra_claims: dict | None = None) -> str:
     return jwt.encode(payload, "secret", algorithm="HS256")
 
 
-class TestTokenManagerInit:
-    def test_cache_path_computed(self, tmp_path: Path):
-        tm = TokenManager("my-profile", tmp_path)
-        assert tm._cache_path == tmp_path / "my-profile" / "session.yaml"
+def _write_config(path: Path, profiles: dict[str, ProfileConfig]) -> None:
+    """Helper: write a config file with given profiles."""
+    parser = ConfigParser()
+    parser.write_file(path, profiles)
 
+
+class TestTokenManagerInit:
     def test_stores_profile_name(self, tmp_path: Path):
-        tm = TokenManager("prod", tmp_path)
+        config_path = tmp_path / "config"
+        tm = TokenManager("prod", config_path)
         assert tm.profile_name == "prod"
 
+    def test_stores_config_path(self, tmp_path: Path):
+        config_path = tmp_path / "config"
+        tm = TokenManager("test", config_path)
+        assert tm.config_path == config_path
 
-class TestReadCache:
-    def test_returns_none_when_no_file(self, tmp_path: Path):
-        tm = TokenManager("test", tmp_path)
-        assert tm._read_cache() is None
-
-    def test_reads_valid_cache(self, tmp_path: Path):
-        cache_dir = tmp_path / "test"
-        cache_dir.mkdir(parents=True)
-        session_file = cache_dir / "session.yaml"
-        session_file.write_text("access_token: my-token-value\ntoken_epoch: 12345\n")
-
-        tm = TokenManager("test", tmp_path)
-        assert tm._read_cache() == "my-token-value"
-
-    def test_returns_none_for_malformed_yaml(self, tmp_path: Path):
-        cache_dir = tmp_path / "test"
-        cache_dir.mkdir(parents=True)
-        session_file = cache_dir / "session.yaml"
-        session_file.write_text(":::invalid yaml[[[")
-
-        tm = TokenManager("test", tmp_path)
-        assert tm._read_cache() is None
-
-    def test_returns_none_when_key_missing(self, tmp_path: Path):
-        cache_dir = tmp_path / "test"
-        cache_dir.mkdir(parents=True)
-        session_file = cache_dir / "session.yaml"
-        session_file.write_text("token_epoch: 12345\n")
-
-        tm = TokenManager("test", tmp_path)
-        assert tm._read_cache() is None
-
-    def test_returns_none_when_value_not_string(self, tmp_path: Path):
-        cache_dir = tmp_path / "test"
-        cache_dir.mkdir(parents=True)
-        session_file = cache_dir / "session.yaml"
-        session_file.write_text("access_token: 12345\ntoken_epoch: 12345\n")
-
-        tm = TokenManager("test", tmp_path)
-        # Integer value, not a string
-        assert tm._read_cache() is None
-
-
-class TestWriteCache:
-    def test_creates_directories_and_file(self, tmp_path: Path):
-        tm = TokenManager("new-profile", tmp_path)
-        tm._write_cache("my-token")
-
-        assert tm._cache_path.exists()
-        assert (tmp_path / "new-profile").is_dir()
-
-    def test_writes_correct_yaml_content(self, tmp_path: Path):
-        tm = TokenManager("test", tmp_path)
-        before = int(time.time())
-        tm._write_cache("token-abc")
-        after = int(time.time())
-
-        from ruamel.yaml import YAML
-        yaml = YAML()
-        with open(tm._cache_path) as fh:
-            data = yaml.load(fh)
-
-        assert data["access_token"] == "token-abc"
-        assert before <= data["token_epoch"] <= after
-
-    def test_sets_permissions_0600(self, tmp_path: Path):
-        tm = TokenManager("test", tmp_path)
-        tm._write_cache("secure-token")
-
-        import stat
-        mode = tm._cache_path.stat().st_mode & 0o777
-        assert mode == 0o600
+    def test_stores_key_paths(self, tmp_path: Path):
+        config_path = tmp_path / "config"
+        priv = tmp_path / "id_rsa"
+        pub = tmp_path / "id_rsa.pub"
+        tm = TokenManager("test", config_path, private_key_path=priv, public_key_path=pub)
+        assert tm.private_key_path == priv
+        assert tm.public_key_path == pub
 
 
 class TestIsTokenFresh:
     def test_fresh_token(self, tmp_path: Path):
-        tm = TokenManager("test", tmp_path)
+        config_path = tmp_path / "config"
+        tm = TokenManager("test", config_path)
         # Token expires in 2 hours (7200 seconds) — well above threshold
         exp = int(time.time()) + 7200
         token = _make_jwt(exp)
         assert tm._is_token_fresh(token) is True
 
     def test_stale_token_at_threshold(self, tmp_path: Path):
-        tm = TokenManager("test", tmp_path)
+        config_path = tmp_path / "config"
+        tm = TokenManager("test", config_path)
         # Token expires exactly at threshold (3600 seconds)
         exp = int(time.time()) + 3600
         token = _make_jwt(exp)
         assert tm._is_token_fresh(token) is False
 
     def test_stale_token_below_threshold(self, tmp_path: Path):
-        tm = TokenManager("test", tmp_path)
+        config_path = tmp_path / "config"
+        tm = TokenManager("test", config_path)
         # Token expires in 1800 seconds — below threshold
         exp = int(time.time()) + 1800
         token = _make_jwt(exp)
         assert tm._is_token_fresh(token) is False
 
     def test_expired_token(self, tmp_path: Path):
-        tm = TokenManager("test", tmp_path)
+        config_path = tmp_path / "config"
+        tm = TokenManager("test", config_path)
         # Already expired
         exp = int(time.time()) - 100
         token = _make_jwt(exp)
         assert tm._is_token_fresh(token) is False
 
     def test_invalid_jwt(self, tmp_path: Path):
-        tm = TokenManager("test", tmp_path)
+        config_path = tmp_path / "config"
+        tm = TokenManager("test", config_path)
         assert tm._is_token_fresh("not-a-jwt") is False
 
     def test_jwt_without_exp_claim(self, tmp_path: Path):
-        tm = TokenManager("test", tmp_path)
+        config_path = tmp_path / "config"
+        tm = TokenManager("test", config_path)
         # JWT without exp claim
         token = jwt.encode({"iss": "test"}, "secret", algorithm="HS256")
         assert tm._is_token_fresh(token) is False
@@ -150,7 +99,8 @@ class TestIsTokenFresh:
 
 class TestGenerateToken:
     def test_successful_generation(self, tmp_path: Path):
-        tm = TokenManager("prod", tmp_path)
+        config_path = tmp_path / "config"
+        tm = TokenManager("prod", config_path)
 
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -170,7 +120,8 @@ class TestGenerateToken:
         )
 
     def test_falls_back_to_access_token_key(self, tmp_path: Path):
-        tm = TokenManager("prod", tmp_path)
+        config_path = tmp_path / "config"
+        tm = TokenManager("prod", config_path)
 
         mock_response = MagicMock()
         mock_response.status_code = 201
@@ -182,7 +133,8 @@ class TestGenerateToken:
         assert result == "fallback-token"
 
     def test_raises_on_http_error(self, tmp_path: Path):
-        tm = TokenManager("prod", tmp_path)
+        config_path = tmp_path / "config"
+        tm = TokenManager("prod", config_path)
 
         mock_response = MagicMock()
         mock_response.status_code = 403
@@ -192,7 +144,8 @@ class TestGenerateToken:
                 tm._generate_token("bad-key", "https://ica.illumina.com/ica/rest")
 
     def test_raises_when_no_token_in_response(self, tmp_path: Path):
-        tm = TokenManager("prod", tmp_path)
+        config_path = tmp_path / "config"
+        tm = TokenManager("prod", config_path)
 
         mock_response = MagicMock()
         mock_response.status_code = 200
@@ -205,79 +158,257 @@ class TestGenerateToken:
 
 class TestGetValidToken:
     def test_returns_cached_fresh_token(self, tmp_path: Path):
-        tm = TokenManager("test", tmp_path)
+        config_path = tmp_path / "config"
 
-        # Write a fresh token to cache
+        # Create a fresh token
         exp = int(time.time()) + 7200
         fresh_token = _make_jwt(exp)
-        tm._write_cache(fresh_token)
+
+        # Write config with the cached token
+        _write_config(config_path, {
+            "default": ProfileConfig(
+                name="default",
+                x_api_key="api-key",
+                access_token=fresh_token,
+                access_token_expiry=str(exp),
+            )
+        })
+
+        tm = TokenManager("default", config_path)
 
         # Should return cached token without calling _generate_token
         with patch.object(tm, "_generate_token") as mock_gen:
-            result = tm.get_valid_token("api-key", "https://ica.illumina.com/ica/rest")
+            result = tm.get_valid_token(
+                "api-key", "https://ica.illumina.com/ica/rest",
+                cached_token=fresh_token,
+            )
 
         assert result == fresh_token
         mock_gen.assert_not_called()
 
     def test_generates_new_when_cache_stale(self, tmp_path: Path):
-        tm = TokenManager("test", tmp_path)
+        config_path = tmp_path / "config"
 
-        # Write a stale token to cache
-        exp = int(time.time()) + 1000  # Below threshold
+        # Create a stale token (below threshold)
+        exp = int(time.time()) + 1000
         stale_token = _make_jwt(exp)
-        tm._write_cache(stale_token)
+
+        _write_config(config_path, {
+            "default": ProfileConfig(
+                name="default",
+                x_api_key="api-key",
+                access_token=stale_token,
+                access_token_expiry=str(exp),
+            )
+        })
+
+        tm = TokenManager("default", config_path)
 
         # Should generate a new token
         new_exp = int(time.time()) + 7200
         new_token = _make_jwt(new_exp)
 
         with patch.object(tm, "_generate_token", return_value=new_token) as mock_gen:
-            result = tm.get_valid_token("api-key", "https://ica.illumina.com/ica/rest")
+            result = tm.get_valid_token(
+                "api-key", "https://ica.illumina.com/ica/rest",
+                cached_token=stale_token,
+            )
 
         assert result == new_token
         mock_gen.assert_called_once_with("api-key", "https://ica.illumina.com/ica/rest")
 
-    def test_generates_new_when_no_cache(self, tmp_path: Path):
-        tm = TokenManager("test", tmp_path)
+    def test_generates_new_when_no_cached_token(self, tmp_path: Path):
+        config_path = tmp_path / "config"
+
+        _write_config(config_path, {
+            "default": ProfileConfig(
+                name="default",
+                x_api_key="api-key",
+            )
+        })
+
+        tm = TokenManager("default", config_path)
 
         new_exp = int(time.time()) + 7200
         new_token = _make_jwt(new_exp)
 
         with patch.object(tm, "_generate_token", return_value=new_token) as mock_gen:
-            result = tm.get_valid_token("api-key", "https://ica.illumina.com/ica/rest")
+            result = tm.get_valid_token(
+                "api-key", "https://ica.illumina.com/ica/rest",
+                cached_token=None,
+            )
 
         assert result == new_token
         mock_gen.assert_called_once()
 
-    def test_generates_new_when_cache_malformed(self, tmp_path: Path):
-        tm = TokenManager("test", tmp_path)
+    def test_persists_token_to_config_after_generation(self, tmp_path: Path):
+        config_path = tmp_path / "config"
 
-        # Write malformed content
-        tm._cache_path.parent.mkdir(parents=True, exist_ok=True)
-        tm._cache_path.write_text("not valid yaml::: [[")
+        _write_config(config_path, {
+            "default": ProfileConfig(
+                name="default",
+                x_api_key="api-key",
+            )
+        })
 
-        new_exp = int(time.time()) + 7200
-        new_token = _make_jwt(new_exp)
-
-        with patch.object(tm, "_generate_token", return_value=new_token) as mock_gen:
-            result = tm.get_valid_token("api-key", "https://ica.illumina.com/ica/rest")
-
-        assert result == new_token
-        mock_gen.assert_called_once()
-
-    def test_writes_cache_after_generation(self, tmp_path: Path):
-        tm = TokenManager("test", tmp_path)
+        tm = TokenManager("default", config_path)
 
         new_exp = int(time.time()) + 7200
         new_token = _make_jwt(new_exp)
 
         with patch.object(tm, "_generate_token", return_value=new_token):
-            tm.get_valid_token("api-key", "https://ica.illumina.com/ica/rest")
+            tm.get_valid_token(
+                "api-key", "https://ica.illumina.com/ica/rest",
+                cached_token=None,
+            )
 
-        # Verify the cache was written
-        assert tm._cache_path.exists()
-        cached = tm._read_cache()
-        assert cached == new_token
+        # Verify the token was persisted back to config
+        parser = ConfigParser()
+        profiles = parser.parse_file(config_path)
+        assert profiles["default"].access_token == new_token
+        assert profiles["default"].access_token_expiry == str(new_exp)
+
+    def test_config_permissions_after_persist(self, tmp_path: Path):
+        config_path = tmp_path / "config"
+
+        _write_config(config_path, {
+            "default": ProfileConfig(
+                name="default",
+                x_api_key="api-key",
+            )
+        })
+
+        tm = TokenManager("default", config_path)
+
+        new_exp = int(time.time()) + 7200
+        new_token = _make_jwt(new_exp)
+
+        with patch.object(tm, "_generate_token", return_value=new_token):
+            tm.get_valid_token(
+                "api-key", "https://ica.illumina.com/ica/rest",
+                cached_token=None,
+            )
+
+        # Verify permissions
+        import stat
+        mode = config_path.stat().st_mode & 0o777
+        assert mode == 0o600
+
+
+class TestGetValidTokenWithEncryption:
+    """Tests for token encryption/decryption during get_valid_token."""
+
+    def test_encrypted_cached_token_is_decrypted(self, tmp_path: Path):
+        """A cached encrypted token is decrypted and returned if fresh."""
+        from icav2_cli_plugins.utils.api_key_encryption import (
+            generate_key_pair, encrypt_api_key,
+        )
+
+        config_path = tmp_path / "config"
+        priv_key = tmp_path / "id_rsa"
+        pub_key = tmp_path / "id_rsa.pub"
+        generate_key_pair(priv_key, pub_key)
+
+        # Create a fresh token and encrypt it
+        exp = int(time.time()) + 7200
+        fresh_token = _make_jwt(exp)
+        encrypted_token = encrypt_api_key(fresh_token, pub_key)
+
+        _write_config(config_path, {
+            "default": ProfileConfig(
+                name="default",
+                x_api_key="api-key",
+                access_token=encrypted_token,
+                access_token_expiry=str(exp),
+                encryption_public_key=str(pub_key),
+                encryption_private_key=str(priv_key),
+            )
+        })
+
+        tm = TokenManager("default", config_path, private_key_path=priv_key, public_key_path=pub_key)
+
+        with patch.object(tm, "_generate_token") as mock_gen:
+            result = tm.get_valid_token(
+                "api-key", "https://ica.illumina.com/ica/rest",
+                cached_token=encrypted_token,
+            )
+
+        assert result == fresh_token
+        mock_gen.assert_not_called()
+
+    def test_new_token_is_stored_encrypted(self, tmp_path: Path):
+        """When a new token is generated, it's encrypted before persisting."""
+        from icav2_cli_plugins.utils.api_key_encryption import (
+            generate_key_pair, is_encrypted,
+        )
+
+        config_path = tmp_path / "config"
+        priv_key = tmp_path / "id_rsa"
+        pub_key = tmp_path / "id_rsa.pub"
+        generate_key_pair(priv_key, pub_key)
+
+        _write_config(config_path, {
+            "default": ProfileConfig(
+                name="default",
+                x_api_key="api-key",
+                encryption_public_key=str(pub_key),
+                encryption_private_key=str(priv_key),
+            )
+        })
+
+        tm = TokenManager("default", config_path, private_key_path=priv_key, public_key_path=pub_key)
+
+        new_exp = int(time.time()) + 7200
+        new_token = _make_jwt(new_exp)
+
+        with patch.object(tm, "_generate_token", return_value=new_token):
+            tm.get_valid_token(
+                "api-key", "https://ica.illumina.com/ica/rest",
+                cached_token=None,
+            )
+
+        # Verify the stored token is encrypted
+        parser = ConfigParser()
+        profiles = parser.parse_file(config_path)
+        stored = profiles["default"].access_token
+        assert is_encrypted(stored)
+
+    def test_encrypted_api_key_is_decrypted_for_generation(self, tmp_path: Path):
+        """When API key is encrypted, it's decrypted before calling _generate_token."""
+        from icav2_cli_plugins.utils.api_key_encryption import (
+            generate_key_pair, encrypt_api_key,
+        )
+
+        config_path = tmp_path / "config"
+        priv_key = tmp_path / "id_rsa"
+        pub_key = tmp_path / "id_rsa.pub"
+        generate_key_pair(priv_key, pub_key)
+
+        plain_api_key = "my-secret-api-key"
+        encrypted_api_key = encrypt_api_key(plain_api_key, pub_key)
+
+        _write_config(config_path, {
+            "default": ProfileConfig(
+                name="default",
+                x_api_key=encrypted_api_key,
+                encryption_public_key=str(pub_key),
+                encryption_private_key=str(priv_key),
+            )
+        })
+
+        tm = TokenManager("default", config_path, private_key_path=priv_key, public_key_path=pub_key)
+
+        new_exp = int(time.time()) + 7200
+        new_token = _make_jwt(new_exp)
+
+        with patch.object(tm, "_generate_token", return_value=new_token) as mock_gen:
+            tm.get_valid_token(
+                encrypted_api_key, "https://ica.illumina.com/ica/rest",
+                cached_token=None,
+            )
+
+        # _generate_token should have received the decrypted key
+        mock_gen.assert_called_once_with(plain_api_key, "https://ica.illumina.com/ica/rest")
 
 
 class TestValidateEnvToken:

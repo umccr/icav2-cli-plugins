@@ -2,12 +2,13 @@
 """
 Token manager for access token lifecycle management.
 
-Handles token caching, validation, and refresh per profile.
-Cache location: ~/.icav2-cli-plugins/cache/<profile_name>/session.yaml
+Handles token validation, refresh, and persistence in the config file.
+Tokens are stored in the profile's config section (optionally encrypted)
+and auto-refreshed when expired or within the refresh threshold.
+
 Refresh threshold: 3600 seconds before expiry
 """
 
-import os
 import sys
 import time
 from typing import Optional
@@ -15,9 +16,13 @@ from pathlib import Path
 
 import jwt
 import requests
-from ruamel.yaml import YAML
 
 from icav2_cli_plugins.utils.globals import TOKEN_REFRESH_THRESHOLD
+from icav2_cli_plugins.utils.api_key_encryption import (
+    encrypt_api_key,
+    is_encrypted,
+    resolve_api_key,
+)
 
 
 def validate_env_token(token: str) -> str:
@@ -68,66 +73,83 @@ class TokenManager:
     """
     Manages access token lifecycle per profile.
 
-    Cache location: ~/.icav2-cli-plugins/cache/<profile_name>/session.yaml
-    Refresh threshold: 3600 seconds before expiry
+    Tokens are stored directly in the config file alongside other profile
+    fields (access_token and access_token_expiry). If encryption keys are
+    configured, the access token is encrypted at rest just like the API key.
+
+    Refresh threshold: 3600 seconds before expiry.
     """
 
-    def __init__(self, profile_name: str, cache_dir: Path):
+    def __init__(
+        self,
+        profile_name: str,
+        config_path: Path,
+        private_key_path: Optional[Path] = None,
+        public_key_path: Optional[Path] = None,
+    ):
         self.profile_name = profile_name
-        self.cache_dir = cache_dir
-        self._cache_path = cache_dir / profile_name / "session.yaml"
+        self.config_path = config_path
+        self.private_key_path = private_key_path
+        self.public_key_path = public_key_path
 
-    def get_valid_token(self, api_key: str, base_url: str) -> str:
+    def get_valid_token(self, api_key: str, base_url: str, cached_token: Optional[str] = None) -> str:
         """
-        Return a valid access token, using cache if fresh enough.
-        Generates new token from API key if cache is stale/absent.
-        """
-        cached_token = self._read_cache()
-        if cached_token is not None and self._is_token_fresh(cached_token):
-            return cached_token
+        Return a valid access token.
 
-        # Cache miss or stale token — generate a new one
-        new_token = self._generate_token(api_key, base_url)
-        self._write_cache(new_token)
+        Checks the cached token from config first. If fresh, returns it directly.
+        If stale/absent, generates a new one from the API key (decrypting if needed),
+        persists the new token back to config (encrypting if keys are available),
+        and returns it.
+
+        Args:
+            api_key: The stored API key (may be encrypted).
+            base_url: The ICAv2 base URL for token generation.
+            cached_token: The access_token value from the config (may be encrypted or None).
+
+        Returns:
+            A valid plain-text access token ready for use.
+        """
+        # Try using the cached token from config
+        if cached_token is not None:
+            plain_token = self._resolve_secret(cached_token)
+            if plain_token and self._is_token_fresh(plain_token):
+                return plain_token
+
+        # Cached token is stale/absent/invalid — generate a new one
+        plain_api_key = self._resolve_secret(api_key)
+        new_token = self._generate_token(plain_api_key, base_url)
+
+        # Persist the new token back to the config file
+        self._persist_token(new_token)
+
         return new_token
 
-    def _read_cache(self) -> Optional[str]:
-        """Read cached token from session.yaml."""
-        if not self._cache_path.exists():
-            return None
+    def _resolve_secret(self, value: str) -> str:
+        """Resolve a secret value, decrypting if necessary."""
+        if not is_encrypted(value):
+            return value
 
         try:
-            yaml = YAML()
-            with open(self._cache_path, "r") as fh:
-                data = yaml.load(fh)
+            return resolve_api_key(
+                stored_value=value,
+                private_key_path=self.private_key_path,
+            )
+        except (FileNotFoundError, ValueError) as e:
+            print(
+                f"Error: Cannot decrypt value for profile '{self.profile_name}': {e}",
+                file=sys.stderr,
+            )
+            sys.exit(1)
 
-            if not isinstance(data, dict):
-                return None
-
-            token = data.get("access_token")
-            if token is None or not isinstance(token, str):
-                return None
-
-            return token
-        except Exception:
-            # Malformed YAML or any read error — treat as absent
-            return None
-
-    def _write_cache(self, token: str) -> None:
-        """Write token to session.yaml with mode 0600."""
-        self._cache_path.parent.mkdir(parents=True, exist_ok=True)
-
-        data = {
-            "access_token": token,
-            "token_epoch": int(time.time()),
-        }
-
-        yaml = YAML()
-        with open(self._cache_path, "w") as fh:
-            yaml.dump(data, fh)
-
-        # Set file permissions to owner read/write only
-        os.chmod(self._cache_path, 0o600)
+    def _encrypt_if_keys_available(self, plaintext: str) -> str:
+        """Encrypt a value if public key is available, otherwise return as-is."""
+        if self.public_key_path and self.public_key_path.exists():
+            try:
+                return encrypt_api_key(plaintext, self.public_key_path)
+            except (ValueError, FileNotFoundError):
+                # Can't encrypt — store plain
+                return plaintext
+        return plaintext
 
     def _is_token_fresh(self, token: str) -> bool:
         """Check if token has >3600 seconds until exp claim."""
@@ -144,6 +166,18 @@ class TokenManager:
         except (jwt.DecodeError, jwt.InvalidTokenError, KeyError, Exception):
             # Not a valid JWT — treat as stale
             return False
+
+    def _get_token_expiry(self, token: str) -> Optional[int]:
+        """Extract the exp claim from a JWT token."""
+        try:
+            payload = jwt.decode(
+                token,
+                options={"verify_signature": False},
+                algorithms=["HS256", "RS256"],
+            )
+            return payload.get("exp")
+        except (jwt.DecodeError, jwt.InvalidTokenError):
+            return None
 
     def _generate_token(self, api_key: str, base_url: str) -> str:
         """Generate new access token from API key via ICAv2 API."""
@@ -177,3 +211,37 @@ class TokenManager:
             )
 
         return token
+
+    def _persist_token(self, token: str) -> None:
+        """
+        Write the new token back to the config file for this profile.
+
+        Encrypts the token if encryption keys are available.
+        Also stores the expiry epoch for quick checks.
+        """
+        from icav2_cli_plugins.utils.config_parser import ConfigParser, ConfigParseError
+
+        parser = ConfigParser()
+
+        try:
+            profiles = parser.parse_file(self.config_path)
+        except ConfigParseError:
+            # If config can't be read, skip persistence (token still usable in memory)
+            return
+
+        if self.profile_name not in profiles:
+            return
+
+        profile = profiles[self.profile_name]
+
+        # Encrypt the token if keys are available
+        stored_token = self._encrypt_if_keys_available(token)
+        profile.access_token = stored_token
+
+        # Store the expiry epoch as a string for easy comparison
+        expiry = self._get_token_expiry(token)
+        if expiry is not None:
+            profile.access_token_expiry = str(expiry)
+
+        # Write the updated config back
+        parser.write_file(self.config_path, profiles)

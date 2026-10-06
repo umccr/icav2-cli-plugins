@@ -348,14 +348,14 @@ See more in [project analyses wiki][project_analyses_wiki_gantt_plot]
 ~/.icav2-cli-plugins/
 ├── config                    # INI-style profile configuration
 ├── bin/
+│   ├── icav2                 # Python CLI wrapper (entry point)
 │   └── _icav2                # Bundled icav2 binary
 ├── cache/
 │   └── <profile_name>/
 │       └── session.yaml      # Cached access token per profile
 ├── pyenv/                    # Python virtual environment
-├── shell_functions/          # Legacy shell functions (backward compat)
 ├── autocompletion/           # Bash/zsh completions
-└── tenants/                  # Legacy tenant configs (preserved)
+└── tenants/                  # Legacy tenant configs (preserved if present)
 ```
 
 ---
