@@ -5,8 +5,7 @@ Add a pipeline object (or list of pipeline objects) to a bundle
 """
 # External imports
 import sys
-from typing import List, Optional
-
+from typing import List, Optional, cast
 
 # Wrapica imports
 from wrapica.bundle import (
@@ -14,6 +13,7 @@ from wrapica.bundle import (
     add_pipeline_to_bundle
 )
 from wrapica.enums import PipelineStatus, BundleStatus
+from wrapica.literals import PipelineStatusType
 from wrapica.pipelines import (
     PipelineType
 )
@@ -103,7 +103,7 @@ Example:
         # Check each pipeline has been released
         has_errors = False
         for pipeline_obj in self.pipeline_obj_list:
-            if not PipelineStatus(pipeline_obj.status) == PipelineStatus.RELEASED:
+            if not cast(PipelineStatusType, pipeline_obj.status) == "RELEASED":
                 logger.error(
                     f"Pipeline {pipeline_obj.id} is not released, only released pipelines can be added to a bundle"
                 )

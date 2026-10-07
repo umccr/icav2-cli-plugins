@@ -35,7 +35,7 @@ class ProjectPipelinesCreateNextflowPipelineFromZip(Command):
     """Usage:
     icav2 projectpipelines create-nextflow-pipeline-from-zip help
     icav2 projectpipelines create-nextflow-pipeline-from-zip <zipped_workflow_path>
-                                                             [--workflow-description=<workflow_description>]
+                                                             (--workflow-description=<workflow_description>)
                                                              [--analysis-storage=<analysis_storage_id_or_size>]
                                                              [--json]
 
@@ -44,14 +44,12 @@ Description:
 
 Options:
     <zipped_workflow_path>                             Path to the zipped nextflow pipeline
-    --workflow-description=<workflow_description>      Optional, description of the workflow
+    --workflow-description=<workflow_description>      A short description of the workflow
     --analysis-storage=<analysis_storage_id_or_size>   Optional, analysis storage id or size [default: Small]
     --json                                             Optional, write pipeline id and code to stdout in json format
 
 
 Environment variables:
-    GITHUB_TOKEN             Optional, will prevent nf-core raising a warning about API throttling
-                             Can be set through `export GITHUB_TOKEN="$(gh auth token)"`
     ICAV2_BASE_URL           Optional, default set as https://ica.illumina.com/ica/rest
     ICAV2_PROJECT_ID         Optional, taken from "$HOME/.icav2/.session.ica.yaml" if not set
     ICAV2_ACCESS_TOKEN       Optional, taken from "$HOME/.icav2/.session.ica.yaml" if not set
@@ -79,15 +77,15 @@ Example:
             ),
             "is_output_json": DocOptArg(
                 cli_arg_keys=["--json"]
+            ),
+            "workflow_description": DocOptArg(
+                cli_arg_keys=["--workflow-description"],
             )
         }
 
         # The project id to deploy to
         self.project_id: Optional[str] = None
         self.pipeline_obj: Optional[ProjectPipeline] = None
-
-        # Set the description as the url from the release page
-        self.workflow_description: Optional[str] = None
 
         super().__init__(command_argv)
 

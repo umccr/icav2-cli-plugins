@@ -4,9 +4,7 @@
 List of globals to use for icav2 cli plugins
 """
 import re
-from enum import Enum
-
-from wrapica.enums import AnalysisStorageSize
+from pathlib import Path
 
 DEFAULT_ICAV2_BASE_URL = "https://ica.illumina.com/ica/rest"
 
@@ -27,7 +25,11 @@ ICAV2_CLI_PLUGINS_HOME_ENV_VAR = "ICAV2_CLI_PLUGINS_HOME"
 ICAV2_CLI_PLUGINS_TENANTS_HOME = "{ICAV2_CLI_PLUGINS_HOME}/tenants/{tenant_name}"
 ICAV2_CLI_PLUGINS_TENANT_CONFIG_FILE_PATH = "{ICAV2_CLI_PLUGINS_TENANTS_HOME}/config.yaml"
 
-ICAV2_DEFAULT_ANALYSIS_STORAGE_SIZE = AnalysisStorageSize.SMALL
+
+def get_default_analysis_storage_size():
+    """Lazy accessor to avoid loading wrapica at module import time."""
+    from wrapica.enums import AnalysisStorageSize
+    return AnalysisStorageSize.SMALL
 
 PARAMS_XML_FILE_NAME = "params.xml"
 
@@ -46,3 +48,15 @@ GITHUB_RELEASE_DESCRIPTION_REGEX_MATCH = re.compile(
 GITHUB_RELEASE_REPO_TAG_REGEX_MATCH = re.compile(
     r"/(.*)/releases/tag/(.*)"
 )
+
+
+# Profile-based configuration constants
+ICAV2_CLI_PLUGINS_BASE_DIR = Path.home() / ".icav2-cli-plugins"
+CONFIG_FILE_PATH = ICAV2_CLI_PLUGINS_BASE_DIR / "config"
+CACHE_DIR = ICAV2_CLI_PLUGINS_BASE_DIR / "cache"
+BIN_DIR = ICAV2_CLI_PLUGINS_BASE_DIR / "bin"
+LOCAL_BINARY_PATH = BIN_DIR / "_icav2"
+
+PROFILE_NAME_REGEX = r'^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$'
+VALID_OUTPUT_FORMATS = ('table', 'json', 'yaml')
+TOKEN_REFRESH_THRESHOLD = 3600

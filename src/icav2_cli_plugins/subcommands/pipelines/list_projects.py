@@ -136,7 +136,7 @@ Example:
                 next(
                     filter(
                         lambda project_pipeline: (
-                            project_pipeline.pipeline.id == self.pipeline_obj.id and
+                            str(project_pipeline.pipeline.id) == str(self.pipeline_obj.id) and
                             self.select_linked_pipeline(project_pipeline)
                         ),
                         list_project_pipelines(project_id=project.id)

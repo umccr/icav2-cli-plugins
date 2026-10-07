@@ -20,6 +20,7 @@ You should have the following applications installed before continuing:
 * python3
 * rsync
 * gh
+* unzip
 * yq (version 4.18 or later)
 
 MacOS users, please install greadlink through 'brew install coreutils'
@@ -27,14 +28,18 @@ MacOS users, please install greadlink through 'brew install coreutils'
 Options:
 --install-pandoc:      Required for running the command icav2 projectpipelines create-cwl-from-zip
 --no-autocompletion:   Only for installation into GitHub actions (where _init_completion is not present)
+--skip-binary:         Skip downloading the icav2 binary (for environments where it's already available)
 "
 
 ICAV2_CLI_PLUGINS_HOME="$HOME/.icav2-cli-plugins"
 PLUGIN_VERSION="__PLUGIN_VERSION__"
 LIBICA_VERSION="__LIBICA_VERSION__"
+JQ_VERSION="1.6"
 YQ_VERSION="4.18.1"
 CURL_VERSION="7.76.0"
 PYTHON_VERSION="3.12"
+ICAV2_CLI_VERSION="2.47.0"
+ICAV2_CLI_DOWNLOAD_BASE_URL="https://stratus-documentation-us-east-1-public.s3.amazonaws.com/cli"
 
 ###########
 # Functions
@@ -56,7 +61,6 @@ print_help() {
   echo_stderr "${help_message}"
 }
 
-
 check_readlink_program() {
   if [[ "${OSTYPE}" == "darwin"* ]]; then
     readlink_program="greadlink"
@@ -75,12 +79,11 @@ check_readlink_program() {
   fi
 }
 
-
 binaries_check(){
   : '
   Check each of the required binaries are available
   '
-  if ! (type aws curl jq python3 yq gh 1>/dev/null); then
+  if ! (type aws curl jq python3 yq gh unzip 1>/dev/null); then
     return 1
   fi
 }
@@ -91,6 +94,19 @@ verlte() {
 
 verlt() {
     [ "$1" = "$2" ] && return 1 || verlte "$1" "$2"
+}
+
+get_jq_version(){
+  # Input jq-1.7
+  # Output: 1.7
+  jq --version | cut -d'-' -f2
+}
+
+check_jq_version(){
+  if ! verlte "${JQ_VERSION}" "$(get_jq_version)"; then
+    echo_stderr "Your jq version is too old"
+    return 1
+  fi
 }
 
 get_yq_version(){
@@ -179,6 +195,103 @@ get_user_shell(){
   fi
 }
 
+detect_platform(){
+  : '
+  Detect the operating system (linux or darwin)
+  '
+  local platform
+  platform="$(uname -s | tr '[:upper:]' '[:lower:]')"
+  case "${platform}" in
+    linux|darwin)
+      echo "${platform}"
+      ;;
+    *)
+      echo_stderr "ERROR: Unsupported platform '${platform}'. Only linux and darwin are supported."
+      return 1
+      ;;
+  esac
+}
+
+detect_architecture(){
+  : '
+  Detect the CPU architecture and map to amd64 or arm64
+  '
+  local arch
+  arch="$(uname -m)"
+  case "${arch}" in
+    x86_64|amd64)
+      echo "amd64"
+      ;;
+    aarch64|arm64)
+      echo "arm64"
+      ;;
+    *)
+      echo_stderr "ERROR: Unsupported architecture '${arch}'. Only x86_64/amd64 and aarch64/arm64 are supported."
+      return 1
+      ;;
+  esac
+}
+
+download_icav2_binary(){
+  : '
+  Download the icav2 binary for the current platform and architecture.
+  Since v2.3.0, the CLI is distributed as a zip archive at:
+    .../cli/{version}/ica-{platform}-{arch}.zip
+  The zip contains the icav2 binary (named "icav2" on linux/mac, "icav2.exe" on windows).
+  Aborts installation if download fails.
+  '
+  local platform="$1"
+  local arch="$2"
+  local version="${ICAV2_CLI_VERSION}"
+  local zip_name="ica-${platform}-${arch}.zip"
+  local download_url="${ICAV2_CLI_DOWNLOAD_BASE_URL}/${version}/${zip_name}"
+  local target_path="${ICAV2_CLI_PLUGINS_HOME}/bin/_icav2"
+  local tmp_dir
+
+  tmp_dir="$(mktemp -d)"
+
+  echo_stderr "Downloading icav2 binary (version ${version}) for ${platform}/${arch}..."
+  echo_stderr "URL: ${download_url}"
+
+  if ! curl --fail --silent --location --output "${tmp_dir}/${zip_name}" "${download_url}"; then
+    echo_stderr "ERROR: Failed to download icav2 binary from ${download_url}"
+    echo_stderr "Please check your network connection and try again."
+    rm -rf "${tmp_dir}"
+    return 1
+  fi
+
+  # Verify the file was actually downloaded (non-empty)
+  if [[ ! -s "${tmp_dir}/${zip_name}" ]]; then
+    echo_stderr "ERROR: Downloaded icav2 archive is empty. Download may have failed."
+    rm -rf "${tmp_dir}"
+    return 1
+  fi
+
+  # Extract the binary from the zip
+  if ! unzip -q -o "${tmp_dir}/${zip_name}" -d "${tmp_dir}/extracted"; then
+    echo_stderr "ERROR: Failed to extract icav2 archive. Is 'unzip' installed?"
+    rm -rf "${tmp_dir}"
+    return 1
+  fi
+
+  # Find the icav2 binary inside the extracted archive
+  local extracted_binary
+  extracted_binary="$(find "${tmp_dir}/extracted" -name 'icav2' -type f | head -n1)"
+
+  if [[ -z "${extracted_binary}" ]]; then
+    echo_stderr "ERROR: Could not find 'icav2' binary in the downloaded archive."
+    echo_stderr "Archive contents:"
+    ls -la "${tmp_dir}/extracted" 1>&2
+    rm -rf "${tmp_dir}"
+    return 1
+  fi
+
+  mv "${extracted_binary}" "${target_path}"
+  chmod 0755 "${target_path}"
+  rm -rf "${tmp_dir}"
+  echo_stderr "icav2 binary installed at ${target_path}"
+}
+
 get_this_path() {
   : '
   Mac users use greadlink over readlink
@@ -206,6 +319,7 @@ get_this_path() {
 # Get args from command line
 install_pandoc="false"
 no_autocompletion="true"
+skip_binary="false"
 while [ $# -gt 0 ]; do
   case "$1" in
     --install-pandoc)
@@ -213,6 +327,9 @@ while [ $# -gt 0 ]; do
       ;;
     --no-autocompletion)
       no_autocompletion="true"
+      ;;
+    --skip-binary)
+      skip_binary="true"
       ;;
     -h | --help)
       print_help
@@ -238,11 +355,18 @@ if ! binaries_check; then
   exit 1
 fi
 
+if ! check_jq_version; then
+  echo_stderr "Please update your version of jq and then rerun the installation"
+  print_help
+  exit 1
+fi
+
 if ! check_yq_version; then
   echo_stderr "Please update your version of yq and then rerun the installation"
   print_help
   exit 1
 fi
+
 
 if ! check_curl_version; then
   echo_stderr "Please update your version of curl to ${CURL_VERSION} or later and then rerun the installation"
@@ -312,6 +436,70 @@ fi
 # CREATE DIRS
 #############
 mkdir -p "${ICAV2_CLI_PLUGINS_HOME}"
+mkdir -p "${ICAV2_CLI_PLUGINS_HOME}/bin"
+mkdir -p "${ICAV2_CLI_PLUGINS_HOME}/cache"
+
+
+#############################
+# DOWNLOAD ICAV2 BINARY
+#############################
+if [[ "${skip_binary}" == "false" ]]; then
+  existing_binary="${ICAV2_CLI_PLUGINS_HOME}/bin/_icav2"
+  need_download="true"
+
+  if [[ -x "${existing_binary}" ]]; then
+    # Extract version from _icav2 --version output (handles formats like "cli version 2.47.0" or just "2.47.0")
+    installed_version="$("${existing_binary}" --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1 || true)"
+    if [[ "${installed_version}" == "${ICAV2_CLI_VERSION}" ]]; then
+      echo_stderr "icav2 binary already at version ${ICAV2_CLI_VERSION}, skipping download."
+      need_download="false"
+    else
+      echo_stderr "icav2 binary version '${installed_version:-unknown}' does not match required '${ICAV2_CLI_VERSION}', downloading update..."
+    fi
+  fi
+
+  if [[ "${need_download}" == "true" ]]; then
+    detected_platform="$(detect_platform)" || exit 1
+    detected_arch="$(detect_architecture)" || exit 1
+
+    if ! download_icav2_binary "${detected_platform}" "${detected_arch}"; then
+      echo_stderr "ERROR: icav2 binary download failed. Aborting installation."
+      exit 1
+    fi
+  fi
+fi
+
+
+#############################
+# CREATE CONFIG FILE
+#############################
+if [[ ! -f "${ICAV2_CLI_PLUGINS_HOME}/config" ]]; then
+  touch "${ICAV2_CLI_PLUGINS_HOME}/config"
+  chmod 0600 "${ICAV2_CLI_PLUGINS_HOME}/config"
+fi
+
+
+#############################
+# MIGRATION PROMPT
+#############################
+if [[ -d "${ICAV2_CLI_PLUGINS_HOME}/tenants" ]]; then
+  if [ -t 0 ]; then
+    echo_stderr ""
+    echo_stderr "Existing tenant configurations detected in ${ICAV2_CLI_PLUGINS_HOME}/tenants/"
+    read -r -p "Migrate to profile-based config? [y/N] " migrate_response
+    if [[ "${migrate_response}" =~ ^[Yy]$ ]]; then
+      echo_stderr ""
+      echo_stderr "To migrate, run 'icav2 configure set <profile_name>' for each tenant."
+      echo_stderr "Your existing tenant configurations remain in ${ICAV2_CLI_PLUGINS_HOME}/tenants/ until you remove them."
+      echo_stderr ""
+    else
+      echo_stderr "Skipping migration. Existing tenants/ directory left unchanged."
+    fi
+  else
+    echo_stderr "Non-interactive mode: skipping tenant migration prompt."
+    echo_stderr "Existing tenants/ directory left unchanged."
+  fi
+fi
 
 
 #############################
@@ -354,14 +542,30 @@ SITE_PACKAGES_DIR="$(
     -name 'site-packages'
 )"
 
+############################
+# LINK ICAV2 WRAPPER TO BIN
+############################
+# The pip install creates pyenv/bin/icav2 as a console_scripts entry point.
+# Symlink it into bin/ so it's on the user's PATH.
+if [[ -f "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/icav2" ]]; then
+  ln -sf "${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/icav2" "${ICAV2_CLI_PLUGINS_HOME}/bin/icav2"
+  echo_stderr "icav2 wrapper linked at ${ICAV2_CLI_PLUGINS_HOME}/bin/icav2"
+else
+  echo_stderr "WARNING: icav2 entry point not found at ${ICAV2_CLI_PLUGINS_HOME}/pyenv/bin/icav2"
+  echo_stderr "The 'icav2' command may not be available. Try re-running install.sh."
+fi
+
 ##############
 # COPY SCRIPTS
 ##############
 mkdir -p "${ICAV2_CLI_PLUGINS_HOME}/plugins/"
 rsync --delete --archive \
   "$(get_this_path)/templates/" "${ICAV2_CLI_PLUGINS_HOME}/plugins/templates/"
-rsync --delete --archive \
-  "$(get_this_path)/shell_functions/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/"
+
+# Remove legacy shell_functions directory if present (no longer used)
+if [[ -d "${ICAV2_CLI_PLUGINS_HOME}/shell_functions" ]]; then
+  rm -rf "${ICAV2_CLI_PLUGINS_HOME}/shell_functions"
+fi
 
 
 ######################
@@ -399,14 +603,6 @@ if [[ "${LIBICA_VERSION}" == "__LIBICA_VERSION__" ]]; then
   echo "Setting libica version as '${LIBICA_VERSION}'"
 fi
 
-
-#####################
-# UPDATE VERSIONS
-######################
-# Update shell function
-sed -i -e "s/__PLUGIN_VERSION__/${PLUGIN_VERSION}/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/_icav2"
-sed -i -e "s/__LIBICA_VERSION__/${LIBICA_VERSION}/" "${ICAV2_CLI_PLUGINS_HOME}/shell_functions/_icav2"
-
 ######################
 # COPY AUTOCOMPLETIONS
 ######################
@@ -429,32 +625,19 @@ fi
 ########################
 {
   echo "#!/usr/bin/env bash"
+  echo ""
   echo "# ICAV2 CLI PLUGINS"
   echo "export ICAV2_CLI_PLUGINS_HOME=\"\${HOME}/.icav2-cli-plugins\""
-  echo "# Source functions"
-  echo "for file_name in \"\${ICAV2_CLI_PLUGINS_HOME}/shell_functions/\"*; do"
-  echo "    . \${file_name}; "
-  echo "done"
-  echo "# Add autocompletions"
-  echo "if [[ \"\$(basename \"\${SHELL}\")\" == \"bash\" ]]; then"
-  echo "  for f in \"\$ICAV2_CLI_PLUGINS_HOME/autocompletion/\$(basename \"\${SHELL}\")/\"*\".bash\"; do"
-  echo "    . \"\$f\""
-  echo "  done"
-  echo "elif [[ \"\$(basename \"\${SHELL}\")\" == \"zsh\" ]]; then"
-  echo "  fpath=(\"\${ICAV2_CLI_PLUGINS_HOME}/autocompletion/\$(basename \"\${SHELL}\")\" \$fpath)"
-  echo "  if [[ \"${OSTYPE}\" == \"darwin\"* ]]; then"
-  echo "    # Mac Users need to run 'autoload' before running compinit"
-  echo "    autoload -Uz compinit"
-  echo "  fi"
-  echo "  compinit"
-  echo "fi"
+  echo ""
+  echo "# Add bin/ to PATH so _icav2 and icav2 wrapper are accessible"
+  echo "export PATH=\"\${ICAV2_CLI_PLUGINS_HOME}/bin:\${PATH}\""
+
 } > "${ICAV2_CLI_PLUGINS_HOME}/source.sh"
 
 
 ############################
 # SHOW BASHRC LINE TO ADD
 #############################
-
 echo_stderr "Add the following line(s) to your ${rc_profile} file"
 echo_stderr "############# ICAV2 CLI PLUGINS #############"
 echo_stderr ". \"\${HOME}/.icav2-cli-plugins/source.sh\""

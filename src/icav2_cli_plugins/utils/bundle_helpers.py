@@ -5,7 +5,7 @@ import json
 from typing import OrderedDict, Optional, List, Dict
 from pathlib import Path
 
-from libica.openapi.v2 import ApiException
+from libica.openapi.v3 import ApiException
 from ruamel.yaml import YAML, CommentedMap, CommentedSeq
 
 # Wrapica

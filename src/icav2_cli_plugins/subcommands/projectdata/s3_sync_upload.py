@@ -9,6 +9,8 @@ from pathlib import Path
 from typing import List, Optional, Dict
 from urllib.parse import urlunparse
 
+from libica.openapi.v3 import AwsTempCredentials
+
 # Wrapica imports
 from wrapica.project_data import (
     get_aws_credentials_access_for_project_folder, ProjectData
@@ -33,7 +35,7 @@ logger = get_logger()
 class S3SyncUpload(Command):
     """Usage:
     icav2 projectdata s3-sync-upload help
-    icav2 projectdata s3-sync-upload <upload_path> <data>
+    icav2 projectdata s3-sync-upload <local_upload_path> <data>
                                      [-w<file_path> | --write-script-path=<file_path>]
                                      [--s3-sync-arg=<s3_sync_arg>]...
 
@@ -43,7 +45,7 @@ Description:
 
 
 Options:
-    <upload_path>                                      Required, the source directory, directory must exist
+    <local_upload_path>                                Required, the source directory, directory must exist
     <data>                                             Required, the data path to icav2 data folder you wish to upload to
                                                        May also specify a folder id or an icav2 uri
 
@@ -86,7 +88,7 @@ Examples: icav2 projectdata s3-sync-upload $HOME/test_inputs/ /test_data/inputs/
                 }
             ),
             "upload_path": DocOptArg(
-                cli_arg_keys=["--upload-path"],
+                cli_arg_keys=["local_upload_path"],
             ),
             "write_script_path": DocOptArg(
                 cli_arg_keys=["--write-script-path"],
@@ -97,7 +99,7 @@ Examples: icav2 projectdata s3-sync-upload $HOME/test_inputs/ /test_data/inputs/
         }
 
         # Additional args
-        self.s3_env_vars: Optional[Dict] = None
+        self.s3_env_vars: Optional[AwsTempCredentials] = None
         self.s3_path: Optional[str] = None
         self.project_id: Optional[str] = None
 
@@ -155,10 +157,14 @@ Examples: icav2 projectdata s3-sync-upload $HOME/test_inputs/ /test_data/inputs/
         # Trailing slash already part of object prefix
         self.s3_path = urlunparse(
             (
-                "s3", self.s3_env_vars.get('bucket'), self.s3_env_vars.get('object_prefix'),
+                "s3", self.s3_env_vars.bucket, self.s3_env_vars.object_prefix,
                 None, None, None
             )
         )
+
+        # Set s3_sync_args to empty list if not provided
+        if self.s3_sync_args is None:
+            self.s3_sync_args = []
 
     def create_sync_script(self):
         with open(self.write_script_path, "w") as file_h:

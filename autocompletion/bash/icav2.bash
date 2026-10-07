@@ -812,7 +812,7 @@ _icav2() {
 
         1)
             __comp_current_options || return
-            __icav2_dynamic_comp 'commands' 'create'$'\t''Create a pipeline'$'\n''create-cwl-wes-input-template'$'\t''Create a WES input template for a CWL workflow ready for launch'$'\n''create-cwl-pipeline-from-github-release'$'\t''From a github release, deploy a workflow to icav2'$'\n''create-cwl-pipeline-from-zip'$'\t''From a zip file, deploy a workflow to icav2'$'\n''input'$'\t''Retrieve input parameters of pipeline'$'\n''link'$'\t''Link pipeline to a project'$'\n''list'$'\t''List of pipelines for a project'$'\n''start'$'\t''Start a pipeline'$'\n''start-cwl-wes'$'\t''Launch an analysis on icav2'$'\n''unlink'$'\t''Unlink pipeline from a project'$'\n''update'
+            __icav2_dynamic_comp 'commands' 'create'$'\t''Create a pipeline'$'\n''create-cwl-wes-input-template'$'\t''Create a WES input template for a CWL workflow ready for launch'$'\n''create-cwl-pipeline-from-github-release'$'\t''From a github release, deploy a workflow to icav2'$'\n''create-cwl-pipeline-from-zip'$'\t''From a zip file, deploy a workflow to icav2'$'\n''input'$'\t''Retrieve input parameters of pipeline'$'\n''link'$'\t''Link pipeline to a project'$'\n''list'$'\t''List of pipelines for a project'$'\n''start'$'\t''Start a pipeline'$'\n''start-wes'$'\t''Launch an analysis on icav2'$'\n''unlink'$'\t''Unlink pipeline from a project'$'\n''update'
 
         ;;
         *)
@@ -931,7 +931,7 @@ _icav2() {
             __icav2_handle_options_flags
             __comp_current_options true || return # no subcmds, no params/opts
           ;;
-          start-cwl-wes)
+          start-wes)
             OPTIONS+=('--launch-yaml' 'Required, input json similar to v1' '--pipeline-id' 'Optional, id of the pipeline you wish to launch' '--pipeline-code' 'Optional, name of the pipeline you wish to launch' '--output-parent-folder-id' 'Optional, the id of the parent folder to write outputs to' '--output-parent-folder-path' 'Optional, the path to the parent folder to write outputs to (will be created if it doesn'"\\'"'t exist)' '--analysis-storage-id' 'Optional, analysis storage id, overrides default analysis storage size' '--analysis-storage-size' 'Optional, analysis storage size, one of Small, Medium, Large' '--activation-id' 'Optional, the activation id used by the pipeline analysis' '--create-cwl-analysis-json-output-path' 'Optional, Path to output a json file that contains the body for a create cwl analysis (https://ica.illumina.com/ica/api/swagger/index.html#/Project%20Analysis/createCwlAnalysis)')
             __icav2_handle_options_flags
             case ${MYWORDS[$INDEX-1]} in
@@ -940,15 +940,15 @@ _icav2() {
                 return
               ;;
               --pipeline-id)
-                _icav2_projectpipelines_start-cwl-wes_option_pipeline_id_completion
+                _icav2_projectpipelines_start-wes_option_pipeline_id_completion
               ;;
               --pipeline-code)
-                _icav2_projectpipelines_start-cwl-wes_option_pipeline_code_completion
+                _icav2_projectpipelines_start-wes_option_pipeline_code_completion
               ;;
               --output-parent-folder-id)
               ;;
               --output-parent-folder-path)
-                _icav2_projectpipelines_start-cwl-wes_option_output_parent_folder_path_completion
+                _icav2_projectpipelines_start-wes_option_output_parent_folder_path_completion
               ;;
               --analysis-storage-id)
               ;;
@@ -3585,7 +3585,7 @@ jq --raw-output \
 )"
     _icav2_compreply "$param_output_parent_folder_path"
 }
-_icav2_projectpipelines_start-cwl-wes_option_pipeline_id_completion() {
+_icav2_projectpipelines_start-wes_option_pipeline_id_completion() {
     local CURRENT_WORD="${words[$cword]}"
     local param_pipeline_id="$(
 ## CONFIG SETUP ##
@@ -3719,7 +3719,7 @@ eval "$(\
 )"
     _icav2_compreply "$param_pipeline_id"
 }
-_icav2_projectpipelines_start-cwl-wes_option_pipeline_code_completion() {
+_icav2_projectpipelines_start-wes_option_pipeline_code_completion() {
     local CURRENT_WORD="${words[$cword]}"
     local param_pipeline_code="$(
 ## CONFIG SETUP ##
@@ -3857,7 +3857,7 @@ eval "$(\
 )"
     _icav2_compreply "$param_pipeline_code"
 }
-_icav2_projectpipelines_start-cwl-wes_option_output_parent_folder_path_completion() {
+_icav2_projectpipelines_start-wes_option_output_parent_folder_path_completion() {
     local CURRENT_WORD="${words[$cword]}"
     local param_output_parent_folder_path="$(
 ## CONFIG SETUP ##

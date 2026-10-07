@@ -9,8 +9,8 @@ Update a project pipeline by
 4. Compare each with filecmp report, and confirm with user that they would like to update the pipeline
 5. Each file in the pipeline is updated
 """
-
 # External imports
+import re
 import sys
 from filecmp import cmpfiles
 from pathlib import Path
@@ -19,6 +19,10 @@ from tempfile import TemporaryDirectory
 from typing import Optional, List
 from zipfile import ZipFile
 from deepdiff import DeepDiff
+from packaging.version import Version
+
+# Libica model imports
+from libica.openapi.v3 import ProjectPipelineV4
 
 # Wrapica imports
 from wrapica.enums import PipelineStatus
@@ -27,14 +31,15 @@ from wrapica.pipelines import (
     list_pipeline_files, download_pipeline_to_directory
 )
 from wrapica.project_pipelines import (
-    ProjectPipeline,
-    update_pipeline_file, add_pipeline_file, delete_pipeline_file
+    update_pipeline_file, add_pipeline_file, delete_pipeline_file,
+    ProjectPipelineType
 )
 from wrapica.user import (
     User,
     get_user_obj_from_user_id,
     get_user_id_from_configuration
 )
+from wrapica.utils.nextflow_helpers import get_default_icav2_config_content, include_icav2_config_into_nextflow_config
 
 # Utils
 from ...utils.config_helpers import get_project_id
@@ -84,7 +89,7 @@ Example:
     """
 
     zipped_pipeline_path: Path
-    project_pipeline_obj: ProjectPipeline
+    project_pipeline_obj: ProjectPipelineType
     force: bool
 
     def __init__(self, command_argv):
@@ -155,6 +160,8 @@ Example:
         # Get the pipeline id
         self.project_id = get_project_id()
 
+        # Coerce to a v4 pipeline
+        self.project_pipeline_obj: ProjectPipelineV4
         # Set the pipeline id, referred to in a few sections
         self.pipeline_id = self.project_pipeline_obj.pipeline.id
 
@@ -182,6 +189,19 @@ Example:
 
         # Pull pipeline from icav2
         self.pull_pipeline_from_icav2()
+
+        # Ensure that the config/icav2.config file is present (and add it in if not)
+        icav2_config_path = self.tmp_local_unzipped_pipeline_directory / "conf" / "icav2.config"
+        if not icav2_config_path.is_file():
+            logger.info(f"Adding missing icav2.config file to {icav2_config_path}")
+            icav2_config_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(icav2_config_path, "w") as icav2_config_file:
+                icav2_config_file.write(get_default_icav2_config_content())
+
+        # Ensure that 'include conf/icav2.config' is in nextflow.config for Nextflow pipelines
+        nextflow_config_path = self.tmp_local_unzipped_pipeline_directory / "nextflow.config"
+        if nextflow_config_path.is_file():
+            include_icav2_config_into_nextflow_config(nextflow_config_path)
 
         # Set pipeline file mapping
         self.pipeline_file_mapping = list_pipeline_files(self.pipeline_id)
@@ -250,7 +270,13 @@ Example:
         # Get the list of missing files
         self.file_cmp_list_missing = list(
             filter(
-                lambda file_: not (self.tmp_local_unzipped_pipeline_directory / file_).is_file(),
+                lambda file_:
+                    (
+                        # Check not a file
+                        not (self.tmp_local_unzipped_pipeline_directory / file_).is_file() and
+                        # Not the conf/icav2.config file
+                        not Path(file_) == (Path("conf") / "icav2.config")
+                    ),
                 file_cmp_list_errors
             )
         )
@@ -258,7 +284,28 @@ Example:
         # Get the list of new files
         self.file_cmp_list_new = list(
             filter(
-                lambda file_: (self.tmp_local_unzipped_pipeline_directory / file_).is_file(),
+                lambda file_: (
+                    # It's a file
+                    (self.tmp_local_unzipped_pipeline_directory / file_).is_file() and
+                    # It's not placed in a subdirectory that is a hidden directory in the top directory
+                    not (
+                        (self.tmp_local_unzipped_pipeline_directory / file_).absolute().resolve().relative_to(self.tmp_local_unzipped_pipeline_directory).parts[0].startswith(".")
+                    ) and
+                    # Not a hidden file in the top directory
+                    not (
+                      (self.tmp_local_unzipped_pipeline_directory / file_).parent.absolute().resolve() == self.tmp_local_unzipped_pipeline_directory and
+                      (self.tmp_local_unzipped_pipeline_directory / file_).name.startswith(".")
+                    ) and
+                    # Not a test file
+                    not (
+                      (self.tmp_local_unzipped_pipeline_directory / file_).name.endswith(".test") or
+                      (self.tmp_local_unzipped_pipeline_directory / file_).name.endswith(".test.snap")
+                    )
+                    # And not a conda environment file or meta file
+                    and not (
+                      (self.tmp_local_unzipped_pipeline_directory / file_).name in ["environment.yml", "environment.yaml", "meta.yml", "meta.yaml"]
+                    )
+                ),
                 file_cmp_list_errors
             )
         )
@@ -344,13 +391,19 @@ Example:
         for file_name in self.file_cmp_list_new:
             logger.info(f"Adding file {file_name}")
             file_path = self.tmp_local_unzipped_pipeline_directory / file_name
-            add_pipeline_file(self.project_id, self.pipeline_id, file_path)
+            add_pipeline_file(
+                project_id=self.project_id,
+                pipeline_id=self.pipeline_id,
+                file_path=file_path,
+                relative_path=file_path.relative_to(self.tmp_local_unzipped_pipeline_directory)
+            )
 
         # Delete missing files
         for file_name in self.file_cmp_list_missing:
             logger.info(f"Deleting file {file_name}")
             file_id = self.get_file_id_from_file_name(file_name)
             delete_pipeline_file(self.project_id, self.pipeline_id, file_id)
+
 
     def check_is_editable(self):
         # Check pipeline status
@@ -360,7 +413,7 @@ Example:
             sys.exit(1)
 
         # Check user
-        if not self.project_pipeline_obj.pipeline.owner_id == self.user_obj.id:
+        if not str(self.project_pipeline_obj.pipeline.owner.id) == str(self.user_obj.id):
             logger.error(f"Pipeline '{self.project_pipeline_obj.pipeline.id}' is not owned by user '{self.user_obj.id}'")
             sys.exit(1)
 

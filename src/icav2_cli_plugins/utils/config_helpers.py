@@ -18,7 +18,7 @@ from typing import Optional
 from urllib.parse import urlparse
 
 # Libica
-from libica.openapi.v2 import Configuration
+from libica.openapi.v3 import Configuration
 
 # Locals
 from .globals import (

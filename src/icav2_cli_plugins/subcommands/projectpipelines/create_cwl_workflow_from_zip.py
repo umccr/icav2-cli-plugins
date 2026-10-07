@@ -165,4 +165,4 @@ Example:
         self.pipeline_code = "__".join([
             self.zipped_workflow_path.stem,
             datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")
-        ])
+        ]).replace(".", "_")

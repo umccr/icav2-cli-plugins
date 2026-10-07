@@ -98,7 +98,7 @@ Example:
         self.tenant_id = get_tenant_id_for_user()
 
         # Check tenant
-        if not self.pipeline_obj.tenant_id == self.tenant_id:
+        if not str(self.pipeline_obj.tenant_id) == str(self.tenant_id):
             logger.error(f"Pipeline '{self.pipeline_obj.id}' is not owned by tenant '{self.tenant_id}'")
             logger.error(f"Pipeline is neither editable nor linkable")
             sys.exit(1)
@@ -117,7 +117,7 @@ Example:
             sys.exit(1)
 
         # Check user
-        if not self.pipeline_obj.owner_id == self.user_id:
+        if not str(self.pipeline_obj.owner_id) == str(self.user_id):
             logger.error(f"Pipeline '{self.pipeline_obj.id}' is not owned by user '{self.user_id}'")
             sys.exit(1)
 

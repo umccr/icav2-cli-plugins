@@ -9,7 +9,7 @@ This is entirely the wrong spot for this, but the code was already all here!
 
 # External imports
 import json
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, cast
 
 # Wrapica
 from wrapica.project_analysis import (
@@ -80,7 +80,7 @@ Example:
         # Get workflow steps
         workflow_steps = sort_analysis_steps(
             get_analysis_steps(
-                project_id=self.project_id,
+                project_id=cast(str, self.project_id),
                 analysis_id=self.analysis_obj.id,
                 include_technical_steps=self.is_show_technical_steps
             )

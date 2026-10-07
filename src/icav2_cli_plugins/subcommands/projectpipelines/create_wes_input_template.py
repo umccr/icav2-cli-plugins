@@ -284,13 +284,12 @@ Example:
                     pipeline_id=self.pipeline_obj.pipeline.id,
                     schema_input_json_path=schema_input_json_file_path
                 )
-                # Rename input to samplesheet_input
-                _ = nf_yaml_template.pop("input")
-                nf_yaml_template["samplesheet_input"] = generate_samplesheet_yaml_template_from_schema_input(
+                # Get input as samplesheet
+                nf_yaml_template["samplesheet"] = generate_samplesheet_yaml_template_from_schema_input(
                     schema_input_json_file_path
                 )
                 nf_yaml_template.yaml_set_comment_before_after_key(
-                    key="samplesheet_input",
+                    key="samplesheet",
                     before="Samplesheet input, this is uploaded to the cache directory before the pipeline is run",
                     indent=4
                 )
@@ -320,7 +319,10 @@ Example:
             self.cwl_obj = get_cwl_obj_from_pipeline_id(self.pipeline_obj.pipeline.id)
 
         # Get yaml path
-        if self.output_template_yaml_path is None or self.output_template_yaml_path == "-":
+        if (
+                self.output_template_yaml_path is None or
+                self.output_template_yaml_path == "-"
+        ):
             self.output_template_yaml_path: int = sys.stdout.fileno()
         elif not self.output_template_yaml_path.parent.is_dir():
             logger.error(f"Please ensure parent directory of "
@@ -333,7 +335,7 @@ Example:
     def get_engine_parameters_as_commented_map(self):
         # Initialise commented map
         engine_parameters_map = CommentedMap({
-            "pipeline": self.pipeline_obj.pipeline.id
+            "pipeline": str(self.pipeline_obj.pipeline.id)
         })
         # Add pipeline code as a comment
         engine_parameters_map.yaml_add_eol_comment(

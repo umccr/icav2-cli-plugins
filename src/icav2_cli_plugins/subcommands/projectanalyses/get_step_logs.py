@@ -9,16 +9,19 @@ This is entirely the wrong spot for this, but the code was already all here!
 import sys
 import tempfile
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List
+
+from libica.openapi.v3.models import AnalysisStep
 
 # Wrapica imports
-from wrapica.enums import AnalysisLogStreamName, ProjectAnalysisStepStatus
+from wrapica.enums import ProjectAnalysisStepStatus
+from wrapica.literals import ProjectAnalysisStepStatusType
 from wrapica.project_analysis import (
     AnalysisType,
     AnalysisStepLogs,
     get_analysis_steps,
     write_analysis_step_logs,
-    analysis_step_to_dict
+    analysis_step_to_dict,
 )
 
 # Utils
@@ -109,10 +112,14 @@ Example:
 
         # Check analysis id is not None
         if self.step_name == "cwltool":
-            self.step_name = "pipeline_runner.0"
+            self.step_name = "Workflow runner-0-executor-0"
 
         # Check output path parent exists
-        if self.output_path is not None and isinstance(self.output_path, Path) and not str(self.output_path) == "-":
+        if (
+                self.output_path is not None and
+                isinstance(self.output_path, Path) and
+                not str(self.output_path) == "-"
+        ):
             if not self.output_path.parent.is_dir():
                 logger.error(f"Parent of {self.output_path} does not exist, please create it first")
                 raise NotADirectoryError
@@ -121,7 +128,7 @@ Example:
 
     def get_analysis_logs(self) -> AnalysisStepLogs:
         # Get workflow steps
-        workflow_steps = get_analysis_steps(
+        workflow_steps: List[AnalysisStep] = get_analysis_steps(
             project_id=self.project_id,
             analysis_id=self.analysis_obj.id,
             include_technical_steps=True
@@ -133,7 +140,10 @@ Example:
         )
 
         # Check step in list of step names
-        matching_workflow_steps = list(filter(lambda x: x.get("name") == self.step_name, workflow_steps_as_dict))
+        matching_workflow_steps = list(filter(
+                lambda x: x.get("name") == self.step_name,
+            workflow_steps_as_dict
+        ))
         if len(matching_workflow_steps) == 0:
             logger.error(f"Could not find step-name {self.step_name} in analysis id {self.analysis_obj.id}")
             logger.error("Please try running icav2 projectanalyses list-analysis-steps to view list of available step names")
@@ -144,7 +154,10 @@ Example:
 
         matching_workflow_step = matching_workflow_steps[0]
 
-        if ProjectAnalysisStepStatus(matching_workflow_step.get("status")) == ProjectAnalysisStepStatus.WAITING:
+        if (
+                ProjectAnalysisStepStatus(matching_workflow_step.get("status")) ==
+                ProjectAnalysisStepStatus.WAITING
+        ):
             logger.error(f"Could not get information about {self.step_name} since it is still waiting to run")
             raise ValueError
 
@@ -152,7 +165,7 @@ Example:
         log_obj: AnalysisStepLogs = list(
             filter(
                 lambda workflow_steps_iter: (
-                    workflow_steps_iter.get("name").split("#", 1)[-1] == matching_workflow_step.get("name")
+                    workflow_steps_iter.name.split("#", 1)[-1] == matching_workflow_step.get("name")
                 ),
                 workflow_steps
             )
@@ -181,7 +194,7 @@ Example:
         write_analysis_step_logs(
             project_id=self.project_id,
             step_logs=log_obj,
-            log_name=AnalysisLogStreamName.STDERR if self.stderr else AnalysisLogStreamName.STDOUT,
+            log_name="stderr" if self.stderr else "stdout",
             output_path=output_path,
             is_cwltool_log=True if self.step_name == "pipeline_runner.0" else False
         )

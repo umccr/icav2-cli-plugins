@@ -82,10 +82,6 @@ runs:
         rsync --archive \
           "src/" "icav2-plugins-cli--${{ inputs.git_tag }}/src/"
 
-        # Add functions
-        rsync --archive \
-          "shell_functions/" "icav2-plugins-cli--${{ inputs.git_tag }}/shell_functions/"
-        
         # Add templates
         rsync --archive \
           "templates/" "icav2-plugins-cli--${{ inputs.git_tag }}/templates/"
