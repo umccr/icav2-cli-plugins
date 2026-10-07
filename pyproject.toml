@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "icav2-cli-plugins"
-version = "2.27.0.post20240805191150"
+version = "2.48.2.dev20261007140942"
 authors = [
     { name = "Alexis Lucattini", email = "alexis.lucattini@umccr.org" },
 ]
@@ -54,7 +54,7 @@ Homepage = "https://github.com/umccr/icav2-cli-plugins"
 
 [project.scripts]
 "icav2-cli-plugins.py" = "icav2_cli_plugins.utils.cli:main"
-"icav2" = "icav2_cli_plugins.utils.cli:main"
+icav2 = "icav2_cli_plugins.utils.cli:main"
 
 [project.optional-dependencies]
 pandoc = [
