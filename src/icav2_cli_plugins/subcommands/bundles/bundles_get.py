@@ -42,7 +42,7 @@ Description:
     region: <region_id>  # Region name
     tenant: <tenant_id>  # Tenant name
     pipelines:
-      - <pipeline_id>  # pipeline-code
+      - <pipeline_id>  # pipeline name
       ...
     data:
       - <data_id>  # Data uri

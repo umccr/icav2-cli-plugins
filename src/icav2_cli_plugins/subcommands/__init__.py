@@ -115,11 +115,11 @@ class DocOptArg:
         from wrapica.bundle import Bundle, coerce_bundle_id_or_name_to_bundle_obj
         from wrapica.data import coerce_data_id_path_or_icav2_uri_to_data_obj, Data
         from wrapica.enums import AnalysisStorageSize
-        from wrapica.pipelines import PipelineType, coerce_pipeline_id_or_code_to_pipeline_obj
+        from wrapica.pipelines import PipelineType, coerce_pipeline_id_or_name_to_pipeline_obj
         from wrapica.project_data import coerce_data_id_uri_or_path_to_project_data_obj, ProjectData, is_folder_id_format
         from wrapica.project import Project, coerce_project_id_or_name_to_project_obj, get_project_id
         from wrapica.project_analysis import AnalysisStorageType, AnalysisType, coerce_analysis_id_or_user_reference_to_analysis_obj
-        from wrapica.project_pipelines import ProjectPipelineType, coerce_analysis_storage_id_or_size_to_analysis_storage, coerce_pipeline_id_or_code_to_project_pipeline_obj
+        from wrapica.project_pipelines import ProjectPipelineType, coerce_analysis_storage_id_or_size_to_analysis_storage, coerce_pipeline_id_or_name_to_project_pipeline_obj
         from wrapica.region import Region, coerce_region_id_or_city_name_to_region_obj
         from wrapica.user import User, coerce_user_id_or_name_to_user_obj
 
@@ -146,7 +146,7 @@ class DocOptArg:
                     )
                 )
             ):
-                logger.warning("Got a pipeline id or code but the arg type is not a pipeline")
+                logger.warning("Got a pipeline id or name but the arg type is not a pipeline")
 
         if (
             self.arg_type == PipelineType or
@@ -155,8 +155,8 @@ class DocOptArg:
                 issubclass(self.arg_type, PipelineType)
             )
         ):
-            # Set value as the pipeline id
-            value: PipelineType = coerce_pipeline_id_or_code_to_pipeline_obj(value)
+            # Set value as the pipeline obj (pipeline_version=None -> latest version in the group)
+            value: PipelineType = coerce_pipeline_id_or_name_to_pipeline_obj(value)
 
         if (
             self.arg_type == ProjectPipelineType or
@@ -169,7 +169,8 @@ class DocOptArg:
             og_log_level = logger.level
             try:
                 logger.setLevel(logging.CRITICAL + 1)
-                value: ProjectPipelineType = coerce_pipeline_id_or_code_to_project_pipeline_obj(value)
+                # pipeline_version=None -> latest version in the group
+                value: ProjectPipelineType = coerce_pipeline_id_or_name_to_project_pipeline_obj(value)
             except ValueError:
                 # Set logging back to original level
                 logger.setLevel(og_log_level)

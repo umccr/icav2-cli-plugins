@@ -39,7 +39,7 @@ Description:
     Release a pipeline (changes pipeline status from draft to release)
 
 Options:
-    <pipeline>           Required, the id (or code) of the pipeline to be released
+    <pipeline>           Required, the id (or name) of the pipeline to be released
 
 Environment:
     ICAV2_BASE_URL (optional, defaults to ica.illumina.com)

@@ -81,6 +81,7 @@ Example:
         # For printing
         self.pipeline_id: Optional[str] = None
         self.pipeline_code: Optional[str] = None
+        self.pipeline_name: Optional[str] = None
 
         super().__init__(command_argv)
 
@@ -88,16 +89,16 @@ Example:
         # Create the pipeline from zip
         self.pipeline_obj = create_cwl_workflow_from_zip(
             project_id=self.project_id,
-            pipeline_code=self.pipeline_code,
+            pipeline_name=self.pipeline_code,
             zip_path=self.zipped_workflow_path,
             analysis_storage=self.analysis_storage_obj,
         )
         self.pipeline_id = self.pipeline_obj.pipeline.id
-        self.pipeline_code = self.pipeline_obj.pipeline.code
+        self.pipeline_name = self.pipeline_obj.pipeline.name
         logger.info(
             f"Successfully created pipeline "
             f"with pipeline id {self.pipeline_id} and "
-            f"pipeline code {self.pipeline_code}"
+            f"pipeline name {self.pipeline_name}"
         )
 
         # # Generate workflow plot
@@ -132,7 +133,7 @@ Example:
             json.dumps(
                 {
                     "pipeline_id": self.pipeline_id,
-                    "pipeline_code": self.pipeline_code
+                    "pipeline_name": self.pipeline_name
                 },
                 indent=2
             )
@@ -161,7 +162,7 @@ Example:
         # Check we can get project id
         self.project_id = get_project_id()
 
-        # Set pipeline code and workflow description
+        # Set pipeline name and workflow description
         self.pipeline_code = "__".join([
             self.zipped_workflow_path.stem,
             datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S")

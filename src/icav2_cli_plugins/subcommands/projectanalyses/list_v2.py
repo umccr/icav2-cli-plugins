@@ -65,7 +65,7 @@ Options:
     --max-items=<max_items>           Optional, limit the number of items returned
 
     Filtering options:
-    --pipeline=<pipeline_id_or_code>                        Optional, filter by the pipeline id or code
+    --pipeline=<pipeline_id_or_code>                        Optional, filter by the pipeline id or name
     --user-reference=<user_reference>                       Optional, filter by the user reference
     --user-reference-regex=<user_reference_regex>           Optional, filter by the user reference regex
     --status-filter=<status_filter>                         Optional, filter by the status (-filter added to end of parameter name to avoid conflict with --status-sort)
@@ -193,7 +193,7 @@ Example:
                             "time_created": analysis_iter.time_created,
                             "time_modified": analysis_iter.time_modified,
                             "pipeline_id": analysis_iter.pipeline.id,
-                            "pipeline_code": analysis_iter.pipeline.code,
+                            "pipeline_name": analysis_iter.pipeline.name,
                         }
                     ),
                     analysis_list
@@ -203,7 +203,7 @@ Example:
 
         # Drop columns if not long listing
         if not self.long_listing:
-            analysis_df = analysis_df.drop(columns=["time_created", "pipeline_code"])
+            analysis_df = analysis_df.drop(columns=["time_created", "pipeline_name"])
 
         column_dtypes = analysis_df.dtypes.to_frame().reset_index()
         column_dtypes.columns = ["Column", "Type"]

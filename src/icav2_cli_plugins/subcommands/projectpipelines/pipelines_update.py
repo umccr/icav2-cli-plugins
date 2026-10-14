@@ -4,7 +4,7 @@
 Update a project pipeline by
 
 1. User provides a local zip file of the pipeline
-2. A pipeline-id or code
+2. A pipeline-id or name
 3. We then extract local zip file, and download all pipeline files from the server
 4. Compare each with filecmp report, and confirm with user that they would like to update the pipeline
 5. Each file in the pipeline is updated
@@ -77,7 +77,7 @@ Description:
 
 Options:
     <zipped_pipeline_path>   Required, the path to the zip file containing the pipeline.
-    <pipeline_id>            Required, the id (or code) of the pipeline to update
+    <pipeline_id>            Required, the id (or name) of the pipeline to update
     --force                  Optional, don't ask user for confirmation
 
 Environment:

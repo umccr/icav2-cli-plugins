@@ -119,7 +119,7 @@ Example:
         # Create output file from zipped workflow apth
         self.pipeline_obj = create_nextflow_pipeline_from_zip(
             project_id=self.project_id,
-            pipeline_code=(
+            pipeline_name=(
                 "__".join(
                     [
                         self.zipped_workflow_path.stem.replace(".", "_"),
@@ -133,7 +133,7 @@ Example:
         logger.info(
             f"Successfully created pipeline with "
             f"pipeline id '{self.pipeline_obj.pipeline.id}' and "
-            f"pipeline code '{self.pipeline_obj.pipeline.code}'"
+            f"pipeline name '{self.pipeline_obj.pipeline.name}'"
         )
 
         if self.is_output_json:
@@ -147,8 +147,8 @@ Example:
         print(
             json.dumps(
                 {
-                    "pipeline_id": self.pipeline_obj.id,
-                    "pipeline_code": self.pipeline_obj.code
+                    "pipeline_id": self.pipeline_obj.pipeline.id,
+                    "pipeline_name": self.pipeline_obj.pipeline.name
                 },
                 indent=2
             )

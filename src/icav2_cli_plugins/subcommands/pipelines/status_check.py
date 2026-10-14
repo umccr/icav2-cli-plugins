@@ -47,7 +47,7 @@ Description:
     A pipeline cannot be both editable AND linkable, hence --is-editable and --is-linkable are mutually exclusive arguments.
 
 Options:
-    <pipeline_id_or_code>          Required, the id (or code) of the pipeline to update
+    <pipeline_id_or_code>          Required, the id (or name) of the pipeline to update
     --is-editable                  Optional,
                                    Return a non-zero exit-code if not owned by user OR not in DRAFT status
     --is-linkable                  Optional, return a non-zero exit-code if not owned by tenant OR not in RELEASED status

@@ -140,14 +140,14 @@ Example:
         # Create output file from zipped workflow apth
         self.pipeline_obj = create_cwl_workflow_from_zip(
             project_id=self.project_id,
-            pipeline_code=self.zipped_workflow_path.stem.replace(".", "_"),
+            pipeline_name=self.zipped_workflow_path.stem.replace(".", "_"),
             zip_path=self.zipped_workflow_path,
             workflow_description=self.description
         )
         logger.info(
             f"Successfully created pipeline with "
             f"pipeline id '{self.pipeline_obj.pipeline.id}' and "
-            f"pipeline code '{self.pipeline_obj.pipeline.code}'"
+            f"pipeline name '{self.pipeline_obj.pipeline.name}'"
         )
 
         if self.is_output_json:
@@ -194,7 +194,7 @@ Example:
             json.dumps(
                 {
                     "pipeline_id": self.pipeline_obj.pipeline.id,
-                    "pipeline_code": self.pipeline_obj.pipeline.code
+                    "pipeline_name": self.pipeline_obj.pipeline.name
                 },
                 indent=2
             )

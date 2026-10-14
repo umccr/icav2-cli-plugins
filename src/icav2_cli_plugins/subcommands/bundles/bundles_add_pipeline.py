@@ -43,14 +43,14 @@ Description:
     The cli-input-yaml may look like the following
     bundle: my_bundle_id
     pipelines:
-      - my_pipeline_code_or_id
+      - my_pipeline_name_or_id
 
 Options:
   --bundle=<bundle_id_or_name>          Required, the bundle id (or bundle name) to add the pipeline to
                                         Use as a positional parameter when not using the yaml file,
                                         otherwise, the bundle id is read from the yaml file or can be specified
                                         on the command line with this option
-  --pipeline=<pipeline_id_or_code>      Required, the pipeline id or code to add to the bundle,
+  --pipeline=<pipeline_id_or_code>      Required, the pipeline id or name to add to the bundle,
                                         can be specified either on the command line or through the input yaml file.
                                         When specified in the yaml file, the key should be 'pipelines'
 
@@ -60,7 +60,7 @@ Environment variables:
     ICAV2_BASE_URL           Optional, default set as https://ica.illumina.com/ica/rest
 
 Example:
-    icav2 bundles add-pipeline my_bundle --pipeline my_pipeline_code
+    icav2 bundles add-pipeline my_bundle --pipeline my_pipeline_name
     icav2 bundles add-pipeline --cli-input-yaml /path/to/input.yaml
     """
 
