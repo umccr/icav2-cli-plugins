@@ -47,7 +47,7 @@ Description:
     A pipeline cannot be both editable AND linkable, hence --is-editable and --is-linkable are mutually exclusive arguments.
 
 Options:
-    <pipeline_id_or_code>          Required, the id (or code) of the pipeline to update
+    <pipeline_id_or_code>          Required, the id (or name) of the pipeline to update
     --is-editable                  Optional,
                                    Return a non-zero exit-code if not owned by user OR not in DRAFT status
     --is-linkable                  Optional, return a non-zero exit-code if not owned by tenant OR not in RELEASED status
@@ -98,7 +98,7 @@ Example:
         self.tenant_id = get_tenant_id_for_user()
 
         # Check tenant
-        if not self.pipeline_obj.tenant_id == self.tenant_id:
+        if not str(self.pipeline_obj.tenant_id) == str(self.tenant_id):
             logger.error(f"Pipeline '{self.pipeline_obj.id}' is not owned by tenant '{self.tenant_id}'")
             logger.error(f"Pipeline is neither editable nor linkable")
             sys.exit(1)
@@ -117,7 +117,7 @@ Example:
             sys.exit(1)
 
         # Check user
-        if not self.pipeline_obj.owner_id == self.user_id:
+        if not str(self.pipeline_obj.owner_id) == str(self.user_id):
             logger.error(f"Pipeline '{self.pipeline_obj.id}' is not owned by user '{self.user_id}'")
             sys.exit(1)
 

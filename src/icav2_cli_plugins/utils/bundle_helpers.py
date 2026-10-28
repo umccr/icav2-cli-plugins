@@ -5,7 +5,7 @@ import json
 from typing import OrderedDict, Optional, List, Dict
 from pathlib import Path
 
-from libica.openapi.v2 import ApiException
+from libica.openapi.v3 import ApiException
 from ruamel.yaml import YAML, CommentedMap, CommentedSeq
 
 # Wrapica
@@ -210,7 +210,7 @@ def bundle_to_yaml_obj(
         pipeline_obj = next(filter(lambda pipeline_iter: pipeline_iter.pipeline.id == pipeline_id_iter, pipeline_objs))
         bundle_commented_map["pipelines"].yaml_add_eol_comment(
             key=index,
-            comment=pipeline_obj.pipeline.code
+            comment=pipeline_obj.pipeline.name
         )
 
     # Add data names to the end of the data ids

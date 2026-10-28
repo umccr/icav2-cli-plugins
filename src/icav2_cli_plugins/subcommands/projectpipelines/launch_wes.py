@@ -7,13 +7,11 @@ Launch a workflow through CWL WES
 # External data
 import json
 from collections import OrderedDict
-from tempfile import NamedTemporaryFile
 from typing import Optional, List, Union, Dict
 from ruamel.yaml import YAML
 from pathlib import Path
 
 # Wrapica
-from wrapica.data import get_project_data_obj_from_data_id
 from wrapica.enums import WorkflowLanguage
 from wrapica.project_analysis import AnalysisType
 from wrapica.project_pipelines import (
@@ -21,17 +19,19 @@ from wrapica.project_pipelines import (
     AnalysisStorageType,
     ICAv2CwlAnalysisJsonInput,
     ICAv2CWLPipelineAnalysis,
+    ICAv2NextflowPipelineAnalysis,
     ICAv2PipelineAnalysisTags,
-    coerce_analysis_storage_id_or_size_to_analysis_storage, coerce_pipeline_id_or_code_to_project_pipeline_obj,
+    coerce_analysis_storage_id_or_size_to_analysis_storage, coerce_pipeline_id_or_name_to_project_pipeline_obj,
     get_default_analysis_storage_obj_from_project_pipeline,
     ICAv2NextflowAnalysisInput
 )
-from wrapica.project_data import ProjectData, coerce_data_id_uri_or_path_to_project_data_obj, \
-    convert_project_data_obj_to_uri, write_icav2_file_contents
-from wrapica.utils.nextflow_helpers import generate_samplesheet_file_from_input_dict, \
-    download_nextflow_schema_input_json_from_pipeline_id
+from wrapica.project_data import (
+    ProjectData, coerce_data_id_uri_or_path_to_project_data_obj, \
+    convert_project_data_obj_to_uri
+)
 
 # Get utils
+from ...utils import is_uuid_format
 from ...utils.errors import InvalidArgumentError
 from ...utils.config_helpers import get_project_id
 from ...utils.logger import get_logger
@@ -49,8 +49,10 @@ class ProjectPipelinesStartWES(Command):
     icav2 projectpipelines start-wes (--launch-yaml=<launch_yaml>)
                                      [--user-reference=<user_reference>]
                                      [--pipeline=<pipeline_id_or_code>]
+                                     [--pipeline-version=<pipeline_version>]
                                      [--analysis-output=<analysis_output_uri_or_path>]
                                      [--ica-logs=<ica_logs_uri_or_path>]
+                                     [--cache=<cache_uri_or_path>]
                                      [--analysis-storage=<analysis_storage_id_or_size>]
                                      [--activation-id=<activation_id>]
                                      [--user-tag=<user_tag>]...
@@ -69,9 +71,11 @@ Description:
       * inputs (the CWL or Nextflow input json dict)
       * engine_parameters:
         * Which comprises the following keys:
-          * pipeline ( Optional, pipeline id or code can also be specified on the cli)
+          * pipeline ( Optional, pipeline id or name can also be specified on the cli)
+          * pipeline_version ( Optional, used when pipeline is specified by name, defaults to latest, can also be specified on the cli)
           * analysis_output ( Optional, analysis output can also be specified on the cli)
           * ica_logs ( Optional, can also be specified on cli) :construction: ICAv2 doesn't support this with analysis_output also present.
+          * cache ( Optional, only for Nextflow pipelines which use the 'input' parameter in their top level keys to specify a samplesheet, can also be specified on cli)
           * user_tags (Optional, a dictionary or array of user tags to attach to this analysis)
           * technical_tags (Optional, a dictionary or array of technical tags to attach to this analysis)
           * reference_tags (Optional array of reference tags to attach to this analysis)
@@ -93,8 +97,13 @@ Options:
     --user-reference=<user_reference>                        Optional, user reference for the analysis
                                                              Must either specify user reference on the CLI or in the launch yaml
 
-    --pipeline=<pipeline_id_or_code>                         Optional, pipeline id or code of the pipeline you wish to launch
+    --pipeline=<pipeline_id_or_code>                         Optional, pipeline id or name of the pipeline you wish to launch
                                                              Must either specify pipeline on the CLI or in the launch yaml
+
+    --pipeline-version=<pipeline_version>                    Optional, the pipeline version to use when the pipeline is specified by name.
+                                                             Defaults to the latest version in the pipeline group.
+                                                             Can also be specified in the launch yaml under engine_parameters.pipeline_version.
+                                                             Ignored (with a warning) when the pipeline is specified by id.
 
     --analysis-output=<analysis_output_uri>                  Optional, the uri or path to where the analysis directory out/ is placed.
                                                              Use icav2://project-name-or-id/path/to/out/ or a regular path
@@ -133,11 +142,12 @@ Environment:
     ICAV2_PROJECT_ID (optional, taken from ~/.session.ica.yaml otherwise)
 
 Example:
-    icav2 projectpipelines start-cwl-wes --launch-yaml /path/to/input.yaml
+    icav2 projectpipelines start-wes --launch-yaml /path/to/input.yaml
     """
 
     launch_yaml_path: Path
     pipeline_obj: Optional[ProjectPipeline]
+    pipeline_version: Optional[str]
     analysis_output_obj: Optional[ProjectData]
     ica_logs_obj: Optional[ProjectData]
     cache_obj: Optional[ProjectData]
@@ -156,6 +166,9 @@ Example:
             ),
             "pipeline_obj": DocOptArg(
                 cli_arg_keys=["--pipeline"],
+            ),
+            "pipeline_version": DocOptArg(
+                cli_arg_keys=["--pipeline-version"],
             ),
             "analysis_output_obj": DocOptArg(
                 cli_arg_keys=["--analysis-output"],
@@ -202,8 +215,8 @@ Example:
         self.user_reference: Optional[str] = None
         self.workflow_language: Optional[WorkflowLanguage] = None
 
-        self.analysis_input_obj: Optional[ICAv2CwlAnalysisJsonInput] = None
-        self.analysis_obj: Optional[ICAv2CWLPipelineAnalysis] = None
+        self.analysis_input_obj: Optional[Union[ICAv2CwlAnalysisJsonInput | ICAv2NextflowAnalysisInput]] = None
+        self.analysis_obj: Optional[Union[ICAv2CWLPipelineAnalysis, ICAv2NextflowPipelineAnalysis]] = None
         self.analysis_id: Optional[str] = None
 
         super().__init__(command_argv)
@@ -225,6 +238,13 @@ Example:
         with open(self.launch_yaml_path, "r") as yaml_h:
             launch_yaml_dict: OrderedDict = yaml_obj.load(yaml_h)
 
+        # Resolve the pipeline version from the cli or launch yaml.
+        # The cli value takes precedence over the launch yaml value.
+        # pipeline_version is None -> use the latest version in the pipeline group.
+        pipeline_version_yaml: str | None = launch_yaml_dict.get("engine_parameters", {}).get("pipeline_version", None)
+        if self.pipeline_version is None:
+            self.pipeline_version = pipeline_version_yaml
+
         # Get the pipeline object
         if self.pipeline_obj is None:
             # Get the pipeline object from the launch yaml engine parameters
@@ -233,9 +253,28 @@ Example:
                 logger.error("Pipeline not specified on cli or in the launch yaml")
                 raise InvalidArgumentError
 
-            self.pipeline_obj = coerce_pipeline_id_or_code_to_project_pipeline_obj(
-                pipeline_yaml
+            # Resolve the pipeline object by id or name (with the optional pipeline version)
+            self.pipeline_obj = coerce_pipeline_id_or_name_to_project_pipeline_obj(
+                pipeline_yaml,
+                pipeline_version=self.pipeline_version
             )
+        elif self.pipeline_version is not None:
+            # The pipeline was supplied on the cli and has already been coerced centrally
+            # (with pipeline_version=None -> latest). If a pipeline version was also supplied,
+            # we need to re-resolve the pipeline object with the explicit version.
+            pipeline_cli_value: str | None = self.cli_args.get("--pipeline", None)
+            if pipeline_cli_value is not None and not is_uuid_format(pipeline_cli_value):
+                # Pipeline was specified by name - re-resolve with the explicit version
+                self.pipeline_obj = coerce_pipeline_id_or_name_to_project_pipeline_obj(
+                    pipeline_cli_value,
+                    pipeline_version=self.pipeline_version
+                )
+            else:
+                # Pipeline was specified by id - the version is irrelevant, ignore it
+                logger.warning(
+                    "A --pipeline-version was specified but the pipeline was provided by id; "
+                    "ignoring the pipeline version"
+                )
 
         # Get pipeline workflow type
         self.workflow_language = WorkflowLanguage(self.pipeline_obj.pipeline.language)
@@ -297,7 +336,8 @@ Example:
                 )
             else:
                 self.analysis_storage_obj = coerce_analysis_storage_id_or_size_to_analysis_storage(
-                    analysis_storage_yaml
+                    project_id=self.project_id,
+                    analysis_storage_id_or_size=analysis_storage_yaml
                 )
 
         # Check if activation ID is set?
@@ -352,53 +392,52 @@ Example:
                     }
                 )
 
-            self.analysis_input_obj: ICAv2CwlAnalysisJsonInput = ICAv2CwlAnalysisJsonInput(
+            self.analysis_input_obj = ICAv2CwlAnalysisJsonInput(
                 inputs_dict
             )
         else:  # Nextflow
             # Initialise the analysis
             from wrapica.project_pipelines import ICAv2NextflowPipelineAnalysis as ICAv2PipelineAnalysis
-            if "samplesheet_input" in inputs_dict.keys():
-                # First we need to update samplesheet_input to input
-                samplesheet_tmp_obj = NamedTemporaryFile(prefix="samplesheet_input_", suffix=".csv")
-                samplesheet_tmp_path = Path(samplesheet_tmp_obj.name)
+            # if "samplesheet_input" in inputs_dict.keys():
+            #     # First we need to update samplesheet_input to input
+            #     samplesheet_tmp_obj = NamedTemporaryFile(prefix="samplesheet_input_", suffix=".csv")
+            #     samplesheet_tmp_path = Path(samplesheet_tmp_obj.name)
+            #
+            #     schema_input_json_file_tmp_obj = NamedTemporaryFile(delete=False, prefix='schema_input', suffix=".json")
+            #     schema_input_json_file_path = Path(schema_input_json_file_tmp_obj.name)
+            #
+            #     # Download the schema input json
+            #     download_nextflow_schema_input_json_from_pipeline_id(
+            #         pipeline_id=self.pipeline_obj.pipeline.id,
+            #         schema_input_json_path=schema_input_json_file_path
+            #     )
+            #
+            #     # Generate the samplesheet file
+            #     generate_samplesheet_file_from_input_dict(
+            #         samplesheet_dict=inputs_dict["samplesheet_input"],
+            #         schema_input_path=schema_input_json_file_path,
+            #         samplesheet_path=samplesheet_tmp_path
+            #     )
+            #
+            #     # Upload the samplesheet file to icav2
+            #     samplesheet_input_file_id = write_icav2_file_contents(
+            #         project_id=self.cache_obj.project_id,
+            #         data_path=Path(self.cache_obj.data.details.path) / "samplesheet_input.csv",
+            #         file_stream_or_path=samplesheet_tmp_path
+            #     )
+            #
+            #     # Now pop the samplesheet_input and instead set 'input' as a file id, set to the samplesheet file
+            #     _ = inputs_dict.pop("samplesheet_input")
+            #     # Coerce file id into icav2 uri
+            #     inputs_dict["input"] = convert_project_data_obj_to_uri(
+            #         get_project_data_obj_from_data_id(
+            #             samplesheet_input_file_id
+            #         )
+            #     )
 
-                schema_input_json_file_tmp_obj = NamedTemporaryFile(delete=False, prefix='schema_input', suffix=".json")
-                schema_input_json_file_path = Path(schema_input_json_file_tmp_obj.name)
-
-                # Download the schema input json
-                download_nextflow_schema_input_json_from_pipeline_id(
-                    pipeline_id=self.pipeline_obj.pipeline.id,
-                    schema_input_json_path=schema_input_json_file_path
-                )
-
-                # Generate the samplesheet file
-                generate_samplesheet_file_from_input_dict(
-                    samplesheet_dict=inputs_dict["samplesheet_input"],
-                    schema_input_path=schema_input_json_file_path,
-                    samplesheet_path=samplesheet_tmp_path
-                )
-
-                # Upload the samplesheet file to icav2
-                samplesheet_input_file_id = write_icav2_file_contents(
-                    project_id=self.cache_obj.project_id,
-                    data_path=Path(self.cache_obj.data.details.path) / "samplesheet_input.csv",
-                    file_stream_or_path=samplesheet_tmp_path
-                )
-
-                # Now pop the samplesheet_input and instead set 'input' as a file id, set to the samplesheet file
-                _ = inputs_dict.pop("samplesheet_input")
-                # Coerce file id into icav2 uri
-                inputs_dict["input"] = convert_project_data_obj_to_uri(
-                    get_project_data_obj_from_data_id(
-                        samplesheet_input_file_id
-                    )
-                )
-
-            self.analysis_input_obj: ICAv2NextflowAnalysisInput = ICAv2NextflowAnalysisInput(
+            self.analysis_input_obj = ICAv2NextflowAnalysisInput(
                 inputs_dict,
-                project_id=self.project_id,
-                pipeline_id=self.pipeline_obj.pipeline.id
+                cache_uri=convert_project_data_obj_to_uri(self.cache_obj)
             )
 
         # Initialise the analysis

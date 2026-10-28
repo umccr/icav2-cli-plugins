@@ -104,6 +104,7 @@ Example: icav2 projectdata find /reference_data/
 
         # Initialise attributes
         self.data_path: Optional[Path] = None
+        self.data_path: Optional[Path] = None
         self.project_id: Optional[str] = None
 
         # Now initialise from super command
@@ -176,7 +177,7 @@ Example: icav2 projectdata find /reference_data/
         if self.creator is not None:
             data_items = list(
                 filter(
-                    lambda x: x.data.details.get("creator_id", None) == self.creator.id,
+                    lambda x: str(x.data.details.get("creator_id", None)) == str(self.creator.id),
                     data_items
                 )
             )

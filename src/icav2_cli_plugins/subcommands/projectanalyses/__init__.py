@@ -64,9 +64,8 @@ Use "icav2 projectanalyses [command] --help" for more information about a comman
         elif cmd == "list-v2":
             from .list_v2 import ProjectAnalysesListV2 as subcommand
         else:
-            print(self.__doc__)
-            print(f"Could not find cmd \"{cmd}\". Please refer to usage above")
-            sys.exit(1)
+            # Not a plugin command — delegate to the native _icav2 binary
+            self._delegate_to_icav2(command_argv)
 
         # Initialise and return
         return subcommand(command_argv)

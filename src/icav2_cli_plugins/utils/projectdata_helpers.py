@@ -11,11 +11,12 @@ List of useful functions for cli helpers in ICAv2
 # External imports
 import os
 from subprocess import SubprocessError
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Union
 from pathlib import Path
 import math
 
 # Wrapica imports
+from libica.openapi.v3 import AwsTempCredentials
 from wrapica.project_data import ProjectData
 from wrapica.user import get_user_obj_from_user_id
 
@@ -39,6 +40,21 @@ def list_files_short(data_items: List[ProjectData]) -> None:
         print(data_item.data.details.path)
 
 
+def list_files_short_with_linked_suffix(project_id: str, data_items: List[ProjectData]) -> None:
+    """
+    List all the files and folders in the directory
+    if a file is 'linked', returns with an '@' suffix
+    :return:
+    """
+
+    # Iterate through each item and print
+    for data_item in data_items:
+        if str(data_item.data.details.owning_project_id) != str(project_id):
+            print(f"{data_item.data.details.path}@")
+        else:
+            print(data_item.data.details.path)
+
+
 def list_files_long(data_items: List[ProjectData]):
     """
     Use pandas to list
@@ -59,9 +75,12 @@ def list_files_long(data_items: List[ProjectData]):
                 "path": data_item.data.details.path,
                 "owning_project_id": data_item.data.details.owning_project_id,
                 "owning_project_name": data_item.data.details.owning_project_name,
-                "creator_id": data_item.data.details.get("creator_id", None),
+                "creator_id": data_item.data.details.creator_id,
                 "modification_time_stamp": data_item.data.details.time_modified,
-                "size_kb": round(float(data_item.data.details.get("file_size_in_bytes", 0)) / math.pow(2, 10), 2)
+                "size_kb": round(
+                    float(str(data_item.data.details.file_size_in_bytes)) / math.pow(2, 10),
+                    2
+                )
             }
             for data_item in data_items
         ]
@@ -69,7 +88,7 @@ def list_files_long(data_items: List[ProjectData]):
 
     # Get users
     creator_ids = list(data_items_df["creator_id"].unique())
-    creator_dict = {
+    creator_dict: Dict[Union[str, None], str] = {
         None: ""
     }
 
@@ -80,7 +99,7 @@ def list_files_long(data_items: List[ProjectData]):
         # Get user from user ids
         user = get_user_obj_from_user_id(creator_id)
         # Set value as firstname ' ' lastname
-        creator_dict[user.id] = f"{user.firstname} {user.lastname}"
+        creator_dict[str(user.id)] = f"{user.firstname} {user.lastname}"
 
     data_items_df["creator_user"] = data_items_df["creator_id"].apply(
         lambda x: creator_dict.get(x, None)
@@ -142,7 +161,7 @@ def view_in_browser(download_url):
 
 
 def run_s3_sync_command(
-        aws_env_vars: Dict,
+        aws_env_vars: AwsTempCredentials,
         aws_s3_sync_args: Optional[List[str]],
         aws_s3_path: str,
         upload: Optional[bool] = False,
@@ -204,10 +223,10 @@ def run_s3_sync_command(
 
     new_env.update(
         {
-            "AWS_ACCESS_KEY_ID": aws_env_vars.get("access_key"),
-            "AWS_SECRET_ACCESS_KEY": aws_env_vars.get("secret_key"),
-            "AWS_SESSION_TOKEN": aws_env_vars.get("session_token"),
-            "AWS_REGION": aws_env_vars.get("region")
+            "AWS_ACCESS_KEY_ID": aws_env_vars.access_key,
+            "AWS_SECRET_ACCESS_KEY": aws_env_vars.secret_key,
+            "AWS_SESSION_TOKEN": aws_env_vars.session_token,
+            "AWS_REGION": aws_env_vars.region,
         }
     )
 
@@ -224,10 +243,15 @@ def run_s3_sync_command(
     return True
 
 
-def get_s3_sync_script(aws_env_vars: Dict, aws_s3_sync_args: List,
-                       aws_s3_path: str,
-                       upload: Optional[bool] = False, download: Optional[bool] = False,
-                       upload_path: Optional[Path] = None, download_path: Optional[Path] = None) -> str:
+def get_s3_sync_script(
+        aws_env_vars: AwsTempCredentials,
+        aws_s3_sync_args: List[str],
+        aws_s3_path: str,
+        upload: Optional[bool] = False,
+        download: Optional[bool] = False,
+        upload_path: Optional[Path] = None,
+        download_path: Optional[Path] = None
+) -> str:
     """
     Create a s3 sync script
     :param aws_env_vars:
@@ -265,27 +289,27 @@ def get_s3_sync_script(aws_env_vars: Dict, aws_s3_sync_args: List,
 # Fail if aws s3 sync command fails 
 set -e
 
-AWS_ACCESS_KEY_ID={aws_env_vars.get("access_key")} \\
-AWS_SECRET_ACCESS_KEY={aws_env_vars.get("secret_key")} \\
-AWS_SESSION_TOKEN={aws_env_vars.get("session_token")} \\
-AWS_REGION={aws_env_vars.get("region")} \\
+AWS_ACCESS_KEY_ID={aws_env_vars.access_key} \\
+AWS_SECRET_ACCESS_KEY={aws_env_vars.secret_key} \\
+AWS_SESSION_TOKEN={aws_env_vars.session_token} \\
+AWS_REGION={aws_env_vars.region} \\
     """
 
     # Get next lines
     if upload:
-        aws_cli_line = f"aws s3 sync {upload_path} {aws_s3_path}"
+        aws_cli_line = f"aws s3 sync {upload_path}/ {aws_s3_path}"
     else:  # Download is true
-        aws_cli_line = f"aws s3 sync {aws_s3_path} {download_path}"
+        aws_cli_line = f"aws s3 sync {aws_s3_path} {download_path}/"
 
     # Get s3 sync args if they exist
     if len(aws_s3_sync_args) > 0:
         aws_cli_line += " \\\n"
 
-    for index, aws_s3_sync_arg in enumerate(aws_s3_sync_args):
-        aws_cli_line += f"  {aws_s3_sync_arg} "
-        if not index == len(aws_s3_sync_args) - 1:
-            # Add \ to signify more arguments to come
-            aws_cli_line += " \\\n"
+        for index, aws_s3_sync_arg in enumerate(aws_s3_sync_args):
+            aws_cli_line += f"  {aws_s3_sync_arg} "
+            if not index == len(aws_s3_sync_args) - 1:
+                # Add \ to signify more arguments to come
+                aws_cli_line += " \\\n"
 
     # Add final line
     aws_cli_line += "\n"

@@ -7,10 +7,11 @@ import sys
 # Standard imports
 from typing import Optional
 
+
 # Wrapica imports
-from wrapica.bundle import release_bundle, get_bundle_obj_from_bundle_id, Bundle, deprecate_bundle
+from wrapica.bundle import get_bundle_obj_from_bundle_id, Bundle, deprecate_bundle
 from wrapica.enums import BundleStatus
-from wrapica.libica_exceptions import ApiException
+from libica.openapi.v3 import ApiException
 
 # Utils
 from ...utils.errors import InvalidArgumentError

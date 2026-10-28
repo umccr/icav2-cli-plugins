@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Given a pipeline id or pipeline code, create a wes input template that comprises the following items
+Given a pipeline id or pipeline name, create a wes input template that comprises the following items
 
 * user reference (or name)
 * inputs
@@ -103,7 +103,7 @@ Description:
       * inputs (the input json dict - we use a JSON dict for both CWL and Nextflow pipelines)
       * engine_parameters
         * Which comprises the following keys:
-          * pipeline (the pipeline id or code)
+          * pipeline (the pipeline id or name)
           * analysis_output (Optional, the uri or path to where the final directory out/ is placed)
           * ica_logs (Optional, the uri or path to where the final directory ica_logs/ is placed)
           * cache (Optional, used by nextflow pipelines to upload the samplesheet input file)
@@ -120,7 +120,7 @@ Description:
 
 
 Options:
-    --pipeline=<pipeline_id_or_code>                         Optional, id (or code) of the pipeline you wish to launch
+    --pipeline=<pipeline_id_or_code>                         Optional, id (or name) of the pipeline you wish to launch
     --user-reference=<user_reference>                        Optional, name of the workflow analysis
 
     --analysis-output=<analysis_output_uri_or_path>          Optional, the uri or project path to where the final directory out/ is placed.
@@ -151,7 +151,7 @@ Environment variables:
     ICAV2_ACCESS_TOKEN       Optional, taken from "$HOME/.icav2/.session.ica.yaml" if not set
 
 Example:
-    icav2 projectpipelines create-wes-input-template --user-reference tabix-analysis-test --pipeline-code tabix-workflow --output-template-yaml-path launch.wes.yaml --analysis-output-path /test_data/v2/tabix/
+    icav2 projectpipelines create-wes-input-template --user-reference tabix-analysis-test --pipeline tabix-workflow --output-template-yaml-path launch.wes.yaml --analysis-output-path /test_data/v2/tabix/
     """
     pipeline_obj: ProjectPipeline
     user_reference: str
@@ -284,13 +284,12 @@ Example:
                     pipeline_id=self.pipeline_obj.pipeline.id,
                     schema_input_json_path=schema_input_json_file_path
                 )
-                # Rename input to samplesheet_input
-                _ = nf_yaml_template.pop("input")
-                nf_yaml_template["samplesheet_input"] = generate_samplesheet_yaml_template_from_schema_input(
+                # Get input as samplesheet
+                nf_yaml_template["samplesheet"] = generate_samplesheet_yaml_template_from_schema_input(
                     schema_input_json_file_path
                 )
                 nf_yaml_template.yaml_set_comment_before_after_key(
-                    key="samplesheet_input",
+                    key="samplesheet",
                     before="Samplesheet input, this is uploaded to the cache directory before the pipeline is run",
                     indent=4
                 )
@@ -320,7 +319,10 @@ Example:
             self.cwl_obj = get_cwl_obj_from_pipeline_id(self.pipeline_obj.pipeline.id)
 
         # Get yaml path
-        if self.output_template_yaml_path is None or self.output_template_yaml_path == "-":
+        if (
+                self.output_template_yaml_path is None or
+                self.output_template_yaml_path == "-"
+        ):
             self.output_template_yaml_path: int = sys.stdout.fileno()
         elif not self.output_template_yaml_path.parent.is_dir():
             logger.error(f"Please ensure parent directory of "
@@ -333,12 +335,12 @@ Example:
     def get_engine_parameters_as_commented_map(self):
         # Initialise commented map
         engine_parameters_map = CommentedMap({
-            "pipeline": self.pipeline_obj.pipeline.id
+            "pipeline": str(self.pipeline_obj.pipeline.id)
         })
-        # Add pipeline code as a comment
+        # Add pipeline name as a comment
         engine_parameters_map.yaml_add_eol_comment(
             key="pipeline",
-            comment=self.pipeline_obj.pipeline.code
+            comment=self.pipeline_obj.pipeline.name
         )
 
         # Additional keys

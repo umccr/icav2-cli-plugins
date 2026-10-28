@@ -57,7 +57,7 @@ Description:
     Deploy an nf-core workflow as an ICAv2 Pipeline.
 
 Options:
-    <pipeline_name>                                    Required, the pipeline core, use `nf-core list`
+    <pipeline_name>                                    Required, the pipeline core, use `nf-core pipelines list`
                                                        to get the list of pipelines
     --revision=<revision>                              Required, the revision of the pipeline.
     --analysis-storage=<analysis_storage_id_or_size>   Optional, analysis storage id or size [default: Small]
@@ -80,7 +80,7 @@ Example:
 
     pipeline_name: str
     revision: str
-    analysis_storage: Optional[AnalysisStorageType]
+    analysis_storage_obj: Optional[AnalysisStorageType]
     is_output_json: Optional[bool]
 
     def __init__(self, command_argv):
@@ -92,7 +92,7 @@ Example:
             "revision": DocOptArg(
                 cli_arg_keys=["--revision"],
             ),
-            "analysis_storage": DocOptArg(
+            "analysis_storage_obj": DocOptArg(
                 cli_arg_keys=["--analysis-storage"],
             ),
             "is_output_json": DocOptArg(
@@ -147,7 +147,7 @@ Example:
         # Create output file from zipped workflow apth
         self.pipeline_obj = create_nextflow_pipeline_from_nf_core_zip(
             project_id=self.project_id,
-            pipeline_code=(
+            pipeline_name=(
                 "__".join(
                     [
                         self.zipped_workflow_path.stem.replace(".", "_"),
@@ -163,7 +163,7 @@ Example:
         logger.info(
             f"Successfully created pipeline with "
             f"pipeline id '{self.pipeline_obj.pipeline.id}' and "
-            f"pipeline code '{self.pipeline_obj.pipeline.code}'"
+            f"pipeline name '{self.pipeline_obj.pipeline.name}'"
         )
 
         if self.is_output_json:
@@ -185,8 +185,11 @@ Example:
         self.download_nf_core_pipeline_to_zip()
 
         # Get analysis storage ID or go to default
-        if self.analysis_storage is None:
-            self.analysis_storage = get_analysis_storage_from_analysis_storage_size(AnalysisStorageType.SMALL)
+        if self.analysis_storage_obj is None:
+            self.analysis_storage_obj = get_analysis_storage_from_analysis_storage_size(
+                project_id=self.project_id,
+                analysis_storage_size=AnalysisStorageType.SMALL.value
+            )
 
         # Set the description as the GitHub release url
         self.description = f"nf-core pipeline {self.pipeline_name} at revision {self.revision}"
@@ -198,8 +201,8 @@ Example:
         print(
             json.dumps(
                 {
-                    "pipeline_id": self.pipeline_obj.id,
-                    "pipeline_code": self.pipeline_obj.code
+                    "pipeline_id": self.pipeline_obj.pipeline.id,
+                    "pipeline_name": self.pipeline_obj.pipeline.name
                 },
                 indent=2
             )

@@ -39,7 +39,7 @@ Description:
     Release a pipeline (changes pipeline status from draft to release)
 
 Options:
-    <pipeline>           Required, the id (or code) of the pipeline to be released
+    <pipeline>           Required, the id (or name) of the pipeline to be released
 
 Environment:
     ICAV2_BASE_URL (optional, defaults to ica.illumina.com)
@@ -62,7 +62,6 @@ Example:
         # Initialise parameters
         self.project_id: Optional[str] = None
         self.pipeline_id: Optional[str] = None
-        self.user_obj: Optional[User] = None
 
         super().__init__(command_argv)
 
@@ -74,11 +73,4 @@ Example:
         self.project_id = get_project_id()
 
         # Set the pipeline id
-        self.pipeline_id = self.project_pipeline_obj.pipeline.id
-
-        # Check pipeline id belongs to owner
-        self.user_obj = get_user_obj_from_user_id(get_user_id_from_configuration())
-
-        if not self.user_obj.id == self.project_pipeline_obj.pipeline.owner_id:
-            logger.error("This pipeline does not belong to you, you cannot release it. Soz.")
-            raise InvalidArgumentError
+        self.pipeline_id = str(self.project_pipeline_obj.pipeline.id)

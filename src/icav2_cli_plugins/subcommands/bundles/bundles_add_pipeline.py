@@ -5,8 +5,7 @@ Add a pipeline object (or list of pipeline objects) to a bundle
 """
 # External imports
 import sys
-from typing import List, Optional
-
+from typing import List, Optional, cast
 
 # Wrapica imports
 from wrapica.bundle import (
@@ -14,6 +13,7 @@ from wrapica.bundle import (
     add_pipeline_to_bundle
 )
 from wrapica.enums import PipelineStatus, BundleStatus
+from wrapica.literals import PipelineStatusType
 from wrapica.pipelines import (
     PipelineType
 )
@@ -43,14 +43,14 @@ Description:
     The cli-input-yaml may look like the following
     bundle: my_bundle_id
     pipelines:
-      - my_pipeline_code_or_id
+      - my_pipeline_name_or_id
 
 Options:
   --bundle=<bundle_id_or_name>          Required, the bundle id (or bundle name) to add the pipeline to
                                         Use as a positional parameter when not using the yaml file,
                                         otherwise, the bundle id is read from the yaml file or can be specified
                                         on the command line with this option
-  --pipeline=<pipeline_id_or_code>      Required, the pipeline id or code to add to the bundle,
+  --pipeline=<pipeline_id_or_code>      Required, the pipeline id or name to add to the bundle,
                                         can be specified either on the command line or through the input yaml file.
                                         When specified in the yaml file, the key should be 'pipelines'
 
@@ -60,7 +60,7 @@ Environment variables:
     ICAV2_BASE_URL           Optional, default set as https://ica.illumina.com/ica/rest
 
 Example:
-    icav2 bundles add-pipeline my_bundle --pipeline my_pipeline_code
+    icav2 bundles add-pipeline my_bundle --pipeline my_pipeline_name
     icav2 bundles add-pipeline --cli-input-yaml /path/to/input.yaml
     """
 
@@ -103,7 +103,7 @@ Example:
         # Check each pipeline has been released
         has_errors = False
         for pipeline_obj in self.pipeline_obj_list:
-            if not PipelineStatus(pipeline_obj.status) == PipelineStatus.RELEASED:
+            if not cast(PipelineStatusType, pipeline_obj.status) == "RELEASED":
                 logger.error(
                     f"Pipeline {pipeline_obj.id} is not released, only released pipelines can be added to a bundle"
                 )

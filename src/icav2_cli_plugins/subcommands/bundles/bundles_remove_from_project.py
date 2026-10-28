@@ -107,7 +107,7 @@ Example:
         projects_with_bundle = []
         for project_obj in self.project_obj_list:
             for bundle in list_bundles_in_project(project_id=project_obj.id):
-                if bundle.id == self.bundle_obj.id:
+                if str(bundle.id) == str(self.bundle_obj.id):
                     break
             else:
                 logger.info(f"Could not find bundle {self.bundle_obj.id} in project {project_obj.id}, skipping this project")

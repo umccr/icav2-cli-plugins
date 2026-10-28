@@ -11,7 +11,7 @@ from .globals import DEFAULT_ICAV2_BASE_URL, ICAV2_SESSION_FILE_ACCESS_TOKEN_KEY
 from .config_helpers import read_session_file, get_session_file_path, get_access_token_from_session_file, \
     check_access_token_expiry, get_libicav2_configuration
 
-from libica.openapi.v2 import Configuration
+from libica.openapi.v3 import Configuration
 
 from uuid import uuid4
 

@@ -41,8 +41,8 @@ Description:
     Download a pipeline from ICAv2 to a local directory.
 
 Options:
-    <pipeline>               Required, the pipeline id (or code) of the pipeline to download from
-    --output-directory       Optional, if not specified, will be downloaded to the current working directory
+    <pipeline>               Required, the pipeline id (or name) of the pipeline to download from
+    --output-dir             Optional, if not specified, will be downloaded to the current working directory
     --force                  Optional, if the output zip file already exists, do not ask user for confirmation to overwrite file
 
 Environment:
@@ -54,7 +54,7 @@ Example:
     """
 
     project_pipeline_obj: ProjectPipeline
-    output_dir: Path
+    output_dir: Optional[Path]
     force: bool
 
     def __init__(self, command_argv):
@@ -90,7 +90,9 @@ Example:
     def check_args(self):
         # Get the pipeline id
         self.project_id = get_project_id()
-        self.output_zip_path = (self.output_dir / (self.project_pipeline_obj.pipeline.code + ".zip"))
+        if self.output_dir is None:
+            self.output_dir = Path.cwd()
+        self.output_zip_path = (self.output_dir / f"{self.project_pipeline_obj.pipeline.name}.zip")
 
         # Get output dir
         if not self.output_dir.is_dir():

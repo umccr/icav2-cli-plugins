@@ -67,3 +67,25 @@ def strip_literal(input_str: str) -> str:
         return str(literal_eval(input_str))
     except (ValueError, SyntaxError):
         return input_str
+
+
+def to_jsonable_dict(model: Any) -> Any:
+    """
+    Convert a libica / pydantic v2 model into a JSON-serialisable structure.
+
+    The libica models' own ``to_json`` / ``to_dict`` methods call
+    ``model_dump(by_alias=True)`` which leaves UUID and datetime values as native
+    Python objects, so a subsequent ``json.dumps`` raises
+    ``TypeError: Object of type UUID is not JSON serializable``.
+
+    Using ``model_dump(mode="json", ...)`` lets pydantic coerce those values
+    (UUID, datetime, etc.) into strings first, matching the behaviour of
+    fastapi's ``jsonable_encoder`` without adding a dependency on fastapi.
+
+    :param model: A pydantic v2 model instance (or any object; non-models are
+                  returned unchanged).
+    :return: A JSON-serialisable dict (or the original object if it is not a model)
+    """
+    if hasattr(model, "model_dump"):
+        return model.model_dump(mode="json", by_alias=True, exclude_none=True)
+    return model
