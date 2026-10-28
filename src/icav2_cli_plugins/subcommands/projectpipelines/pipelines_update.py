@@ -412,9 +412,4 @@ Example:
             logger.error(f"Cannot edit pipeline in '{self.pipeline_status.value}' status")
             sys.exit(1)
 
-        # Check user
-        if not str(self.project_pipeline_obj.pipeline.owner.id) == str(self.user_obj.id):
-            logger.error(f"Pipeline '{self.project_pipeline_obj.pipeline.id}' is not owned by user '{self.user_obj.id}'")
-            sys.exit(1)
-
         logger.info(f"Pipeline '{self.project_pipeline_obj.pipeline.id}' is editable")
