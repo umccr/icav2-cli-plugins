@@ -71,8 +71,8 @@ Description:
     The cli input yaml file may look like the following
     name: my_first_bundle # Required (can also be specified on the cli)
     region: my-region-id OR my-region-city-name # Optional
-    pipelines:  # Optional - list of either a pipeline id or pipeline code
-      - a_pipeline_code
+    pipelines:  # Optional - list of either a pipeline id or pipeline name
+      - a_pipeline_name
       - a1b2c3de-uuid-pipeline-id
     data:  # Optional - list of either a data id or data uri
       - fil.12345567
@@ -91,7 +91,7 @@ Options:
   --short-description=<description>          Required, a short description for the bundle
   --bundle-version=<bundle_version>          Required, specify the bundle version
   --bundle-version-description=<description> Required, specify a description for the bundle version
-  --pipeline=<pipeline_id_or_code>           Optional, specify a pipeline ID or code to add to the bundle
+  --pipeline=<pipeline_id_or_code>           Optional, specify a pipeline ID or name to add to the bundle
                                              (specify multiple times for multiple pipelines).
                                              Use the 'pipelines' key when using the input yaml file invocation.
   --data=<data_id_or_uri>                    Optional, specify a data ID or URI to add to the bundle

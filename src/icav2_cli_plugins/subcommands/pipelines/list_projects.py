@@ -46,7 +46,7 @@ Description:
     Finding out which projects a pipeline is linked to.
 
 Options:
-    <pipeline_id_or_code>        Required, the id (or code) of the pipeline to update
+    <pipeline_id_or_code>        Required, the id (or name) of the pipeline to update
     --include-hidden-projects    Optional, search hidden projects
     --json                       Optional, output in json format
     --include-bundle-linked      Optional, include projects that have the pipeline linked via a bundle

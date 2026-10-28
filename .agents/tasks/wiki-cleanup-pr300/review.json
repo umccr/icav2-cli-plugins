@@ -1,0 +1,24 @@
+{
+  "verdict": "CHANGES_REQUESTED",
+  "findings": [
+    {
+      "label": "Residual GIF Example sections",
+      "confidence": "confirmed",
+      "severity": "blocking",
+      "detail": "ProjectData.md (2), ProjectAnalyses.md (2), and Bundles.md (7) still contain '### GIF Example' headings plus matching '#gif-example' TOC links — twelve references in total. The user asked to remove all GIFs; these vestigial GIF-scaffolding sections (':construction:' placeholders) were left untouched. Remove the headings and TOC entries, and where useful (e.g. the s3-sync and ls flows) replace with a reproducible command + output as was done on ProjectPipelines.md."
+    },
+    {
+      "label": "projectdata cp/mkdir undocumented",
+      "confidence": "confirmed",
+      "severity": "non-blocking",
+      "detail": "cp and mkdir exist as real subcommands in source but ProjectData.md documents neither. Outside the explicit #300 asks (GIF removal + tenant cleanup), so informational, but worth capturing if the page is being revised."
+    },
+    {
+      "label": "Local wiki commit ahead of origin",
+      "confidence": "confirmed",
+      "severity": "non-blocking",
+      "detail": "Commit 9213afa sits on wiki master unpushed. Nothing is pushed so the public wiki is unaffected, but the task constraint was 'no commits to the wiki'. Confirm whether this commit should be reset back into the working tree."
+    }
+  ],
+  "reviewDoc": "/home/alexiswl/GitHub/UMCCR/icav2-cli-plugins/.agents/tasks/wiki-cleanup-pr300/wiki-review.md"
+}
