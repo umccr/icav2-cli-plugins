@@ -3,7 +3,8 @@
 Unit tests for TokenManager.
 
 Tests token freshness checking, generation, persistence to config, and
-the encrypted token lifecycle.
+the encrypted token lifecycle. Tokens are user-scoped and persisted on the
+referenced [tenant <name>] section.
 """
 
 import time
@@ -14,7 +15,11 @@ import jwt
 import pytest
 
 from icav2_cli_plugins.utils.token_manager import TokenManager
-from icav2_cli_plugins.utils.config_parser import ConfigParser, ProfileConfig
+from icav2_cli_plugins.utils.config_parser import (
+    ConfigParser,
+    ProfileConfig,
+    TenantConfig,
+)
 
 
 def _make_jwt(exp: int, extra_claims: dict | None = None) -> str:
@@ -25,17 +30,21 @@ def _make_jwt(exp: int, extra_claims: dict | None = None) -> str:
     return jwt.encode(payload, "secret", algorithm="HS256")
 
 
-def _write_config(path: Path, profiles: dict[str, ProfileConfig]) -> None:
-    """Helper: write a config file with given profiles."""
+def _write_config(
+    path: Path,
+    tenants: dict[str, TenantConfig],
+    profiles: dict[str, ProfileConfig] | None = None,
+) -> None:
+    """Helper: write a config file with given tenants and profiles."""
     parser = ConfigParser()
-    parser.write_file(path, profiles)
+    parser.write_file(path, tenants, profiles or {})
 
 
 class TestTokenManagerInit:
-    def test_stores_profile_name(self, tmp_path: Path):
+    def test_stores_tenant_name(self, tmp_path: Path):
         config_path = tmp_path / "config"
         tm = TokenManager("prod", config_path)
-        assert tm.profile_name == "prod"
+        assert tm.tenant_name == "prod"
 
     def test_stores_config_path(self, tmp_path: Path):
         config_path = tmp_path / "config"
@@ -164,9 +173,9 @@ class TestGetValidToken:
         exp = int(time.time()) + 7200
         fresh_token = _make_jwt(exp)
 
-        # Write config with the cached token
+        # Write config with the cached token on the tenant
         _write_config(config_path, {
-            "default": ProfileConfig(
+            "default": TenantConfig(
                 name="default",
                 x_api_key="api-key",
                 access_token=fresh_token,
@@ -194,7 +203,7 @@ class TestGetValidToken:
         stale_token = _make_jwt(exp)
 
         _write_config(config_path, {
-            "default": ProfileConfig(
+            "default": TenantConfig(
                 name="default",
                 x_api_key="api-key",
                 access_token=stale_token,
@@ -221,7 +230,7 @@ class TestGetValidToken:
         config_path = tmp_path / "config"
 
         _write_config(config_path, {
-            "default": ProfileConfig(
+            "default": TenantConfig(
                 name="default",
                 x_api_key="api-key",
             )
@@ -241,11 +250,11 @@ class TestGetValidToken:
         assert result == new_token
         mock_gen.assert_called_once()
 
-    def test_persists_token_to_config_after_generation(self, tmp_path: Path):
+    def test_persists_token_to_tenant_after_generation(self, tmp_path: Path):
         config_path = tmp_path / "config"
 
         _write_config(config_path, {
-            "default": ProfileConfig(
+            "default": TenantConfig(
                 name="default",
                 x_api_key="api-key",
             )
@@ -262,17 +271,64 @@ class TestGetValidToken:
                 cached_token=None,
             )
 
-        # Verify the token was persisted back to config
+        # Verify the token was persisted back to the tenant section
         parser = ConfigParser()
-        profiles = parser.parse_file(config_path)
-        assert profiles["default"].access_token == new_token
-        assert profiles["default"].access_token_expiry == str(new_exp)
+        tenants, _profiles = parser.parse_file(config_path)
+        assert tenants["default"].access_token == new_token
+        assert tenants["default"].access_token_expiry == str(new_exp)
+
+    def test_token_cached_per_tenant_shared_across_profiles(self, tmp_path: Path):
+        """The token is keyed by tenant: two profiles sharing a tenant share it.
+
+        The first resolution generates once and persists onto the tenant; a
+        second resolution for the other profile reuses the fresh cached token
+        without regenerating.
+        """
+        config_path = tmp_path / "config"
+
+        tenants = {
+            "acme": TenantConfig(name="acme", x_api_key="api-key"),
+        }
+        profiles = {
+            "default": ProfileConfig(name="default", tenant_name="acme", project_id="p1"),
+            "staging": ProfileConfig(name="staging", tenant_name="acme", project_id="p2"),
+        }
+        _write_config(config_path, tenants, profiles)
+
+        new_exp = int(time.time()) + 7200
+        new_token = _make_jwt(new_exp)
+
+        # Both profiles resolve against the same tenant name.
+        tm = TokenManager("acme", config_path)
+
+        with patch.object(tm, "_generate_token", return_value=new_token) as mock_gen:
+            first = tm.get_valid_token(
+                "api-key", "https://ica.illumina.com/ica/rest", cached_token=None,
+            )
+        assert first == new_token
+        mock_gen.assert_called_once()
+
+        # The token is now persisted on the tenant and shared.
+        parser = ConfigParser()
+        persisted_tenants, _profiles = parser.parse_file(config_path)
+        cached = persisted_tenants["acme"].access_token
+        assert cached == new_token
+
+        # A second resolution (e.g. for the other profile) reuses the cached
+        # token and does NOT regenerate.
+        tm2 = TokenManager("acme", config_path)
+        with patch.object(tm2, "_generate_token") as mock_gen2:
+            second = tm2.get_valid_token(
+                "api-key", "https://ica.illumina.com/ica/rest", cached_token=cached,
+            )
+        assert second == new_token
+        mock_gen2.assert_not_called()
 
     def test_config_permissions_after_persist(self, tmp_path: Path):
         config_path = tmp_path / "config"
 
         _write_config(config_path, {
-            "default": ProfileConfig(
+            "default": TenantConfig(
                 name="default",
                 x_api_key="api-key",
             )
@@ -315,7 +371,7 @@ class TestGetValidTokenWithEncryption:
         encrypted_token = encrypt_api_key(fresh_token, pub_key)
 
         _write_config(config_path, {
-            "default": ProfileConfig(
+            "default": TenantConfig(
                 name="default",
                 x_api_key="api-key",
                 access_token=encrypted_token,
@@ -348,7 +404,7 @@ class TestGetValidTokenWithEncryption:
         generate_key_pair(priv_key, pub_key)
 
         _write_config(config_path, {
-            "default": ProfileConfig(
+            "default": TenantConfig(
                 name="default",
                 x_api_key="api-key",
                 encryption_public_key=str(pub_key),
@@ -369,8 +425,8 @@ class TestGetValidTokenWithEncryption:
 
         # Verify the stored token is encrypted
         parser = ConfigParser()
-        profiles = parser.parse_file(config_path)
-        stored = profiles["default"].access_token
+        tenants, _profiles = parser.parse_file(config_path)
+        stored = tenants["default"].access_token
         assert is_encrypted(stored)
 
     def test_encrypted_api_key_is_decrypted_for_generation(self, tmp_path: Path):
@@ -388,7 +444,7 @@ class TestGetValidTokenWithEncryption:
         encrypted_api_key = encrypt_api_key(plain_api_key, pub_key)
 
         _write_config(config_path, {
-            "default": ProfileConfig(
+            "default": TenantConfig(
                 name="default",
                 x_api_key=encrypted_api_key,
                 encryption_public_key=str(pub_key),

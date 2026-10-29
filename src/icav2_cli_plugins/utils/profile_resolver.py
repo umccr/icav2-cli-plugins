@@ -29,6 +29,7 @@ class ResolvedConfig:
     project_name: Optional[str]
     api_key: Optional[str]
     output_format: str
+    tenant_name: Optional[str] = None
     encryption_private_key: Optional[str] = None
     encryption_public_key: Optional[str] = None
     cached_access_token: Optional[str] = None
@@ -52,7 +53,7 @@ class ProfileResolver:
         # Parse the config file, handling missing/unreadable errors
         parser = ConfigParser()
         try:
-            profiles = parser.parse_file(self.config_path)
+            tenants, profiles = parser.parse_file(self.config_path)
         except ConfigParseError as e:
             print(
                 f"Error: Config file not found at {self.config_path}. "
@@ -95,8 +96,22 @@ class ProfileResolver:
 
         profile = profiles[profile_name]
 
-        # Build ResolvedConfig from profile values
-        server_url = profile.server_url or "ica.illumina.com"
+        # Resolve the tenant the profile points at (user-scoped secrets).
+        tenant = None
+        if profile.tenant_name is not None:
+            tenant = tenants.get(profile.tenant_name)
+            if tenant is None:
+                available_tenants = ", ".join(sorted(tenants.keys()))
+                print(
+                    f"Error: Profile '{profile_name}' references tenant "
+                    f"'{profile.tenant_name}' which is not configured. "
+                    f"Available tenants: {available_tenants}",
+                    file=sys.stderr,
+                )
+                sys.exit(1)
+
+        # Build ResolvedConfig from tenant + profile values
+        server_url = (tenant.server_url if tenant else None) or "ica.illumina.com"
         base_url = f"https://{server_url}/ica/rest"
 
         config = ResolvedConfig(
@@ -106,11 +121,12 @@ class ProfileResolver:
             access_token=None,
             project_id=profile.project_id,
             project_name=profile.project_name,
-            api_key=profile.x_api_key,
+            api_key=tenant.x_api_key if tenant else None,
             output_format=profile.output_format or "table",
-            encryption_private_key=profile.encryption_private_key,
-            encryption_public_key=profile.encryption_public_key,
-            cached_access_token=profile.access_token,
+            tenant_name=profile.tenant_name,
+            encryption_private_key=tenant.encryption_private_key if tenant else None,
+            encryption_public_key=tenant.encryption_public_key if tenant else None,
+            cached_access_token=tenant.access_token if tenant else None,
         )
 
         # Apply environment variable overrides

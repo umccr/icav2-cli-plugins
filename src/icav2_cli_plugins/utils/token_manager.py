@@ -3,8 +3,8 @@
 Token manager for access token lifecycle management.
 
 Handles token validation, refresh, and persistence in the config file.
-Tokens are stored in the profile's config section (optionally encrypted)
-and auto-refreshed when expired or within the refresh threshold.
+Tokens are user-scoped and stored in the tenant's config section (optionally
+encrypted) and auto-refreshed when expired or within the refresh threshold.
 
 Refresh threshold: 3600 seconds before expiry
 """
@@ -71,9 +71,9 @@ def validate_env_token(token: str) -> str:
 
 class TokenManager:
     """
-    Manages access token lifecycle per profile.
+    Manages access token lifecycle per tenant.
 
-    Tokens are stored directly in the config file alongside other profile
+    Tokens are stored directly in the config file alongside other tenant
     fields (access_token and access_token_expiry). If encryption keys are
     configured, the access token is encrypted at rest just like the API key.
 
@@ -82,12 +82,12 @@ class TokenManager:
 
     def __init__(
         self,
-        profile_name: str,
+        tenant_name: str,
         config_path: Path,
         private_key_path: Optional[Path] = None,
         public_key_path: Optional[Path] = None,
     ):
-        self.profile_name = profile_name
+        self.tenant_name = tenant_name
         self.config_path = config_path
         self.private_key_path = private_key_path
         self.public_key_path = public_key_path
@@ -136,7 +136,7 @@ class TokenManager:
             )
         except (FileNotFoundError, ValueError) as e:
             print(
-                f"Error: Cannot decrypt value for profile '{self.profile_name}': {e}",
+                f"Error: Cannot decrypt value for tenant '{self.tenant_name}': {e}",
                 file=sys.stderr,
             )
             sys.exit(1)
@@ -194,7 +194,7 @@ class TokenManager:
 
         if response.status_code not in (200, 201):
             raise RuntimeError(
-                f"Failed to generate token for profile '{self.profile_name}' "
+                f"Failed to generate token for tenant '{self.tenant_name}' "
                 f"at {base_url}: HTTP {response.status_code}"
             )
 
@@ -206,7 +206,7 @@ class TokenManager:
 
         if token is None:
             raise RuntimeError(
-                f"Failed to generate token for profile '{self.profile_name}' "
+                f"Failed to generate token for tenant '{self.tenant_name}' "
                 f"at {base_url}: response did not contain a token"
             )
 
@@ -214,8 +214,10 @@ class TokenManager:
 
     def _persist_token(self, token: str) -> None:
         """
-        Write the new token back to the config file for this profile.
+        Write the new token back to the config file for this tenant.
 
+        The access token is user-scoped, so it is stored on the [tenant <name>]
+        section and shared across every profile that references the tenant.
         Encrypts the token if encryption keys are available.
         Also stores the expiry epoch for quick checks.
         """
@@ -224,24 +226,24 @@ class TokenManager:
         parser = ConfigParser()
 
         try:
-            profiles = parser.parse_file(self.config_path)
+            tenants, profiles = parser.parse_file(self.config_path)
         except ConfigParseError:
             # If config can't be read, skip persistence (token still usable in memory)
             return
 
-        if self.profile_name not in profiles:
+        if self.tenant_name not in tenants:
             return
 
-        profile = profiles[self.profile_name]
+        tenant = tenants[self.tenant_name]
 
         # Encrypt the token if keys are available
         stored_token = self._encrypt_if_keys_available(token)
-        profile.access_token = stored_token
+        tenant.access_token = stored_token
 
         # Store the expiry epoch as a string for easy comparison
         expiry = self._get_token_expiry(token)
         if expiry is not None:
-            profile.access_token_expiry = str(expiry)
+            tenant.access_token_expiry = str(expiry)
 
         # Write the updated config back
-        parser.write_file(self.config_path, profiles)
+        parser.write_file(self.config_path, tenants, profiles)

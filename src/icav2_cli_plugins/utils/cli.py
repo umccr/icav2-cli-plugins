@@ -165,7 +165,7 @@ def _resolve_profile_and_token(cli_profile):
             sys.exit(1)
 
         token_mgr = TokenManager(
-            profile_name=config.profile_name,
+            tenant_name=config.tenant_name,
             config_path=CONFIG_FILE_PATH,
             private_key_path=(
                 Path(config.encryption_private_key)
