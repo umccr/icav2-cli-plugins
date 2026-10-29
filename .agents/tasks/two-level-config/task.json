@@ -1,0 +1,7 @@
+{
+  "task_id": "task-two-level-config",
+  "task_description": "Refactor the tenant/project configuration system in icav2-cli-plugins into an AWS-CLI-style two-level layout (shared [tenant <name>] sections + lightweight [profile <name>]/[default] sections). Move the user-scoped access token to the tenant section and cache it per tenant. Add 'configure set-tenant', 'configure set-profile', and 'configure export <profile>'. Deprecate (warn, keep working) 'configure set' and 'tokens export'. Update CLI help/docstrings and the adjacent wiki repo. New format only; do NOT migrate the live ~/.icav2-cli-plugins/config.",
+  "status": "pending",
+  "feature_order": ["FEAT-001", "FEAT-002", "FEAT-003"],
+  "blocked_reason": null
+}

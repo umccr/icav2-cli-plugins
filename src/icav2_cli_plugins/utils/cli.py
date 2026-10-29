@@ -17,7 +17,7 @@ Command:
     ######################
     Configure
     ######################
-    configure                           Manage CLI profiles and configuration
+    configure                           Manage CLI tenants and profiles (set-tenant, set-profile, export, list)
 
     ######################
     Bundles
@@ -73,6 +73,7 @@ Command:
     Tokens
     ######################
     tokens                              Collection of subfunctions relating to access tokens
+                                        (note: 'tokens export' is deprecated - use 'configure export')
 
     ######################
     Tenants
@@ -355,9 +356,12 @@ def _dispatch():
             print("Usage: icav2 configure <subcommand> [<args>...]")
             print("")
             print("Available subcommands:")
-            print("  set             Interactively configure a profile")
-            print("  list            Display all configured profiles")
+            print("  set-tenant      Interactively configure a tenant (user-scoped credentials)")
+            print("  set-profile     Interactively configure a profile (project-scoped)")
+            print("  export          Emit shell export lines for a profile")
+            print("  list            Display all configured tenants and profiles")
             print("  generate-keys   Generate RSA key pair for API key encryption")
+            print("  set             (deprecated) Interactively configure a profile")
             sys.exit(0)
 
         if subcmd is None or subcmd in ("--help", "-h", "help"):
