@@ -23,7 +23,7 @@ class Command:
     """
 Usage:
     icav2 configure export help
-    icav2 configure export <profile>
+    icav2 configure export [<profile>]
 
 Description:
     Print four shell export lines for the resolved profile (merged with its
@@ -34,11 +34,17 @@ Description:
         export ICAV2_PROJECT_ID=<project_id>
         export ICAV2_ACCESS_TOKEN=<access_token>
 
+    The profile is resolved from (highest precedence first): the <profile>
+    positional argument, then the ICAV2_PROFILE environment variable. If
+    neither is set, the [default] profile is used.
+
 Options:
-    <profile>   Name of the profile to export
+    <profile>   Name of the profile to export (optional; overrides ICAV2_PROFILE)
 
 Examples:
     eval "$(icav2 configure export my-profile)"
+    export ICAV2_PROFILE=my-profile
+    eval "$(icav2 configure export)"
     """
 
     def __init__(self, command_argv):

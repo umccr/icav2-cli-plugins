@@ -88,26 +88,12 @@ class TestConfigureSetTenant:
         # No profiles / project fields written
         assert profiles == {}
 
-    def test_set_tenant_defaults_to_default(self, tmp_path: Path, monkeypatch):
-        config_path = tmp_path / "config"
-        token = _make_jwt(int(time.time()) + 7200)
-
-        responses = iter(["", "key-abc"])  # server_url default, api key
-        monkeypatch.setattr("builtins.input", lambda prompt: next(responses))
-        monkeypatch.setattr(
-            "icav2_cli_plugins.subcommands.configure.configure_set_tenant.CONFIG_FILE_PATH",
-            config_path,
-        )
-        mock_response = MagicMock(status_code=200, json=MagicMock(return_value={"token": token}))
-
-        with patch("icav2_cli_plugins.utils.token_manager.requests.post", return_value=mock_response):
-            cmd = ConfigureSetTenantCommand(["configure", "set-tenant"])
-            cmd()
-
-        parser = ConfigParser()
-        tenants, _profiles = parser.parse_file(config_path)
-        assert "default" in tenants
-        assert tenants["default"].server_url == "ica.illumina.com"
+    def test_set_tenant_requires_tenant_name(self):
+        """set-tenant with no positional tenant name exits with a usage error."""
+        with pytest.raises(SystemExit) as exc_info:
+            ConfigureSetTenantCommand(["configure", "set-tenant"])
+        # docopt exits non-zero on a usage error
+        assert exc_info.value.code != 0
 
 
 # ---------------------------------------------------------------------------
@@ -116,6 +102,12 @@ class TestConfigureSetTenant:
 
 
 class TestConfigureSetProfile:
+
+    def test_set_profile_requires_profile_name(self):
+        """set-profile with no positional profile name exits with a usage error."""
+        with pytest.raises(SystemExit) as exc_info:
+            ConfigureSetProfileCommand(["configure", "set-profile"])
+        assert exc_info.value.code != 0
 
     def _write_tenant(self, config_path: Path, token: str) -> None:
         parser = ConfigParser()
@@ -243,6 +235,90 @@ class TestConfigureExport:
             "export ICAV2_PROJECT_ID=proj-uuid-123",
             f"export ICAV2_ACCESS_TOKEN={token}",
         ]
+
+    def _write_two_level(self, config_path: Path, token: str) -> None:
+        parser = ConfigParser()
+        tenants = {
+            "my-tenant": TenantConfig(
+                name="my-tenant",
+                server_url="ica.illumina.com",
+                x_api_key="tenant-key",
+                access_token=token,
+            )
+        }
+        profiles = {
+            "prod": ProfileConfig(
+                name="prod",
+                project_id="proj-uuid-123",
+                project_name="my-project",
+                tenant_name="my-tenant",
+            )
+        }
+        parser.write_file(config_path, tenants, profiles)
+
+    def _clear_override_env(self, monkeypatch) -> None:
+        monkeypatch.delenv("ICAV2_ACCESS_TOKEN", raising=False)
+        monkeypatch.delenv("ICAV2_PROJECT_ID", raising=False)
+        monkeypatch.delenv("ICAV2_BASE_URL", raising=False)
+
+    def test_export_resolves_profile_from_icav2_profile_env(self, tmp_path: Path, monkeypatch, capsys):
+        """With no positional, export resolves the profile from ICAV2_PROFILE."""
+        config_path = tmp_path / "config"
+        token = _make_jwt(int(time.time()) + 7200)
+        self._write_two_level(config_path, token)
+
+        monkeypatch.setattr(
+            "icav2_cli_plugins.subcommands.configure.configure_export.CONFIG_FILE_PATH",
+            config_path,
+        )
+        self._clear_override_env(monkeypatch)
+        monkeypatch.setenv("ICAV2_PROFILE", "prod")
+
+        cmd = ConfigureExportCommand(["configure", "export"])
+        cmd()
+
+        lines = [ln for ln in capsys.readouterr().out.splitlines() if ln.strip()]
+        assert "export ICAV2_PROJECT_ID=proj-uuid-123" in lines
+        assert f"export ICAV2_ACCESS_TOKEN={token}" in lines
+
+    def test_export_positional_overrides_icav2_profile_env(self, tmp_path: Path, monkeypatch, capsys):
+        """The <profile> positional takes precedence over ICAV2_PROFILE."""
+        config_path = tmp_path / "config"
+        token = _make_jwt(int(time.time()) + 7200)
+
+        parser = ConfigParser()
+        tenants = {
+            "my-tenant": TenantConfig(
+                name="my-tenant",
+                server_url="ica.illumina.com",
+                x_api_key="tenant-key",
+                access_token=token,
+            )
+        }
+        profiles = {
+            "prod": ProfileConfig(
+                name="prod", project_id="proj-prod", project_name="p", tenant_name="my-tenant",
+            ),
+            "staging": ProfileConfig(
+                name="staging", project_id="proj-staging", project_name="s", tenant_name="my-tenant",
+            ),
+        }
+        parser.write_file(config_path, tenants, profiles)
+
+        monkeypatch.setattr(
+            "icav2_cli_plugins.subcommands.configure.configure_export.CONFIG_FILE_PATH",
+            config_path,
+        )
+        self._clear_override_env(monkeypatch)
+        # env points at staging, positional points at prod -> prod wins
+        monkeypatch.setenv("ICAV2_PROFILE", "staging")
+
+        cmd = ConfigureExportCommand(["configure", "export", "prod"])
+        cmd()
+
+        lines = [ln for ln in capsys.readouterr().out.splitlines() if ln.strip()]
+        assert "export ICAV2_PROJECT_ID=proj-prod" in lines
+        assert "export ICAV2_PROJECT_ID=proj-staging" not in lines
 
 
 # ---------------------------------------------------------------------------

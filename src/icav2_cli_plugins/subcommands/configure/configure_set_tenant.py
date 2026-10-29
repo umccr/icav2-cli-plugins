@@ -36,7 +36,7 @@ class Command:
     """
 Usage:
     icav2 configure set-tenant help
-    icav2 configure set-tenant [<tenant_name>] [--no-encrypt] [--public-key=<path>] [--private-key=<path>]
+    icav2 configure set-tenant <tenant_name> [--no-encrypt] [--public-key=<path>] [--private-key=<path>]
 
 Description:
     Interactively configure a tenant (user-scoped configuration). Prompts for
@@ -53,13 +53,12 @@ Description:
     plain text.
 
 Options:
-    <tenant_name>           Name of the tenant to configure (defaults to 'default')
+    <tenant_name>           Name of the tenant to configure (required)
     --no-encrypt            Store secrets in plain text even if encryption keys exist
     --public-key=<path>     Path to public key for encryption
     --private-key=<path>    Path to private key (stored in tenant for decryption)
 
 Examples:
-    icav2 configure set-tenant
     icav2 configure set-tenant my-tenant
     icav2 configure set-tenant my-tenant --no-encrypt
     """
@@ -72,7 +71,7 @@ Examples:
             print(self.__doc__)
             sys.exit(0)
 
-        self.tenant_name = self.args.get("<tenant_name>") or "default"
+        self.tenant_name = self.args.get("<tenant_name>")
         self.no_encrypt = self.args.get("--no-encrypt", False)
 
         # Resolve encryption key paths

@@ -29,7 +29,7 @@ class Command:
     """
 Usage:
     icav2 configure set-profile help
-    icav2 configure set-profile [<profile_name>]
+    icav2 configure set-profile <profile_name>
 
 Description:
     Interactively configure a profile (project-scoped configuration). Prompts
@@ -42,10 +42,9 @@ Description:
     output_format only; server_url and x_api_key live on the tenant section.
 
 Options:
-    <profile_name>          Name of the profile to configure (defaults to 'default')
+    <profile_name>          Name of the profile to configure (required)
 
 Examples:
-    icav2 configure set-profile
     icav2 configure set-profile production
     """
 
@@ -57,7 +56,7 @@ Examples:
             print(self.__doc__)
             sys.exit(0)
 
-        self.profile_name = self.args.get("<profile_name>") or "default"
+        self.profile_name = self.args.get("<profile_name>")
 
     def __call__(self):
         # Load existing config (profiles can only be created once a tenant exists)
