@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-Unit tests for the ConfigureSet command.
+Unit tests for the (deprecated) ConfigureSet command.
 
-Tests interactive prompting, API key validation, profile creation/overwrite,
-and config file handling.
+Tests interactive prompting, API key validation, config creation/overwrite,
+config file handling, and that the deprecation warning is emitted while the
+command still writes a usable two-level config.
 """
 
 import os
@@ -14,7 +15,7 @@ from unittest.mock import patch, MagicMock
 import pytest
 
 from icav2_cli_plugins.subcommands.configure.configure_set import Command
-from icav2_cli_plugins.utils.config_parser import ConfigParser, ProfileConfig
+from icav2_cli_plugins.utils.config_parser import ConfigParser, ProfileConfig, TenantConfig
 
 
 class TestCommandInit:
@@ -51,8 +52,8 @@ class TestCommandCall:
             fake_priv,
         )
 
-    def test_successful_profile_creation(self, tmp_path: Path):
-        """Successful flow: prompts, validates key, writes config."""
+    def test_successful_profile_creation(self, tmp_path: Path, capsys):
+        """Successful flow: prompts, validates key, writes tenant + profile."""
         config_path = tmp_path / "config"
 
         inputs = iter([
@@ -81,13 +82,18 @@ class TestCommandCall:
              patch("icav2_cli_plugins.subcommands.configure.configure_set.requests.get", return_value=mock_projects_response):
             cmd()
 
-        # Verify config was written
+        # Deprecation warning emitted on stderr
+        captured = capsys.readouterr()
+        assert "deprecated" in captured.err
+
+        # Verify config was written with a tenant + profile
         assert config_path.exists()
         parser = ConfigParser()
-        profiles = parser.parse_file(config_path)
+        tenants, profiles = parser.parse_file(config_path)
+        assert "my-tenant" in tenants
+        assert tenants["my-tenant"].server_url == "ica.illumina.com"
+        assert tenants["my-tenant"].x_api_key == "my-api-key-123"
         assert "myprofile" in profiles
-        assert profiles["myprofile"].server_url == "ica.illumina.com"
-        assert profiles["myprofile"].x_api_key == "my-api-key-123"
         assert profiles["myprofile"].project_name == "my-project"
         assert profiles["myprofile"].project_id == "proj-uuid-123"
         assert profiles["myprofile"].tenant_name == "my-tenant"
@@ -99,7 +105,7 @@ class TestCommandCall:
         inputs = iter([
             "",                  # server_url (empty -> default)
             "api-key-456",       # x_api_key
-            "",                  # tenant_name (empty -> None)
+            "",                  # tenant_name (empty -> None, falls back to profile name)
             "",                  # project_name (empty -> None)
         ])
 
@@ -115,12 +121,14 @@ class TestCommandCall:
             cmd()
 
         parser = ConfigParser()
-        profiles = parser.parse_file(config_path)
+        tenants, profiles = parser.parse_file(config_path)
         assert "default" in profiles
-        assert profiles["default"].server_url == "ica.illumina.com"
-        assert profiles["default"].x_api_key == "api-key-456"
+        # No explicit tenant -> tenant named after the profile
+        assert "default" in tenants
+        assert tenants["default"].server_url == "ica.illumina.com"
+        assert tenants["default"].x_api_key == "api-key-456"
         assert profiles["default"].project_name is None
-        assert profiles["default"].tenant_name is None
+        assert profiles["default"].tenant_name == "default"
 
     def test_api_key_validation_failure_exits(self, tmp_path: Path, capsys):
         """When API key validation fails, exit without writing config."""
@@ -177,17 +185,23 @@ class TestCommandCall:
         """When profile already exists, overwrite it with new values."""
         config_path = tmp_path / "config"
 
-        # Write an existing config with a profile
+        # Write an existing config with a tenant + profile
         parser = ConfigParser()
+        existing_tenants = {
+            "old-tenant": TenantConfig(
+                name="old-tenant",
+                server_url="old-server.com",
+                x_api_key="old-key",
+            )
+        }
         existing_profiles = {
             "myprofile": ProfileConfig(
                 name="myprofile",
-                server_url="old-server.com",
-                x_api_key="old-key",
                 project_name="old-project",
+                tenant_name="old-tenant",
             )
         }
-        parser.write_file(config_path, existing_profiles)
+        parser.write_file(config_path, existing_tenants, existing_profiles)
 
         inputs = iter([
             "new-server.com",
@@ -214,9 +228,9 @@ class TestCommandCall:
              patch("icav2_cli_plugins.subcommands.configure.configure_set.requests.get", return_value=mock_projects_response):
             cmd()
 
-        profiles = parser.parse_file(config_path)
-        assert profiles["myprofile"].server_url == "new-server.com"
-        assert profiles["myprofile"].x_api_key == "new-api-key"
+        tenants, profiles = parser.parse_file(config_path)
+        assert tenants["new-tenant"].server_url == "new-server.com"
+        assert tenants["new-tenant"].x_api_key == "new-api-key"
         assert profiles["myprofile"].project_name == "new-project"
         assert profiles["myprofile"].project_id == "proj-new-uuid"
         assert profiles["myprofile"].tenant_name == "new-tenant"
@@ -226,24 +240,28 @@ class TestCommandCall:
         config_path = tmp_path / "config"
 
         parser = ConfigParser()
-        existing_profiles = {
-            "default": ProfileConfig(
+        existing_tenants = {
+            "default": TenantConfig(
                 name="default",
                 server_url="ica.illumina.com",
                 x_api_key="default-key",
             ),
-            "other": ProfileConfig(
+            "other": TenantConfig(
                 name="other",
                 server_url="other.com",
                 x_api_key="other-key",
             ),
         }
-        parser.write_file(config_path, existing_profiles)
+        existing_profiles = {
+            "default": ProfileConfig(name="default", tenant_name="default"),
+            "other": ProfileConfig(name="other", tenant_name="other"),
+        }
+        parser.write_file(config_path, existing_tenants, existing_profiles)
 
         inputs = iter([
             "ica.illumina.com",
             "new-default-key",
-            "",                  # tenant_name (empty -> None)
+            "",                  # tenant_name (empty -> falls back to profile name 'default')
             "",                  # project_name (empty -> None)
         ])
 
@@ -258,12 +276,13 @@ class TestCommandCall:
              patch("icav2_cli_plugins.utils.token_manager.requests.post", return_value=mock_response):
             cmd()
 
-        profiles = parser.parse_file(config_path)
-        # Default was overwritten
-        assert profiles["default"].x_api_key == "new-default-key"
-        # Other profile preserved
+        tenants, profiles = parser.parse_file(config_path)
+        # Default tenant was overwritten
+        assert tenants["default"].x_api_key == "new-default-key"
+        # Other profile + tenant preserved
         assert "other" in profiles
-        assert profiles["other"].x_api_key == "other-key"
+        assert "other" in tenants
+        assert tenants["other"].x_api_key == "other-key"
 
     def test_creates_parent_directories(self, tmp_path: Path):
         """Config file and parent dirs are created if they don't exist."""
@@ -272,7 +291,7 @@ class TestCommandCall:
         inputs = iter([
             "ica.illumina.com",
             "key-123",
-            "",                  # tenant_name (empty -> None)
+            "",                  # tenant_name (empty -> falls back to profile name)
             "",                  # project_name (empty -> None)
         ])
 

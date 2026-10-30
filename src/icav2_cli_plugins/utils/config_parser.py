@@ -1,10 +1,15 @@
 #!/usr/bin/env python3
 """
-Config file parser for INI-style profile configuration.
+Config file parser for INI-style two-level configuration.
 
-Handles the AWS CLI-style profile format:
+Handles the AWS CLI-style config format with two kinds of sections:
+  [tenant my-tenant]   -> user-scoped tenant configuration
   [default]            -> default profile
-  [profile my-tenant]  -> named profile "my-tenant"
+  [profile my-profile] -> named profile "my-profile"
+
+A profile is project-scoped and points at a tenant via its tenant_name key.
+The tenant carries the user-scoped secrets (API key, access token, encryption
+keys) that are shared across every project/profile in that tenant.
 
 Keys: key = value (whitespace trimmed, comments with # or ;)
 """
@@ -12,27 +17,32 @@ Keys: key = value (whitespace trimmed, comments with # or ;)
 import os
 import re
 from dataclasses import dataclass
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 from pathlib import Path
 
 from icav2_cli_plugins.utils.globals import PROFILE_NAME_REGEX, VALID_OUTPUT_FORMATS
 
 
 @dataclass
-class ProfileConfig:
-    """Represents a single parsed profile."""
+class TenantConfig:
+    """Represents a single parsed tenant (user-scoped configuration)."""
     name: str
     server_url: str = "ica.illumina.com"
     x_api_key: Optional[str] = None
-    project_id: Optional[str] = None
-    project_name: Optional[str] = None
-    tenant_name: Optional[str] = None
-    token_tid: Optional[str] = None
-    output_format: str = "table"
     encryption_public_key: Optional[str] = None
     encryption_private_key: Optional[str] = None
     access_token: Optional[str] = None
     access_token_expiry: Optional[str] = None
+
+
+@dataclass
+class ProfileConfig:
+    """Represents a single parsed profile (project-scoped configuration)."""
+    name: str
+    project_id: Optional[str] = None
+    project_name: Optional[str] = None
+    tenant_name: Optional[str] = None
+    output_format: str = "table"
 
 
 class ConfigParseError(Exception):
@@ -48,26 +58,36 @@ class ConfigParser:
     Parses ~/.icav2-cli-plugins/config in AWS-style INI format.
 
     Sections:
+      [tenant my-tenant]   -> tenant configuration
       [default]            -> default profile
-      [profile my-tenant]  -> named profile "my-tenant"
+      [profile my-profile] -> named profile "my-profile"
 
     Keys: key = value (whitespace trimmed, comments with # or ;)
     """
 
-    # Known keys that map to ProfileConfig fields
-    _KNOWN_KEYS = frozenset({
-        'server_url', 'x_api_key', 'project_id',
-        'project_name', 'tenant_name', 'token_tid', 'output_format',
+    # Known keys that map to TenantConfig fields
+    _TENANT_KEYS = frozenset({
+        'server_url', 'x_api_key',
         'encryption_public_key', 'encryption_private_key',
         'access_token', 'access_token_expiry',
     })
 
-    def parse(self, content: str) -> Dict[str, ProfileConfig]:
-        """Parse config file content into profile dict."""
+    # Known keys that map to ProfileConfig fields
+    _PROFILE_KEYS = frozenset({
+        'project_id', 'project_name', 'tenant_name', 'output_format',
+    })
+
+    def parse(self, content: str) -> Tuple[Dict[str, TenantConfig], Dict[str, ProfileConfig]]:
+        """Parse config file content into (tenants, profiles) dicts."""
+        tenants: Dict[str, TenantConfig] = {}
         profiles: Dict[str, ProfileConfig] = {}
-        # Track raw key-value pairs per section before constructing ProfileConfig
-        sections: Dict[str, Dict[str, str]] = {}
-        current_section: Optional[str] = None
+
+        # Track raw key-value pairs per section. Keyed by a (kind, name) tuple
+        # where kind is 'tenant' or 'profile'.
+        sections: Dict[Tuple[str, str], Dict[str, str]] = {}
+        # Preserve insertion order of section keys
+        section_order: list[Tuple[str, str]] = []
+        current_section: Optional[Tuple[str, str]] = None
 
         lines = content.split('\n')
 
@@ -88,6 +108,7 @@ class ConfigParser:
                 current_section = self._parse_section_header(line, line_num, raw_line)
                 if current_section not in sections:
                     sections[current_section] = {}
+                    section_order.append(current_section)
                 continue
 
             # Must be a key=value pair
@@ -113,9 +134,24 @@ class ConfigParser:
             # Last occurrence wins for duplicate keys
             sections[current_section][key] = value
 
-        # Build ProfileConfig objects from parsed sections
-        for section_name, kvs in sections.items():
-            # Validate output_format if present
+        # Build TenantConfig / ProfileConfig objects from parsed sections
+        for section_key in section_order:
+            kind, section_name = section_key
+            kvs = sections[section_key]
+
+            if kind == 'tenant':
+                tenants[section_name] = TenantConfig(
+                    name=section_name,
+                    server_url=kvs.get('server_url', 'ica.illumina.com'),
+                    x_api_key=kvs.get('x_api_key'),
+                    encryption_public_key=kvs.get('encryption_public_key'),
+                    encryption_private_key=kvs.get('encryption_private_key'),
+                    access_token=kvs.get('access_token'),
+                    access_token_expiry=kvs.get('access_token_expiry'),
+                )
+                continue
+
+            # Profile section — validate output_format if present
             if 'output_format' in kvs:
                 fmt = kvs['output_format']
                 if fmt not in VALID_OUTPUT_FORMATS:
@@ -127,23 +163,22 @@ class ConfigParser:
 
             profiles[section_name] = ProfileConfig(
                 name=section_name,
-                server_url=kvs.get('server_url', 'ica.illumina.com'),
-                x_api_key=kvs.get('x_api_key'),
                 project_id=kvs.get('project_id'),
                 project_name=kvs.get('project_name'),
                 tenant_name=kvs.get('tenant_name'),
-                token_tid=kvs.get('token_tid'),
                 output_format=kvs.get('output_format', 'table'),
-                encryption_public_key=kvs.get('encryption_public_key'),
-                encryption_private_key=kvs.get('encryption_private_key'),
-                access_token=kvs.get('access_token'),
-                access_token_expiry=kvs.get('access_token_expiry'),
             )
 
-        return profiles
+        return tenants, profiles
 
-    def _parse_section_header(self, line: str, line_num: int, raw_line: str) -> str:
-        """Parse a section header line and return the profile name."""
+    def _parse_section_header(
+        self, line: str, line_num: int, raw_line: str
+    ) -> Tuple[str, str]:
+        """
+        Parse a section header line and return a (kind, name) tuple.
+
+        kind is one of 'tenant' or 'profile'.
+        """
         # Must end with ]
         if not line.endswith(']'):
             raise ConfigParseError(
@@ -155,9 +190,27 @@ class ConfigParser:
         # Extract content between [ and ]
         header_content = line[1:-1].strip()
 
+        # [tenant <name>] section
+        if header_content.startswith('tenant '):
+            tenant_name = header_content[len('tenant '):].strip()
+            if not tenant_name:
+                raise ConfigParseError(
+                    line_number=line_num,
+                    line_content=raw_line,
+                    message="empty tenant name"
+                )
+            if not re.match(PROFILE_NAME_REGEX, tenant_name):
+                raise ConfigParseError(
+                    line_number=line_num,
+                    line_content=raw_line,
+                    message=f"invalid tenant name '{tenant_name}' "
+                            f"(must match {PROFILE_NAME_REGEX})"
+                )
+            return ('tenant', tenant_name)
+
         # [default] section
         if header_content == 'default':
-            return 'default'
+            return ('profile', 'default')
 
         # [profile <name>] section
         if header_content.startswith('profile '):
@@ -175,67 +228,75 @@ class ConfigParser:
                     message=f"invalid profile name '{profile_name}' "
                             f"(must match {PROFILE_NAME_REGEX})"
                 )
-            return profile_name
+            return ('profile', profile_name)
 
         # Unrecognized section header format
         raise ConfigParseError(
             line_number=line_num,
             line_content=raw_line,
             message=f"invalid section header '[{header_content}]' "
-                    f"(expected '[default]' or '[profile <name>]')"
+                    f"(expected '[tenant <name>]', '[default]' or '[profile <name>]')"
         )
 
-    def serialize(self, profiles: Dict[str, ProfileConfig]) -> str:
-        """Serialize profiles back to INI format."""
+    def serialize(
+        self,
+        tenants: Dict[str, TenantConfig],
+        profiles: Dict[str, ProfileConfig],
+    ) -> str:
+        """Serialize tenants and profiles back to INI format."""
         sections: list[str] = []
 
-        # Determine section ordering: default first, then named profiles alphabetically
-        profile_names = sorted(
-            (name for name in profiles if name != 'default')
-        )
+        # Tenant sections first, alphabetical
+        for name in sorted(tenants):
+            tenant = tenants[name]
+            lines: list[str] = [f'[tenant {name}]']
+
+            if tenant.server_url is not None:
+                lines.append(f'server_url = {tenant.server_url}')
+            if tenant.x_api_key is not None:
+                lines.append(f'x_api_key = {tenant.x_api_key}')
+            if tenant.encryption_public_key is not None:
+                lines.append(f'encryption_public_key = {tenant.encryption_public_key}')
+            if tenant.encryption_private_key is not None:
+                lines.append(f'encryption_private_key = {tenant.encryption_private_key}')
+            if tenant.access_token is not None:
+                lines.append(f'access_token = {tenant.access_token}')
+            if tenant.access_token_expiry is not None:
+                lines.append(f'access_token_expiry = {tenant.access_token_expiry}')
+
+            sections.append('\n'.join(lines))
+
+        # Profile sections: default first, then named profiles alphabetically
+        profile_names = sorted(name for name in profiles if name != 'default')
         if 'default' in profiles:
             profile_names = ['default'] + profile_names
 
         for name in profile_names:
             profile = profiles[name]
 
-            # Build section header
             if name == 'default':
                 header = '[default]'
             else:
                 header = f'[profile {name}]'
 
-            # Build key-value lines for non-None fields
-            lines: list[str] = [header]
+            lines = [header]
 
-            if profile.server_url is not None:
-                lines.append(f'server_url = {profile.server_url}')
-            if profile.x_api_key is not None:
-                lines.append(f'x_api_key = {profile.x_api_key}')
             if profile.project_id is not None:
                 lines.append(f'project_id = {profile.project_id}')
             if profile.project_name is not None:
                 lines.append(f'project_name = {profile.project_name}')
             if profile.tenant_name is not None:
                 lines.append(f'tenant_name = {profile.tenant_name}')
-            if profile.token_tid is not None:
-                lines.append(f'token_tid = {profile.token_tid}')
             if profile.output_format is not None:
                 lines.append(f'output_format = {profile.output_format}')
-            if profile.encryption_public_key is not None:
-                lines.append(f'encryption_public_key = {profile.encryption_public_key}')
-            if profile.encryption_private_key is not None:
-                lines.append(f'encryption_private_key = {profile.encryption_private_key}')
-            if profile.access_token is not None:
-                lines.append(f'access_token = {profile.access_token}')
-            if profile.access_token_expiry is not None:
-                lines.append(f'access_token_expiry = {profile.access_token_expiry}')
 
             sections.append('\n'.join(lines))
 
         return '\n\n'.join(sections) + '\n'
 
-    def parse_file(self, path: Path) -> Dict[str, ProfileConfig]:
+    def parse_file(
+        self, path: Path
+    ) -> Tuple[Dict[str, TenantConfig], Dict[str, ProfileConfig]]:
         """Read and parse a config file from disk."""
         if not path.exists():
             raise ConfigParseError(
@@ -259,9 +320,14 @@ class ConfigParser:
             ) from e
         return self.parse(content)
 
-    def write_file(self, path: Path, profiles: Dict[str, ProfileConfig]) -> None:
-        """Serialize and write profiles to disk with mode 0600."""
+    def write_file(
+        self,
+        path: Path,
+        tenants: Dict[str, TenantConfig],
+        profiles: Dict[str, ProfileConfig],
+    ) -> None:
+        """Serialize and write tenants + profiles to disk with mode 0600."""
         path.parent.mkdir(parents=True, exist_ok=True)
-        content = self.serialize(profiles)
+        content = self.serialize(tenants, profiles)
         path.write_text(content, encoding="utf-8")
         os.chmod(path, 0o600)

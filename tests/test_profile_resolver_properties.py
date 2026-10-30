@@ -11,9 +11,62 @@ import pytest
 from hypothesis import given, settings, assume, HealthCheck
 from hypothesis import strategies as st
 
-from icav2_cli_plugins.utils.config_parser import ConfigParser, ProfileConfig
+from icav2_cli_plugins.utils.config_parser import ConfigParser, ProfileConfig, TenantConfig
 from icav2_cli_plugins.utils.globals import VALID_OUTPUT_FORMATS
 from icav2_cli_plugins.utils.profile_resolver import ProfileResolver
+
+
+class _ProfileWithTenant:
+    """
+    Test helper bundling a ProfileConfig with the TenantConfig it references.
+
+    In the two-level config, server_url and x_api_key are user-scoped and live
+    on the tenant. These property tests build a profile and a matching tenant
+    (named after the profile) so that a profile's effective server_url/api_key
+    can be asserted against the tenant it points at.
+    """
+
+    def __init__(self, profile: ProfileConfig, tenant: TenantConfig):
+        self.profile = profile
+        self.tenant = tenant
+
+    # Convenience accessors mirroring the old flat ProfileConfig API so the
+    # existing assertions (x_api_key / server_url) keep reading naturally.
+    @property
+    def name(self) -> str:
+        return self.profile.name
+
+    @property
+    def project_id(self):
+        return self.profile.project_id
+
+    @property
+    def output_format(self) -> str:
+        return self.profile.output_format
+
+    @property
+    def x_api_key(self):
+        return self.tenant.x_api_key
+
+    @property
+    def server_url(self) -> str:
+        return self.tenant.server_url
+
+
+def _split_maps(bundle: dict):
+    """Split a {name: _ProfileWithTenant} dict into (tenants, profiles) maps."""
+    tenants: dict[str, TenantConfig] = {}
+    profiles: dict[str, ProfileConfig] = {}
+    for name, item in bundle.items():
+        profiles[name] = item.profile
+        tenants[item.tenant.name] = item.tenant
+    return tenants, profiles
+
+
+def _write_bundle(parser: ConfigParser, path, bundle: dict) -> None:
+    """Serialize a {name: _ProfileWithTenant} dict to a config file."""
+    tenants, profiles = _split_maps(bundle)
+    parser.write_file(path, tenants, profiles)
 
 
 # ---------------------------------------------------------------------------
@@ -47,11 +100,31 @@ _simple_value = st.text(
 )
 
 
+def _make_profile_with_tenant(
+    name: str,
+    server_url: str = "ica.illumina.com",
+    x_api_key=None,
+    project_id=None,
+    project_name=None,
+    output_format: str = "table",
+) -> _ProfileWithTenant:
+    """Build a profile plus a matching tenant (named after the profile)."""
+    profile = ProfileConfig(
+        name=name,
+        project_id=project_id,
+        project_name=project_name,
+        tenant_name=name,
+        output_format=output_format,
+    )
+    tenant = TenantConfig(name=name, server_url=server_url, x_api_key=x_api_key)
+    return _ProfileWithTenant(profile, tenant)
+
+
 @st.composite
 def profiles_with_unique_names(draw: st.DrawFn, min_profiles: int = 1, max_profiles: int = 5):
-    """Generate a dict of valid profiles with unique names."""
+    """Generate a dict of valid profiles (with matching tenants) with unique names."""
     num_profiles = draw(st.integers(min_value=min_profiles, max_value=max_profiles))
-    profiles: dict[str, ProfileConfig] = {}
+    profiles: dict[str, _ProfileWithTenant] = {}
 
     # Generate unique profile names
     names: list[str] = []
@@ -65,13 +138,12 @@ def profiles_with_unique_names(draw: st.DrawFn, min_profiles: int = 1, max_profi
         names.append(name)
 
     for name in names:
-        profiles[name] = ProfileConfig(
+        profiles[name] = _make_profile_with_tenant(
             name=name,
             server_url=draw(_simple_value),
             x_api_key=draw(st.one_of(st.none(), _simple_value)),
             project_id=draw(st.one_of(st.none(), _simple_value)),
             project_name=draw(st.one_of(st.none(), _simple_value)),
-            token_tid=draw(st.one_of(st.none(), _simple_value)),
             output_format=draw(output_format_strategy),
         )
 
@@ -125,7 +197,7 @@ class TestInvalidProfileError:
         # Write the config to a temp file
         parser = ConfigParser()
         config_file = tmp_path / f"config_{id(profiles)}"
-        parser.write_file(config_file, profiles)
+        _write_bundle(parser, config_file, profiles)
 
         # Clear any env vars that might interfere
         monkeypatch.delenv("ICAV2_PROFILE", raising=False)
@@ -190,7 +262,7 @@ class TestInvalidProfileError:
         # Write the config to a temp file
         parser = ConfigParser()
         config_file = tmp_path / f"config_{id(profiles)}"
-        parser.write_file(config_file, profiles)
+        _write_bundle(parser, config_file, profiles)
 
         # Set ICAV2_PROFILE to the nonexistent name
         monkeypatch.setenv("ICAV2_PROFILE", requested_name)
@@ -267,21 +339,36 @@ def _build_config_content(
     server_url_value: str | None,
     output_format_value: str | None,
 ) -> str:
-    """Build INI config content with optional keys omitted."""
+    """Build INI config content with optional keys omitted.
+
+    server_url is a tenant-scoped key in the two-level config, so when it is
+    present the profile points at a tenant (named after the profile) that
+    carries the server_url. When omitted, no tenant is referenced and the
+    resolver falls back to the default server_url.
+    """
+    sections: list[str] = []
+
+    tenant_name = None
+    if not omit_server_url and server_url_value is not None:
+        tenant_name = f"{profile_name}-tenant"
+        sections.append(
+            f"[tenant {tenant_name}]\nserver_url = {server_url_value}"
+        )
+
     if profile_name == "default":
         header = "[default]"
     else:
         header = f"[profile {profile_name}]"
 
     lines = [header]
-
-    if not omit_server_url and server_url_value is not None:
-        lines.append(f"server_url = {server_url_value}")
-
+    if tenant_name is not None:
+        lines.append(f"tenant_name = {tenant_name}")
     if not omit_output_format and output_format_value is not None:
         lines.append(f"output_format = {output_format_value}")
 
-    return "\n".join(lines) + "\n"
+    sections.append("\n".join(lines))
+
+    return "\n\n".join(sections) + "\n"
 
 
 # ---------------------------------------------------------------------------
@@ -476,25 +563,26 @@ _server_url_p4 = st.text(
 
 
 @st.composite
-def multi_profile_config(draw: st.DrawFn) -> dict[str, ProfileConfig]:
+def multi_profile_config(draw: st.DrawFn) -> dict[str, _ProfileWithTenant]:
     """
     Generate a multi-profile config dict that always includes a 'default' profile
-    and at least one named profile with unique names.
+    and at least one named profile with unique names. Each profile references a
+    matching tenant that carries its server_url and x_api_key.
     """
-    # Generate default profile
-    default_profile = ProfileConfig(
-        name="default",
-        server_url=draw(_server_url_p4),
-        x_api_key=draw(_simple_value),
-        project_id=draw(_simple_value),
-        project_name=draw(st.one_of(st.none(), _simple_value)),
-        token_tid=draw(st.one_of(st.none(), _simple_value)),
-        output_format=draw(output_format_strategy),
-    )
+    # Generate default profile (+ matching tenant)
+    profiles: dict[str, _ProfileWithTenant] = {
+        "default": _make_profile_with_tenant(
+            name="default",
+            server_url=draw(_server_url_p4),
+            x_api_key=draw(_simple_value),
+            project_id=draw(_simple_value),
+            project_name=draw(st.one_of(st.none(), _simple_value)),
+            output_format=draw(output_format_strategy),
+        )
+    }
 
     # Generate between 1 and 4 named profiles
     num_named = draw(st.integers(min_value=1, max_value=4))
-    profiles: dict[str, ProfileConfig] = {"default": default_profile}
 
     used_names: set[str] = {"default"}
     for i in range(num_named):
@@ -507,13 +595,12 @@ def multi_profile_config(draw: st.DrawFn) -> dict[str, ProfileConfig]:
             name = f"prof{i}"
         used_names.add(name)
 
-        profiles[name] = ProfileConfig(
+        profiles[name] = _make_profile_with_tenant(
             name=name,
             server_url=draw(_server_url_p4),
             x_api_key=draw(_simple_value),
             project_id=draw(_simple_value),
             project_name=draw(st.one_of(st.none(), _simple_value)),
-            token_tid=draw(st.one_of(st.none(), _simple_value)),
             output_format=draw(output_format_strategy),
         )
 
@@ -551,7 +638,7 @@ class TestProfileSelectionResolvesCorrectProfile:
         # Write the config to a temp file
         parser = ConfigParser()
         config_file = tmp_path / f"config_{id(profiles)}"
-        parser.write_file(config_file, profiles)
+        _write_bundle(parser, config_file, profiles)
 
         # Pick a named (non-default) profile to select
         named_profiles = [name for name in profiles if name != "default"]
@@ -594,7 +681,7 @@ class TestProfileSelectionResolvesCorrectProfile:
         # Write the config to a temp file
         parser = ConfigParser()
         config_file = tmp_path / f"config_{id(profiles)}"
-        parser.write_file(config_file, profiles)
+        _write_bundle(parser, config_file, profiles)
 
         default_profile = profiles["default"]
 
@@ -630,7 +717,7 @@ class TestProfileSelectionResolvesCorrectProfile:
         # Write the config to a temp file
         parser = ConfigParser()
         config_file = tmp_path / f"config_{id(profiles)}"
-        parser.write_file(config_file, profiles)
+        _write_bundle(parser, config_file, profiles)
 
         default_profile = profiles["default"]
 
@@ -667,7 +754,7 @@ class TestProfileSelectionResolvesCorrectProfile:
         # Write the config to a temp file
         parser = ConfigParser()
         config_file = tmp_path / f"config_{id(profiles)}"
-        parser.write_file(config_file, profiles)
+        _write_bundle(parser, config_file, profiles)
 
         # Pick any profile name from the config (including 'default')
         target_name = data.draw(st.sampled_from(sorted(profiles.keys())), label="target_profile")
@@ -720,11 +807,11 @@ optional_env_value = st.one_of(
 _named_profile_strategy = profile_name_strategy.filter(lambda n: n != "default")
 
 
-def _write_config_with_profiles(tmp_path: Path, profiles: dict[str, ProfileConfig]) -> Path:
-    """Write a config file with given profiles and return its path."""
+def _write_config_with_profiles(tmp_path: Path, profiles: dict) -> Path:
+    """Write a config file with given profiles (+ their tenants) and return its path."""
     config_path = tmp_path / "config"
     parser = ConfigParser()
-    parser.write_file(config_path, profiles)
+    _write_bundle(parser, config_path, profiles)
     return config_path
 
 
@@ -735,9 +822,9 @@ def _build_profile(
     project_id: str | None = None,
     project_name: str | None = None,
     output_format: str = "table",
-) -> ProfileConfig:
-    """Build a ProfileConfig with given values."""
-    return ProfileConfig(
+) -> _ProfileWithTenant:
+    """Build a profile (+ matching tenant) with given values."""
+    return _make_profile_with_tenant(
         name=name,
         server_url=server_url,
         x_api_key=x_api_key,
@@ -1105,3 +1192,51 @@ class TestPrecedenceResolution:
             else:
                 expected_url = "https://default-server.com/ica/rest"
             assert resolved.base_url == expected_url
+
+
+# ---------------------------------------------------------------------------
+# Unit test: profile references a tenant that is not configured
+# ---------------------------------------------------------------------------
+
+
+class TestProfileReferencesMissingTenant:
+    """A profile pointing at an unknown tenant exits non-zero and names the
+    profile, the missing tenant, and the available tenants in stderr."""
+
+    def test_missing_tenant_exits_and_names_everything(self, tmp_path, monkeypatch, capsys):
+        from icav2_cli_plugins.utils.config_parser import TenantConfig
+
+        monkeypatch.delenv("ICAV2_PROFILE", raising=False)
+        monkeypatch.delenv("ICAV2_TENANT_NAME", raising=False)
+        monkeypatch.delenv("ICAV2_ACCESS_TOKEN", raising=False)
+        monkeypatch.delenv("ICAV2_PROJECT_ID", raising=False)
+        monkeypatch.delenv("ICAV2_BASE_URL", raising=False)
+
+        # Two tenants exist, but the default profile points at a third, absent one.
+        tenants = {
+            "alpha": TenantConfig(name="alpha", server_url="a.example.com"),
+            "beta": TenantConfig(name="beta", server_url="b.example.com"),
+        }
+        profiles = {
+            "default": ProfileConfig(name="default", tenant_name="ghost", project_id="p1"),
+        }
+
+        config_path = tmp_path / "config"
+        parser = ConfigParser()
+        parser.write_file(config_path, tenants, profiles)
+
+        resolver = ProfileResolver(config_path=config_path)
+        with pytest.raises(SystemExit) as exc_info:
+            resolver.resolve()
+
+        assert exc_info.value.code == 1
+
+        stderr_output = capsys.readouterr().err
+        # Names the profile
+        assert "default" in stderr_output
+        # Names the missing tenant
+        assert "ghost" in stderr_output
+        # Names the available tenants
+        assert "alpha" in stderr_output
+        assert "beta" in stderr_output
+
