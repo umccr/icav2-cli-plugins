@@ -20,7 +20,12 @@ from icav2_cli_plugins.utils.api_key_encryption import (
     encrypt_api_key,
     is_encrypted,
 )
-from icav2_cli_plugins.utils.config_parser import ConfigParser, ProfileConfig, ConfigParseError
+from icav2_cli_plugins.utils.config_parser import (
+    ConfigParser,
+    ConfigParseError,
+    ProfileConfig,
+    TenantConfig,
+)
 from icav2_cli_plugins.utils.globals import CONFIG_FILE_PATH
 from icav2_cli_plugins.utils.token_manager import TokenManager
 
@@ -80,6 +85,13 @@ Examples:
         )
 
     def __call__(self):
+        print(
+            "Warning: 'icav2 configure set' is deprecated. "
+            "Use 'icav2 configure set-tenant' followed by "
+            "'icav2 configure set-profile' instead.",
+            file=sys.stderr,
+        )
+
         # Prompt interactively for profile values
         server_url = input("ICA server URL [ica.illumina.com]: ").strip() or "ica.illumina.com"
         x_api_key = input("ICA API key: ").strip()
@@ -97,7 +109,7 @@ Examples:
         # Validate the API key by attempting token generation
         base_url = f"https://{server_url}/ica/rest"
         token_manager = TokenManager(
-            profile_name=self.profile_name,
+            tenant_name=tenant_name or self.profile_name,
             config_path=CONFIG_FILE_PATH,
         )
 
@@ -172,27 +184,35 @@ Examples:
         # Load existing config (or start fresh if file doesn't exist)
         parser = ConfigParser()
         try:
-            profiles = parser.parse_file(CONFIG_FILE_PATH)
+            tenants, profiles = parser.parse_file(CONFIG_FILE_PATH)
         except ConfigParseError:
-            # File doesn't exist or is empty — start with an empty dict
-            profiles = {}
+            # File doesn't exist or is empty — start with empty maps
+            tenants, profiles = {}, {}
 
-        # Create/overwrite the profile
-        profiles[self.profile_name] = ProfileConfig(
-            name=self.profile_name,
+        # The user-scoped credentials live on a tenant section. Fall back to the
+        # profile name when no explicit tenant name was provided.
+        effective_tenant_name = tenant_name or self.profile_name
+
+        tenants[effective_tenant_name] = TenantConfig(
+            name=effective_tenant_name,
             server_url=server_url,
             x_api_key=stored_api_key,
-            project_id=project_id,
-            project_name=project_name,
-            tenant_name=tenant_name,
             encryption_public_key=encryption_public_key,
             encryption_private_key=encryption_private_key,
             access_token=stored_access_token,
             access_token_expiry=access_token_expiry,
         )
 
+        # The project-scoped profile points at the tenant above.
+        profiles[self.profile_name] = ProfileConfig(
+            name=self.profile_name,
+            project_id=project_id,
+            project_name=project_name,
+            tenant_name=effective_tenant_name,
+        )
+
         # Write config file (creates file + parent dirs with mode 0600)
-        parser.write_file(CONFIG_FILE_PATH, profiles)
+        parser.write_file(CONFIG_FILE_PATH, tenants, profiles)
 
         print(f"Profile '{self.profile_name}' configured successfully.")
         if is_encrypted(stored_api_key):

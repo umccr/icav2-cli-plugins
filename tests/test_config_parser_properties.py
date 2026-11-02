@@ -7,7 +7,12 @@ import pytest
 from hypothesis import given, settings, assume
 from hypothesis import strategies as st
 
-from icav2_cli_plugins.utils.config_parser import ConfigParser, ConfigParseError, ProfileConfig
+from icav2_cli_plugins.utils.config_parser import (
+    ConfigParser,
+    ConfigParseError,
+    ProfileConfig,
+    TenantConfig,
+)
 from icav2_cli_plugins.utils.globals import PROFILE_NAME_REGEX, VALID_OUTPUT_FORMATS
 
 
@@ -70,13 +75,37 @@ def profile_config_strategy(name_strategy=profile_name_strategy):
     return st.builds(
         ProfileConfig,
         name=name_strategy,
-        server_url=server_url_strategy,
-        x_api_key=optional_string_strategy,
         project_id=optional_string_strategy,
         project_name=optional_string_strategy,
         tenant_name=optional_string_strategy,
-        token_tid=optional_string_strategy,
         output_format=output_format_strategy,
+    )
+
+
+def tenant_config_strategy(name_strategy=profile_name_strategy):
+    """Strategy for generating valid TenantConfig objects."""
+    return st.builds(
+        TenantConfig,
+        name=name_strategy,
+        server_url=server_url_strategy,
+        x_api_key=optional_string_strategy,
+        encryption_public_key=optional_string_strategy,
+        encryption_private_key=optional_string_strategy,
+        access_token=optional_string_strategy,
+        access_token_expiry=optional_string_strategy,
+    )
+
+
+def tenants_dict_strategy():
+    """Strategy for generating a valid Dict[str, TenantConfig] (may be empty)."""
+    return st.builds(
+        lambda tenants: {t.name: t for t in tenants},
+        st.lists(
+            tenant_config_strategy(),
+            min_size=0,
+            max_size=4,
+            unique_by=lambda t: t.name,
+        ),
     )
 
 
@@ -137,37 +166,44 @@ class TestConfigRoundTrip:
     """
 
     @settings(max_examples=100)
-    @given(profiles=profiles_dict_strategy())
-    def test_round_trip_preserves_all_profiles(self, profiles):
-        """Serialize then parse produces identical ProfileConfig objects."""
+    @given(tenants=tenants_dict_strategy(), profiles=profiles_dict_strategy())
+    def test_round_trip_preserves_all_tenants_and_profiles(self, tenants, profiles):
+        """Serialize then parse produces identical TenantConfig/ProfileConfig objects."""
         parser = ConfigParser()
 
-        # Serialize profiles to INI format
-        serialized = parser.serialize(profiles)
+        # Serialize tenants + profiles to INI format
+        serialized = parser.serialize(tenants, profiles)
 
         # Parse the serialized content back
-        parsed = parser.parse(serialized)
+        parsed_tenants, parsed_profiles = parser.parse(serialized)
 
-        # Assert the round-trip produces identical profile names
-        assert set(parsed.keys()) == set(profiles.keys()), (
-            f"Profile names differ: parsed={set(parsed.keys())}, "
+        # Assert the round-trip produces identical tenant and profile names
+        assert set(parsed_tenants.keys()) == set(tenants.keys()), (
+            f"Tenant names differ: parsed={set(parsed_tenants.keys())}, "
+            f"original={set(tenants.keys())}"
+        )
+        assert set(parsed_profiles.keys()) == set(profiles.keys()), (
+            f"Profile names differ: parsed={set(parsed_profiles.keys())}, "
             f"original={set(profiles.keys())}"
         )
 
+        # Assert each tenant has identical field values
+        for name, original_tenant in tenants.items():
+            parsed_tenant = parsed_tenants[name]
+            assert parsed_tenant.name == original_tenant.name
+            assert parsed_tenant.server_url == original_tenant.server_url
+            assert parsed_tenant.x_api_key == original_tenant.x_api_key
+            assert parsed_tenant.encryption_public_key == original_tenant.encryption_public_key
+            assert parsed_tenant.encryption_private_key == original_tenant.encryption_private_key
+            assert parsed_tenant.access_token == original_tenant.access_token
+            assert parsed_tenant.access_token_expiry == original_tenant.access_token_expiry
+
         # Assert each profile has identical field values
         for name, original_profile in profiles.items():
-            parsed_profile = parsed[name]
+            parsed_profile = parsed_profiles[name]
             assert parsed_profile.name == original_profile.name, (
                 f"Profile '{name}' name mismatch: "
                 f"parsed={parsed_profile.name!r}, original={original_profile.name!r}"
-            )
-            assert parsed_profile.server_url == original_profile.server_url, (
-                f"Profile '{name}' server_url mismatch: "
-                f"parsed={parsed_profile.server_url!r}, original={original_profile.server_url!r}"
-            )
-            assert parsed_profile.x_api_key == original_profile.x_api_key, (
-                f"Profile '{name}' x_api_key mismatch: "
-                f"parsed={parsed_profile.x_api_key!r}, original={original_profile.x_api_key!r}"
             )
             assert parsed_profile.project_id == original_profile.project_id, (
                 f"Profile '{name}' project_id mismatch: "
@@ -177,9 +213,9 @@ class TestConfigRoundTrip:
                 f"Profile '{name}' project_name mismatch: "
                 f"parsed={parsed_profile.project_name!r}, original={original_profile.project_name!r}"
             )
-            assert parsed_profile.token_tid == original_profile.token_tid, (
-                f"Profile '{name}' token_tid mismatch: "
-                f"parsed={parsed_profile.token_tid!r}, original={original_profile.token_tid!r}"
+            assert parsed_profile.tenant_name == original_profile.tenant_name, (
+                f"Profile '{name}' tenant_name mismatch: "
+                f"parsed={parsed_profile.tenant_name!r}, original={original_profile.tenant_name!r}"
             )
             assert parsed_profile.output_format == original_profile.output_format, (
                 f"Profile '{name}' output_format mismatch: "
@@ -187,8 +223,46 @@ class TestConfigRoundTrip:
             )
 
 
-# Known keys from ProfileConfig (excluding output_format which has validation)
-DUPLICABLE_KEYS = ["server_url", "x_api_key", "project_id", "project_name", "tenant_name", "token_tid"]
+# Feature: profile-based-config, Property 1 (tenant section): tenant sections land in the tenants map
+class TestTenantSectionParsing:
+    """A parsed [tenant <name>] section lands in the tenants map with its six fields."""
+
+    def test_tenant_section_parsed_into_tenants_map(self):
+        parser = ConfigParser()
+        content = (
+            "[tenant acme]\n"
+            "server_url = my.server.com\n"
+            "x_api_key = secret-key\n"
+            "encryption_public_key = /keys/id_rsa.pub\n"
+            "encryption_private_key = /keys/id_rsa\n"
+            "access_token = cached-token\n"
+            "access_token_expiry = 1234567890\n"
+            "\n"
+            "[profile dev]\n"
+            "tenant_name = acme\n"
+            "project_id = proj-123\n"
+        )
+
+        tenants, profiles = parser.parse(content)
+
+        assert set(tenants.keys()) == {"acme"}
+        tenant = tenants["acme"]
+        assert tenant.name == "acme"
+        assert tenant.server_url == "my.server.com"
+        assert tenant.x_api_key == "secret-key"
+        assert tenant.encryption_public_key == "/keys/id_rsa.pub"
+        assert tenant.encryption_private_key == "/keys/id_rsa"
+        assert tenant.access_token == "cached-token"
+        assert tenant.access_token_expiry == "1234567890"
+
+        # The profile section does not leak into the tenants map
+        assert set(profiles.keys()) == {"dev"}
+        assert profiles["dev"].tenant_name == "acme"
+        assert profiles["dev"].project_id == "proj-123"
+
+
+# Keys from ProfileConfig that can be duplicated (excluding output_format which has validation)
+DUPLICABLE_KEYS = ["project_id", "project_name", "tenant_name"]
 
 
 # Feature: profile-based-config, Property 9: Duplicate keys resolve to last occurrence
@@ -216,7 +290,7 @@ class TestDuplicateKeyResolution:
 
         content = "\n".join(lines) + "\n"
         parser = ConfigParser()
-        profiles = parser.parse(content)
+        _tenants, profiles = parser.parse(content)
 
         assert "default" in profiles
         profile = profiles["default"]
@@ -240,7 +314,7 @@ class TestDuplicateKeyResolution:
 
         content = "\n".join(lines) + "\n"
         parser = ConfigParser()
-        profiles = parser.parse(content)
+        _tenants, profiles = parser.parse(content)
 
         assert profile_name in profiles
         profile = profiles[profile_name]
@@ -278,7 +352,7 @@ class TestDuplicateKeyResolution:
 
         content = "\n".join(lines) + "\n"
         parser = ConfigParser()
-        profiles = parser.parse(content)
+        _tenants, profiles = parser.parse(content)
 
         assert "default" in profiles
         profile = profiles["default"]
@@ -321,7 +395,7 @@ class TestOutputFormatValidation:
 
         if output_format in VALID_OUTPUT_FORMATS:
             # Valid formats should parse successfully
-            result = parser.parse(config_content)
+            _tenants, result = parser.parse(config_content)
             assert 'default' in result
             assert result['default'].output_format == output_format
         else:
@@ -339,7 +413,7 @@ class TestOutputFormatValidation:
         parser = ConfigParser()
         config_content = f"[default]\noutput_format = {valid_format}\n"
 
-        result = parser.parse(config_content)
+        _tenants, result = parser.parse(config_content)
         assert 'default' in result
         assert result['default'].output_format == valid_format
 
@@ -441,6 +515,17 @@ _simple_value_p2 = st.text(
 )
 
 
+def _make_profile_p2(draw: st.DrawFn, name: str) -> ProfileConfig:
+    """Build a single ProfileConfig for Property 2 testing."""
+    return ProfileConfig(
+        name=name,
+        project_id=draw(st.one_of(st.none(), _simple_value_p2)),
+        project_name=draw(st.one_of(st.none(), _simple_value_p2)),
+        tenant_name=draw(st.one_of(st.none(), _simple_value_p2)),
+        output_format=draw(st.sampled_from(VALID_OUTPUT_FORMATS)),
+    )
+
+
 @st.composite
 def profile_dicts(draw: st.DrawFn) -> dict[str, ProfileConfig]:
     """Generate a dict of valid profiles for Property 2 testing."""
@@ -450,15 +535,7 @@ def profile_dicts(draw: st.DrawFn) -> dict[str, ProfileConfig]:
     profiles: dict[str, ProfileConfig] = {}
 
     if has_default:
-        profiles["default"] = ProfileConfig(
-            name="default",
-            server_url=draw(_simple_value_p2),
-            x_api_key=draw(st.one_of(st.none(), _simple_value_p2)),
-            project_id=draw(st.one_of(st.none(), _simple_value_p2)),
-            project_name=draw(st.one_of(st.none(), _simple_value_p2)),
-            token_tid=draw(st.one_of(st.none(), _simple_value_p2)),
-            output_format=draw(st.sampled_from(VALID_OUTPUT_FORMATS)),
-        )
+        profiles["default"] = _make_profile_p2(draw, "default")
 
     # Generate unique named profiles using index suffixes to avoid collisions
     for i in range(num_named):
@@ -466,27 +543,11 @@ def profile_dicts(draw: st.DrawFn) -> dict[str, ProfileConfig]:
         name = f"{base_name}{i}"
         if name == "default":
             name = f"p{name}"
-        profiles[name] = ProfileConfig(
-            name=name,
-            server_url=draw(_simple_value_p2),
-            x_api_key=draw(st.one_of(st.none(), _simple_value_p2)),
-            project_id=draw(st.one_of(st.none(), _simple_value_p2)),
-            project_name=draw(st.one_of(st.none(), _simple_value_p2)),
-            token_tid=draw(st.one_of(st.none(), _simple_value_p2)),
-            output_format=draw(st.sampled_from(VALID_OUTPUT_FORMATS)),
-        )
+        profiles[name] = _make_profile_p2(draw, name)
 
     # Ensure at least one profile exists
     if not profiles:
-        profiles["default"] = ProfileConfig(
-            name="default",
-            server_url=draw(_simple_value_p2),
-            x_api_key=draw(st.one_of(st.none(), _simple_value_p2)),
-            project_id=draw(st.one_of(st.none(), _simple_value_p2)),
-            project_name=draw(st.one_of(st.none(), _simple_value_p2)),
-            token_tid=draw(st.one_of(st.none(), _simple_value_p2)),
-            output_format=draw(st.sampled_from(VALID_OUTPUT_FORMATS)),
-        )
+        profiles["default"] = _make_profile_p2(draw, "default")
 
     return profiles
 
@@ -540,10 +601,10 @@ class TestCommentInvariance:
         parser = ConfigParser()
 
         # Serialize the profiles to get valid config content
-        original_content = parser.serialize(profiles)
+        original_content = parser.serialize({}, profiles)
 
         # Parse the original content (without extra comments)
-        original_result = parser.parse(original_content)
+        _tenants, original_result = parser.parse(original_content)
 
         # Insert comments at random positions in the content lines
         lines = original_content.split("\n")
@@ -559,7 +620,7 @@ class TestCommentInvariance:
         content_with_comments = "\n".join(lines)
 
         # Parse the content with comments inserted
-        result_with_comments = parser.parse(content_with_comments)
+        _tenants2, result_with_comments = parser.parse(content_with_comments)
 
         # The results should be identical
         assert result_with_comments.keys() == original_result.keys(), (
@@ -570,9 +631,7 @@ class TestCommentInvariance:
             orig = original_result[profile_name]
             commented = result_with_comments[profile_name]
             assert orig.name == commented.name
-            assert orig.server_url == commented.server_url
-            assert orig.x_api_key == commented.x_api_key
             assert orig.project_id == commented.project_id
             assert orig.project_name == commented.project_name
-            assert orig.token_tid == commented.token_tid
+            assert orig.tenant_name == commented.tenant_name
             assert orig.output_format == commented.output_format

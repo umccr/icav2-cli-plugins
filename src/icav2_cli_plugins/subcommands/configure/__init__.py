@@ -2,17 +2,23 @@
 """
 Configure subcommand group for profile management.
 
-Provides commands to create, list, and manage profiles in the
+Provides commands to create, list, and manage tenants and profiles in the
 ~/.icav2-cli-plugins/config file.
 
 Subcommands:
-  set             - Interactively configure a profile
-  list            - Display all configured profiles
+  set-tenant      - Interactively configure a tenant (user-scoped credentials)
+  set-profile     - Interactively configure a profile (project-scoped)
+  export          - Emit shell export lines for a profile
+  set             - (deprecated) Interactively configure a profile
+  list            - Display all configured tenants and profiles
   generate-keys   - Generate RSA key pair for API key encryption
 """
 
 # Command registration mapping for the configure subcommand group
 CONFIGURE_SUBCOMMANDS = {
+    "set-tenant": "icav2_cli_plugins.subcommands.configure.configure_set_tenant",
+    "set-profile": "icav2_cli_plugins.subcommands.configure.configure_set_profile",
+    "export": "icav2_cli_plugins.subcommands.configure.configure_export",
     "set": "icav2_cli_plugins.subcommands.configure.configure_set",
     "list": "icav2_cli_plugins.subcommands.configure.configure_list",
     "generate-keys": "icav2_cli_plugins.subcommands.configure.configure_generate_keys",

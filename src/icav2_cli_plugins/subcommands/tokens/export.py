@@ -56,6 +56,12 @@ Example:
         pass
 
     def __call__(self):
+        print(
+            "Warning: 'icav2 tokens export' is deprecated. "
+            "Use 'icav2 configure export <profile>' instead.",
+            file=sys.stderr,
+        )
+
         access_token = environ.get("ICAV2_ACCESS_TOKEN", None)
 
         if not access_token:
